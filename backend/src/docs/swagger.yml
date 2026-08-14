@@ -1,0 +1,389 @@
+openapi: 3.0.0
+info:
+  title: Ride Round Up API
+  version: 1.0.0
+  description: API Documentation for Ride Round Up backend
+servers:
+  - url: /api/v1
+    description: v1 API
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: Error message
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Request successful
+    Brand:
+      type: object
+      properties:
+        _id:
+          type: string
+        brandCode:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive]
+    Model:
+      type: object
+      properties:
+        _id:
+          type: string
+        brandId:
+          type: string
+        modelCode:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive, draft]
+    Generation:
+      type: object
+      properties:
+        _id:
+          type: string
+        modelId:
+          type: string
+        generationCode:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        startYear:
+          type: integer
+        endYear:
+          type: integer
+        status:
+          type: string
+          enum: [active, inactive, draft]
+
+paths:
+  /health:
+    get:
+      summary: Health Check
+      description: Returns the health status of the API and database
+      responses:
+        '200':
+          description: Successful health check
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /brands:
+    get:
+      summary: List brands
+      tags: [Brands]
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          schema:
+            type: integer
+        - in: query
+          name: search
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+    post:
+      summary: Create a brand
+      tags: [Brands]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Brand'
+      responses:
+        '201':
+          description: Created
+  /brands/{id}:
+    get:
+      summary: Get brand by ID
+      tags: [Brands]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+    patch:
+      summary: Update a brand
+      tags: [Brands]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Brand'
+      responses:
+        '200':
+          description: OK
+    delete:
+      summary: Delete a brand
+      tags: [Brands]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+
+  /brands/{brandId}/models:
+    get:
+      summary: List models for a brand
+      tags: [Models]
+      parameters:
+        - in: path
+          name: brandId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+
+  /models:
+    get:
+      summary: List models
+      tags: [Models]
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+    post:
+      summary: Create a model
+      tags: [Models]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Model'
+      responses:
+        '201':
+          description: Created
+  /models/{id}:
+    get:
+      summary: Get model by ID
+      tags: [Models]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+    patch:
+      summary: Update a model
+      tags: [Models]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Model'
+      responses:
+        '200':
+          description: OK
+    delete:
+      summary: Delete a model
+      tags: [Models]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+
+  /models/{modelId}/generations:
+    get:
+      summary: List generations for a model
+      tags: [Generations]
+      parameters:
+        - in: path
+          name: modelId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+
+  /generations:
+    get:
+      summary: List generations
+      tags: [Generations]
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+    post:
+      summary: Create a generation
+      tags: [Generations]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Generation'
+      responses:
+        '201':
+          description: Created
+  /generations/{id}:
+    get:
+      summary: Get generation by ID
+      tags: [Generations]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+    patch:
+      summary: Update a generation
+      tags: [Generations]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Generation'
+      responses:
+        '200':
+          description: OK
+    delete:
+      summary: Delete a generation
+      tags: [Generations]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
