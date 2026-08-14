@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import * as generationController from './generation.controller';
+import variantRoutes from '../variants/variant.routes';
 import { validate } from '../../../middlewares/validate.middleware';
 import { authenticate, authorize } from '../../../middlewares/auth.middleware';
 import {
@@ -13,13 +14,19 @@ import {
 
 const router = Router({ mergeParams: true });
 
+router.use('/:generationId/variants', variantRoutes);
+
 // Public routes
-router.get('/', validate(z.object({ query: GenerationListQuerySchema }) as any), (req, res, next) => {
-  if (req.params.modelId) {
-    return generationController.getGenerationsByModel(req, res, next);
-  }
-  return generationController.getGenerations(req, res, next);
-});
+router.get(
+  '/',
+  validate(z.object({ query: GenerationListQuerySchema }) as any),
+  (req, res, next) => {
+    if (req.params.modelId) {
+      return generationController.getGenerationsByModel(req, res, next);
+    }
+    return generationController.getGenerations(req, res, next);
+  },
+);
 router.get(
   '/slug/:slug',
   validate(z.object({ params: GenerationSlugParamSchema }) as any),

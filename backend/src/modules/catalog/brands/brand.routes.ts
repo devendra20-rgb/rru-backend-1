@@ -14,15 +14,31 @@ import {
 const router = Router();
 
 // Public routes
-router.get('/', validate(z.object({ query: BrandListQuerySchema }) as any), brandController.getBrands);
-router.get('/slug/:slug', validate(z.object({ params: BrandSlugParamSchema }) as any), brandController.getBrandBySlug);
-router.get('/:id', validate(z.object({ params: BrandIdParamSchema }) as any), brandController.getBrandById);
+router.get(
+  '/',
+  validate(z.object({ query: BrandListQuerySchema }) as any),
+  brandController.getBrands,
+);
+router.get(
+  '/slug/:slug',
+  validate(z.object({ params: BrandSlugParamSchema }) as any),
+  brandController.getBrandBySlug,
+);
+router.get(
+  '/:id',
+  validate(z.object({ params: BrandIdParamSchema }) as any),
+  brandController.getBrandById,
+);
 
 // Protected routes (Admin / Editor)
 router.use(authenticate, authorize('admin', 'editor'));
 
 router.post('/', validate(CreateBrandSchema as any), brandController.createBrand);
 router.patch('/:id', validate(UpdateBrandSchema as any), brandController.updateBrand);
-router.delete('/:id', validate(z.object({ params: BrandIdParamSchema }) as any), brandController.deleteBrand);
+router.delete(
+  '/:id',
+  validate(z.object({ params: BrandIdParamSchema }) as any),
+  brandController.deleteBrand,
+);
 
 export default router;

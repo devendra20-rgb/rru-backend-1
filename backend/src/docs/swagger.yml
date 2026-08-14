@@ -15,6 +15,131 @@ components:
       bearerFormat: JWT
 
   schemas:
+    Feature:
+      type: object
+      properties:
+        _id:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        category:
+          type: string
+          enum: [safety, exterior, interior, comfort, infotainment, convenience, performance, other]
+        description:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    VariantFeature:
+      type: object
+      properties:
+        _id:
+          type: string
+        variantId:
+          type: string
+        featureId:
+          type: string
+        availability:
+          type: string
+          enum: [standard, optional, unavailable]
+        value:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Specification:
+      type: object
+      properties:
+        _id:
+          type: string
+        variantId:
+          type: string
+        performance:
+          type: object
+          properties:
+            topSpeedKph:
+              type: number
+            acceleration0To100Kph:
+              type: number
+        dimensions:
+          type: object
+          properties:
+            lengthMm:
+              type: number
+            widthMm:
+              type: number
+            heightMm:
+              type: number
+            wheelbaseMm:
+              type: number
+            groundClearanceMm:
+              type: number
+        capacity:
+          type: object
+          properties:
+            bootSpaceLitres:
+              type: number
+            fuelTankLitres:
+              type: number
+        weight:
+          type: object
+          properties:
+            kerbWeightKg:
+              type: number
+            grossWeightKg:
+              type: number
+        fuel:
+          type: object
+          properties:
+            fuelEconomyCity:
+              type: number
+            fuelEconomyHighway:
+              type: number
+            fuelEconomyCombined:
+              type: number
+            economyUnit:
+              type: string
+        safety:
+          type: object
+          properties:
+            airbags:
+              type: number
+            abs:
+              type: boolean
+            tractionControl:
+              type: boolean
+            stabilityControl:
+              type: boolean
+            parkingSensors:
+              type: string
+            camera:
+              type: string
+        status:
+          type: string
+          enum: [active, inactive]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
     ErrorResponse:
       type: object
       properties:
@@ -92,8 +217,321 @@ components:
         status:
           type: string
           enum: [active, inactive, draft]
+    Variant:
+      type: object
+      properties:
+        _id:
+          type: string
+        generationId:
+          type: string
+        variantCode:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        modelYear:
+          type: integer
+        fuelType:
+          type: string
+        transmissionType:
+          type: string
+        drivetrain:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive, draft]
+    Market:
+      type: object
+      properties:
+        _id:
+          type: string
+        code:
+          type: string
+        name:
+          type: string
+        countryCode:
+          type: string
+        currencyCode:
+          type: string
+        currencySymbol:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive, draft]
 
 paths:
+  /api/v1/features:
+    get:
+      tags:
+        - Features
+      summary: Get all features
+      parameters:
+        - in: query
+          name: category
+          schema:
+            type: string
+        - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [active, inactive]
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: List of features
+    post:
+      tags:
+        - Features
+      summary: Create a feature
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                category:
+                  type: string
+                  enum: [safety, exterior, interior, comfort, infotainment, convenience, performance, other]
+                description:
+                  type: string
+                status:
+                  type: string
+                  enum: [active, inactive]
+      responses:
+        '201':
+          description: Feature created
+
+  /api/v1/features/{id}:
+    get:
+      tags:
+        - Features
+      summary: Get feature by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Feature details
+    patch:
+      tags:
+        - Features
+      summary: Update feature
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                category:
+                  type: string
+                description:
+                  type: string
+                status:
+                  type: string
+                  enum: [active, inactive]
+      responses:
+        '200':
+          description: Feature updated
+    delete:
+      tags:
+        - Features
+      summary: Delete (deactivate) feature
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Feature deleted
+
+  /api/v1/features/slug/{slug}:
+    get:
+      tags:
+        - Features
+      summary: Get feature by slug
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Feature details
+
+  /api/v1/variant-features:
+    get:
+      tags:
+        - Variant Features
+      summary: Get all variant features
+      parameters:
+        - in: query
+          name: variantId
+          schema:
+            type: string
+        - in: query
+          name: featureId
+          schema:
+            type: string
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [active, inactive]
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: List of variant features
+    post:
+      tags:
+        - Variant Features
+      summary: Map a feature to a variant
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                variantId:
+                  type: string
+                featureId:
+                  type: string
+                availability:
+                  type: string
+                  enum: [standard, optional, unavailable]
+                value:
+                  type: string
+                status:
+                  type: string
+                  enum: [active, inactive]
+      responses:
+        '201':
+          description: Variant feature mapped
+
+  /api/v1/variant-features/{id}:
+    get:
+      tags:
+        - Variant Features
+      summary: Get variant feature mapping by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Variant feature mapping details
+    patch:
+      tags:
+        - Variant Features
+      summary: Update variant feature mapping
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                availability:
+                  type: string
+                  enum: [standard, optional, unavailable]
+                value:
+                  type: string
+                status:
+                  type: string
+                  enum: [active, inactive]
+      responses:
+        '200':
+          description: Variant feature mapping updated
+    delete:
+      tags:
+        - Variant Features
+      summary: Delete (deactivate) variant feature mapping
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Variant feature mapping deleted
+
+  /api/v1/variants/{variantId}/features:
+    get:
+      tags:
+        - Variant Features
+      summary: Get all features mapped to a specific variant
+      parameters:
+        - in: path
+          name: variantId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of features mapped to variant
+
   /health:
     get:
       summary: Health Check
@@ -387,3 +825,536 @@ paths:
       responses:
         '200':
           description: OK
+
+  /generations/{generationId}/variants:
+    get:
+      summary: List variants for a generation
+      tags: [Variants]
+      parameters:
+        - in: path
+          name: generationId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+
+  /variants:
+    get:
+      summary: List variants
+      tags: [Variants]
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+    post:
+      summary: Create a variant
+      tags: [Variants]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Variant'
+      responses:
+        '201':
+          description: Created
+  /variants/{id}:
+    get:
+      summary: Get variant by ID
+      tags: [Variants]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+    patch:
+      summary: Update a variant
+      tags: [Variants]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Variant'
+      responses:
+        '200':
+          description: OK
+    delete:
+      summary: Delete a variant
+      tags: [Variants]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+
+  /markets:
+    get:
+      summary: List markets
+      tags: [Markets]
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          schema:
+            type: integer
+        - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: status
+          schema:
+            type: string
+        - in: query
+          name: countryCode
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+    post:
+      summary: Create a market
+      tags: [Markets]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Market'
+      responses:
+        '201':
+          description: Created
+  /markets/{id}:
+    get:
+      summary: Get market by ID
+      tags: [Markets]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+    patch:
+      summary: Update a market
+      tags: [Markets]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Market'
+      responses:
+        '200':
+          description: OK
+    delete:
+      summary: Delete a market
+      tags: [Markets]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+  /markets/code/{code}:
+    get:
+      summary: Get market by code
+      tags: [Markets]
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+
+  /variant-markets:
+    get:
+      tags:
+        - Variant Markets
+      summary: List variant markets
+      parameters:
+        - in: query
+          name: variantId
+          schema:
+            type: string
+        - in: query
+          name: marketId
+          schema:
+            type: string
+        - in: query
+          name: availabilityStatus
+          schema:
+            type: string
+        - in: query
+          name: status
+          schema:
+            type: string
+        - in: query
+          name: priceType
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: List of variant markets
+    post:
+      tags:
+        - Variant Markets
+      summary: Create a variant market relationship
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateVariantMarketInput'
+      responses:
+        "201":
+          description: Variant Market created
+  /variant-markets/{id}:
+    get:
+      tags:
+        - Variant Markets
+      summary: Get variant market by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Variant Market details
+    patch:
+      tags:
+        - Variant Markets
+      summary: Update variant market
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                availabilityStatus:
+                  type: string
+                status:
+                  type: string
+                pricing:
+                  type: object
+      responses:
+        "200":
+          description: Variant Market updated
+    delete:
+      tags:
+        - Variant Markets
+      summary: Soft delete variant market
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Variant Market deleted
+
+  /variant-markets:
+    get:
+      tags:
+        - Variant Markets
+      summary: List variant markets
+      parameters:
+        - in: query
+          name: variantId
+          schema:
+            type: string
+        - in: query
+          name: marketId
+          schema:
+            type: string
+        - in: query
+          name: availabilityStatus
+          schema:
+            type: string
+        - in: query
+          name: status
+          schema:
+            type: string
+        - in: query
+          name: priceType
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: List of variant markets
+    post:
+      tags:
+        - Variant Markets
+      summary: Create a variant market relationship
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateVariantMarketInput'
+      responses:
+        "201":
+          description: Variant Market created
+  /variant-markets/{id}:
+    get:
+      tags:
+        - Variant Markets
+      summary: Get variant market by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Variant Market details
+    patch:
+      tags:
+        - Variant Markets
+      summary: Update variant market
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                availabilityStatus:
+                  type: string
+                status:
+                  type: string
+                pricing:
+                  type: object
+      responses:
+        "200":
+          description: Variant Market updated
+    delete:
+      tags:
+        - Variant Markets
+      summary: Soft delete variant market
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Variant Market deleted
+
+  /api/v1/specifications:
+    get:
+      tags:
+        - Specifications
+      summary: Get all specifications
+      parameters:
+        - in: query
+          name: variantId
+          schema:
+            type: string
+        - in: query
+          name: status
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Success
+    post:
+      tags:
+        - Specifications
+      summary: Create specification
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Specification'
+      responses:
+        "201":
+          description: Created
+        "409":
+          description: Conflict
+  /api/v1/specifications/{id}:
+    get:
+      tags:
+        - Specifications
+      summary: Get specification by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+    patch:
+      tags:
+        - Specifications
+      summary: Update specification
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Specification'
+      responses:
+        "200":
+          description: Updated
+    delete:
+      tags:
+        - Specifications
+      summary: Soft delete specification
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+  /api/v1/specifications/variant/{variantId}:
+    get:
+      tags:
+        - Specifications
+      summary: Get specification by variant ID
+      parameters:
+        - in: path
+          name: variantId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success

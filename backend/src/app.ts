@@ -15,6 +15,13 @@ import healthRoutes from './modules/health/health.routes';
 import brandRoutes from './modules/catalog/brands/brand.routes';
 import modelRoutes from './modules/catalog/models/model.routes';
 import generationRoutes from './modules/catalog/generations/generation.routes';
+import variantRoutes from './modules/catalog/variants/variant.routes';
+import marketRoutes from './modules/catalog/markets/market.routes';
+import variantMarketRoutes from './modules/catalog/variant-markets/variant-market.routes';
+import { specificationRoutes } from './modules/catalog/specifications/specification.routes';
+import { featureRouter, variantFeatureRouter } from './modules/catalog/features/feature.routes';
+import { colorRouter, variantColorRouter } from './modules/catalog/colors/color.routes';
+import mediaRoutes from './modules/media/media.routes';
 
 const app = express();
 
@@ -40,6 +47,9 @@ app.use('/api', limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Static Files (Media Uploads)
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 // Logging
 app.use(
   pinoHttp({
@@ -63,6 +73,15 @@ v1Router.use('/brands', brandRoutes);
 v1Router.use('/models/:modelId/generations', generationRoutes);
 v1Router.use('/models', modelRoutes);
 v1Router.use('/generations', generationRoutes);
+v1Router.use('/variants', variantRoutes);
+v1Router.use('/markets', marketRoutes);
+v1Router.use('/variant-markets', variantMarketRoutes);
+v1Router.use('/specifications', specificationRoutes);
+v1Router.use('/features', featureRouter);
+v1Router.use('/variant-features', variantFeatureRouter);
+v1Router.use('/colors', colorRouter);
+v1Router.use('/variant-colors', variantColorRouter);
+v1Router.use('/media', mediaRoutes);
 
 // Register API Routes
 app.use('/api/v1', v1Router);

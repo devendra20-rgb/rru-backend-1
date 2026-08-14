@@ -8,7 +8,11 @@ import { Generation } from '../src/modules/catalog/generations/generation.model'
 import { env } from '../src/config/env';
 import jwt from 'jsonwebtoken';
 
-const adminToken = jwt.sign({ userId: 'admin1', role: 'admin' }, env.JWT_ACCESS_SECRET || 'test_secret', { expiresIn: '1h' });
+const adminToken = jwt.sign(
+  { userId: 'admin1', role: 'admin' },
+  env.JWT_ACCESS_SECRET || 'test_secret',
+  { expiresIn: '1h' },
+);
 
 describe('Generations API', () => {
   let modelId: string;
@@ -25,7 +29,7 @@ describe('Generations API', () => {
       name: 'Test Gen Brand',
       slug: 'test-gen-brand',
     });
-    
+
     const model = await VehicleModel.create({
       brandId: brand._id,
       modelCode: 'TMG',
@@ -59,7 +63,7 @@ describe('Generations API', () => {
     expect(res.body.data.generationCode).toBe('G1'); // Normalized
     expect(res.body.data.name).toBe('Gen One');
     expect(res.body.data.slug).toBe('gen-one');
-    
+
     generationId = res.body.data._id;
   });
 
@@ -76,7 +80,9 @@ describe('Generations API', () => {
       });
 
     expect(res.status).toBe(400); // Zod validation fails
-    expect(res.body.errors[0].message).toContain('endYear must be greater than or equal to startYear');
+    expect(res.body.errors[0].message).toContain(
+      'endYear must be greater than or equal to startYear',
+    );
   });
 
   it('should list generations by modelId', async () => {
@@ -90,9 +96,9 @@ describe('Generations API', () => {
     const res = await request(app)
       .delete(`/api/v1/generations/${generationId}`)
       .set('Authorization', `Bearer ${adminToken}`);
-    
+
     expect(res.status).toBe(200);
-    
+
     const check = await request(app).get(`/api/v1/generations/${generationId}`);
     expect(check.body.data.status).toBe('inactive');
   });

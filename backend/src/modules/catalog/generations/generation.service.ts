@@ -8,6 +8,7 @@ import {
   getPaginationMeta,
   PaginationQuery,
 } from '../../../utils/pagination';
+import { variantRepository } from '../variants/variant.repository';
 
 export const generationService = {
   async createGeneration(data: Partial<IGeneration>) {
@@ -128,7 +129,12 @@ export const generationService = {
     const generation = await generationRepository.findById(id);
     if (!generation) throw new AppError('Generation not found', 404);
 
-    // Dependency check for Variants will go here once Variants are added.
+    // Dependency check for Variants
+    const hasVariants = await variantRepository.count({ generationId: id });
+    if (hasVariants > 0) {
+      throw new AppError('Cannot delete generation because it has associated variants', 409);
+    }
+
     return generationRepository.updateStatus(id, 'inactive');
   },
 };

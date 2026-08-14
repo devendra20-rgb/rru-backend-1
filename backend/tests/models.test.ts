@@ -7,7 +7,11 @@ import { VehicleModel } from '../src/modules/catalog/models/model.model';
 import { env } from '../src/config/env';
 import jwt from 'jsonwebtoken';
 
-const adminToken = jwt.sign({ userId: 'admin1', role: 'admin' }, env.JWT_ACCESS_SECRET || 'test_secret', { expiresIn: '1h' });
+const adminToken = jwt.sign(
+  { userId: 'admin1', role: 'admin' },
+  env.JWT_ACCESS_SECRET || 'test_secret',
+  { expiresIn: '1h' },
+);
 
 describe('Models API', () => {
   let brandId: string;
@@ -48,7 +52,7 @@ describe('Models API', () => {
     expect(res.body.data.modelCode).toBe('M1'); // Normalized
     expect(res.body.data.name).toBe('Model One'); // Trimmed
     expect(res.body.data.slug).toBe('model-one');
-    
+
     modelId = res.body.data._id;
   });
 
@@ -90,9 +94,9 @@ describe('Models API', () => {
     const res = await request(app)
       .delete(`/api/v1/models/${modelId}`)
       .set('Authorization', `Bearer ${adminToken}`);
-    
+
     expect(res.status).toBe(200);
-    
+
     const check = await request(app).get(`/api/v1/models/${modelId}`);
     expect(check.body.data.status).toBe('inactive');
   });

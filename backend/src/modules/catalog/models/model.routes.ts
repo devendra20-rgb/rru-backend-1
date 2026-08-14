@@ -20,14 +20,26 @@ router.get('/', validate(z.object({ query: ModelListQuerySchema }) as any), (req
   }
   return modelController.getModels(req, res, next);
 });
-router.get('/slug/:slug', validate(z.object({ params: ModelSlugParamSchema }) as any), modelController.getModelBySlug);
-router.get('/:id', validate(z.object({ params: ModelIdParamSchema }) as any), modelController.getModelById);
+router.get(
+  '/slug/:slug',
+  validate(z.object({ params: ModelSlugParamSchema }) as any),
+  modelController.getModelBySlug,
+);
+router.get(
+  '/:id',
+  validate(z.object({ params: ModelIdParamSchema }) as any),
+  modelController.getModelById,
+);
 
 // Protected routes (Admin / Editor)
 router.use(authenticate, authorize('admin', 'editor'));
 
 router.post('/', validate(CreateModelSchema as any), modelController.createModel);
 router.patch('/:id', validate(UpdateModelSchema as any), modelController.updateModel);
-router.delete('/:id', validate(z.object({ params: ModelIdParamSchema }) as any), modelController.deleteModel);
+router.delete(
+  '/:id',
+  validate(z.object({ params: ModelIdParamSchema }) as any),
+  modelController.deleteModel,
+);
 
 export default router;

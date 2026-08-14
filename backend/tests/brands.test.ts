@@ -6,8 +6,16 @@ import { Brand } from '../src/modules/catalog/brands/brand.model';
 import { env } from '../src/config/env';
 import jwt from 'jsonwebtoken';
 
-const adminToken = jwt.sign({ userId: 'admin1', role: 'admin' }, env.JWT_ACCESS_SECRET || 'test_secret', { expiresIn: '1h' });
-const userToken = jwt.sign({ userId: 'user1', role: 'user' }, env.JWT_ACCESS_SECRET || 'test_secret', { expiresIn: '1h' });
+const adminToken = jwt.sign(
+  { userId: 'admin1', role: 'admin' },
+  env.JWT_ACCESS_SECRET || 'test_secret',
+  { expiresIn: '1h' },
+);
+const userToken = jwt.sign(
+  { userId: 'user1', role: 'user' },
+  env.JWT_ACCESS_SECRET || 'test_secret',
+  { expiresIn: '1h' },
+);
 
 describe('Brands API', () => {
   beforeAll(async () => {
@@ -37,7 +45,7 @@ describe('Brands API', () => {
     expect(res.body.data.name).toBe('Toyota'); // Trimmed
     expect(res.body.data.slug).toBe('toyota');
     expect(res.body.data.status).toBe('active');
-    
+
     brandId = res.body.data._id;
   });
 
@@ -86,9 +94,9 @@ describe('Brands API', () => {
     const res = await request(app)
       .delete(`/api/v1/brands/${brandId}`)
       .set('Authorization', `Bearer ${adminToken}`);
-    
+
     expect(res.status).toBe(200);
-    
+
     const check = await request(app).get(`/api/v1/brands/${brandId}`);
     expect(check.body.data.status).toBe('inactive');
   });
