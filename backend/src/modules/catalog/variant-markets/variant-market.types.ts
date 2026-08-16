@@ -12,6 +12,7 @@ export interface IVariantMarket extends Document {
   marketId: Types.ObjectId;
   availabilityStatus: 'available' | 'unavailable' | 'upcoming' | 'discontinued';
   status: 'active' | 'inactive';
+  isFeatured: boolean;
   launchDate?: Date;
   discontinuedDate?: Date;
   pricing?: IPricing;
@@ -24,6 +25,7 @@ export interface IVariantMarketCreate {
   marketId: string | Types.ObjectId;
   availabilityStatus?: 'available' | 'unavailable' | 'upcoming' | 'discontinued';
   status?: 'active' | 'inactive';
+  isFeatured?: boolean;
   launchDate?: Date | string;
   discontinuedDate?: Date | string;
   pricing?: IPricing;
@@ -37,6 +39,7 @@ export interface IVariantMarketQuery {
   availabilityStatus?: string;
   status?: string;
   priceType?: string;
+  isFeatured?: string | boolean;
   page?: number;
   limit?: number;
   sortBy?: string;

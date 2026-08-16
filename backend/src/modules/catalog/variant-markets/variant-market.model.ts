@@ -47,6 +47,10 @@ const variantMarketSchema = new Schema<IVariantMarket>(
       enum: ['active', 'inactive'],
       default: 'active',
     },
+    isFeatured: {
+      type: Boolean,
+      default: false,
+    },
     launchDate: {
       type: Date,
     },
@@ -68,6 +72,7 @@ variantMarketSchema.index({ variantId: 1 });
 variantMarketSchema.index({ marketId: 1 });
 variantMarketSchema.index({ availabilityStatus: 1 });
 variantMarketSchema.index({ status: 1 });
+variantMarketSchema.index({ isFeatured: 1, marketId: 1 });
 variantMarketSchema.index({ 'pricing.priceType': 1 });
 
 export const VariantMarket = model<IVariantMarket>('VariantMarket', variantMarketSchema);

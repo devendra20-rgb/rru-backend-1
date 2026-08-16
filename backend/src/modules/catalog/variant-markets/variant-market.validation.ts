@@ -22,6 +22,7 @@ export const CreateVariantMarketSchema = z
       .optional()
       .default('upcoming'),
     status: z.enum(['active', 'inactive']).optional().default('active'),
+    isFeatured: z.boolean().optional().default(false),
     launchDate: z.string().datetime().optional(),
     discontinuedDate: z.string().datetime().optional(),
     pricing: PricingSchema.optional(),
@@ -43,6 +44,7 @@ export const UpdateVariantMarketSchema = z
   .object({
     availabilityStatus: z.enum(['available', 'unavailable', 'upcoming', 'discontinued']).optional(),
     status: z.enum(['active', 'inactive']).optional(),
+    isFeatured: z.boolean().optional(),
     launchDate: z.string().datetime().optional(),
     discontinuedDate: z.string().datetime().optional(),
     pricing: PricingSchema.optional(),
@@ -69,5 +71,9 @@ export const VariantMarketListQuerySchema = PaginationQuerySchema.extend({
   marketId: z.string().regex(objectIdRegex, 'Invalid Market ID format').optional(),
   availabilityStatus: z.enum(['available', 'unavailable', 'upcoming', 'discontinued']).optional(),
   status: z.enum(['active', 'inactive']).optional(),
+  isFeatured: z
+    .enum(['true', 'false'])
+    .transform((v) => v === 'true')
+    .optional(),
   priceType: z.enum(['starting', 'ex_showroom', 'on_road', 'msrp', 'other']).optional(),
 });

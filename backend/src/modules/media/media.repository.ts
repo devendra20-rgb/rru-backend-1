@@ -23,7 +23,10 @@ export class MediaRepository {
     }
 
     const [data, total] = await Promise.all([
-      Media.find(filters as any).sort(sort).skip(skip).limit(Number(limit)),
+      Media.find(filters as any)
+        .sort(sort)
+        .skip(skip)
+        .limit(Number(limit)),
       Media.countDocuments(filters as any),
     ]);
 
@@ -39,10 +42,9 @@ export class MediaRepository {
   }
 
   async unsetPrimary(entityType: string, entityId: string): Promise<void> {
-    await Media.updateMany(
-      { entityType, entityId, isPrimary: true } as any,
-      { $set: { isPrimary: false } },
-    );
+    await Media.updateMany({ entityType, entityId, isPrimary: true } as any, {
+      $set: { isPrimary: false },
+    });
   }
 
   async findPrimary(entityType: string, entityId: string): Promise<IMedia | null> {

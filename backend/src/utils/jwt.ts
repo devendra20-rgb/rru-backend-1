@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { env } from '../config/env';
 
 export interface TokenPayload {
@@ -13,9 +14,13 @@ export const generateAccessToken = (payload: TokenPayload): string => {
 };
 
 export const generateRefreshToken = (payload: TokenPayload): string => {
-  return jwt.sign(payload, env.JWT_REFRESH_SECRET, {
-    expiresIn: env.JWT_REFRESH_EXPIRES_IN as any,
-  });
+  return jwt.sign(
+    { ...payload, jti: crypto.randomBytes(16).toString('hex') },
+    env.JWT_REFRESH_SECRET,
+    {
+      expiresIn: env.JWT_REFRESH_EXPIRES_IN as any,
+    },
+  );
 };
 
 export const verifyAccessToken = (token: string): TokenPayload => {

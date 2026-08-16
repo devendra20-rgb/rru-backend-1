@@ -22,6 +22,11 @@ import { specificationRoutes } from './modules/catalog/specifications/specificat
 import { featureRouter, variantFeatureRouter } from './modules/catalog/features/feature.routes';
 import { colorRouter, variantColorRouter } from './modules/catalog/colors/color.routes';
 import mediaRoutes from './modules/media/media.routes';
+import userRoutes from './modules/users/user.routes';
+import authRoutes from './modules/auth/auth.routes';
+import carsRoutes from './modules/catalog/cars/cars.routes';
+import costToOwnRoutes from './modules/catalog/cost-to-own/cost-to-own.routes';
+import reviewRoutes from './modules/reviews/review.routes';
 
 const app = express();
 
@@ -73,6 +78,7 @@ v1Router.use('/brands', brandRoutes);
 v1Router.use('/models/:modelId/generations', generationRoutes);
 v1Router.use('/models', modelRoutes);
 v1Router.use('/generations', generationRoutes);
+v1Router.use('/', reviewRoutes); // Mount before variants to avoid variant routes intercepting /variants/:variantId/reviews
 v1Router.use('/variants', variantRoutes);
 v1Router.use('/markets', marketRoutes);
 v1Router.use('/variant-markets', variantMarketRoutes);
@@ -82,6 +88,10 @@ v1Router.use('/variant-features', variantFeatureRouter);
 v1Router.use('/colors', colorRouter);
 v1Router.use('/variant-colors', variantColorRouter);
 v1Router.use('/media', mediaRoutes);
+v1Router.use('/users', userRoutes);
+v1Router.use('/auth', authRoutes);
+v1Router.use('/cars', carsRoutes);
+v1Router.use('/cost-to-own', costToOwnRoutes);
 
 // Register API Routes
 app.use('/api/v1', v1Router);
