@@ -1,0 +1,364 @@
+/* ============================================
+   REVIEWS & NEWS PAGES (Shared styles)
+   ============================================ */
+.page {
+  padding: var(--space-3xl) var(--content-padding) var(--space-4xl);
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-sm);
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.breadcrumb a {
+  color: var(--petrol);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.pageTitle {
+  font-size: var(--font-size-3xl);
+  letter-spacing: -0.8px;
+  margin: 0 0 4px;
+}
+
+.pageSubtitle {
+  color: var(--muted);
+  font-size: var(--font-size-base);
+  margin-bottom: 28px;
+}
+
+/* --- Review Stats Bar --- */
+.statsBar {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 30px;
+  background: var(--mist);
+  border-radius: var(--radius-xl);
+  padding: 28px;
+  margin-bottom: 30px;
+  align-items: center;
+}
+
+.statsBig {
+  text-align: center;
+}
+
+.statsBigNumber {
+  font-size: 54px;
+  font-weight: 900;
+  color: var(--deep);
+  line-height: 1;
+}
+
+.statsBigStars {
+  color: var(--amber);
+  font-size: var(--font-size-lg);
+  letter-spacing: 2px;
+  margin-top: 4px;
+}
+
+.statsBigCount {
+  font-size: var(--font-size-sm);
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.statsDistribution {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.statsRow {
+  display: grid;
+  grid-template-columns: 60px 1fr 40px;
+  gap: 10px;
+  align-items: center;
+  font-size: var(--font-size-sm);
+}
+
+.statsRowLabel {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.statsRowBar {
+  height: 8px;
+  background: var(--mist-dark);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.statsRowBarFill {
+  height: 100%;
+  background: var(--amber);
+  border-radius: var(--radius-full);
+}
+
+.statsRowCount {
+  text-align: right;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* --- Review Grid --- */
+.reviewGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+
+.reviewCard {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  background: var(--white);
+  transition: all var(--transition-base);
+}
+
+.reviewCard:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.reviewStars {
+  color: var(--amber);
+  letter-spacing: 2px;
+  font-size: var(--font-size-md);
+}
+
+.reviewTitle {
+  font-size: var(--font-size-lg);
+  font-weight: 800;
+  margin: 8px 0 6px;
+  color: var(--deep);
+}
+
+.reviewContent {
+  font-size: var(--font-size-base);
+  color: var(--text);
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+
+.reviewMeta {
+  font-size: var(--font-size-sm);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.reviewVerified {
+  color: var(--green);
+  font-weight: 700;
+}
+
+.reviewVehicle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: var(--mist);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--petrol);
+  margin-top: 10px;
+}
+
+/* --- Ratings Grid --- */
+.ratingsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.ratingItem {
+  padding: 10px;
+  background: var(--mist);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.ratingItemValue {
+  font-size: var(--font-size-md);
+  font-weight: 900;
+  color: var(--amber);
+}
+
+.ratingItemLabel {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+/* --- News Grid --- */
+.newsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.articleCard {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--white);
+  transition: all var(--transition-base);
+  text-decoration: none;
+  color: inherit;
+}
+
+.articleCard:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-3px);
+}
+
+.articleCardImg {
+  height: 180px;
+  background: linear-gradient(135deg, #dfe6e8, #c8d4d8);
+  display: grid;
+  place-items: center;
+  color: #8ea5ab;
+}
+
+.articleCardInfo {
+  padding: 18px;
+}
+
+.articleCardCategory {
+  font-size: 10px;
+  letter-spacing: 1.2px;
+  color: var(--green);
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.articleCardTitle {
+  font-size: var(--font-size-lg);
+  margin: 8px 0;
+  font-weight: 800;
+  color: var(--deep);
+  line-height: 1.3;
+}
+
+.articleCardExcerpt {
+  font-size: var(--font-size-sm);
+  color: var(--muted);
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.articleCardMeta {
+  font-size: 11px;
+  color: var(--muted);
+  display: flex;
+  justify-content: space-between;
+}
+
+/* --- Filter Chips --- */
+.filterRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+
+.filterBtn {
+  padding: 7px 16px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--line);
+  background: var(--white);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--text);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.filterBtn:hover {
+  border-color: var(--petrol);
+}
+
+.filterBtnActive {
+  background: var(--petrol);
+  color: var(--white);
+  border-color: var(--petrol);
+}
+
+/* --- Article Detail --- */
+.articlePage {
+  padding: var(--space-3xl) var(--content-padding) var(--space-4xl);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.articleHeader {
+  margin-bottom: 30px;
+}
+
+.articleCategoryBig {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: var(--green);
+  font-weight: 900;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.articleTitleBig {
+  font-size: var(--font-size-4xl);
+  letter-spacing: -1px;
+  margin: 0 0 12px;
+}
+
+.articleMetaBig {
+  font-size: var(--font-size-sm);
+  color: var(--muted);
+  display: flex;
+  gap: 14px;
+}
+
+.articleHeroImg {
+  height: 400px;
+  background: linear-gradient(135deg, #dfe6e8, #c8d4d8);
+  border-radius: var(--radius-xl);
+  display: grid;
+  place-items: center;
+  color: #8ea5ab;
+  margin-bottom: 30px;
+}
+
+.articleBody {
+  font-size: var(--font-size-md);
+  line-height: 1.8;
+  color: var(--text);
+}
+
+.articleBody p {
+  margin-bottom: 18px;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .newsGrid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+  .reviewGrid { grid-template-columns: 1fr; }
+  .newsGrid { grid-template-columns: 1fr; }
+  .statsBar {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .ratingsGrid { grid-template-columns: repeat(2, 1fr); }
+  .articleHeroImg { height: 240px; }
+}

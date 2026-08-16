@@ -1,0 +1,360 @@
+/* ============================================
+   UI COMPONENTS — Shared Styles
+   ============================================ */
+
+/* ---------- VehicleCard ---------- */
+.vehicleCard {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--white);
+  transition: all var(--transition-base);
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+}
+
+.vehicleCard:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-3px);
+}
+
+.vehicleCardImg {
+  height: 190px;
+  background: linear-gradient(135deg, #dfe6e8, #c8d4d8);
+  display: grid;
+  place-items: center;
+  color: #8ea5ab;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  position: relative;
+  overflow: hidden;
+}
+
+.vehicleCardBadges {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.vehicleCardInfo {
+  padding: 17px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.vehicleCardBrand {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+.vehicleCardName {
+  margin: 0 0 4px;
+  font-size: var(--font-size-lg);
+  font-weight: 800;
+  color: var(--deep);
+  line-height: 1.2;
+}
+
+.vehicleCardVariant {
+  font-size: var(--font-size-sm);
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.vehicleCardMeta {
+  font-size: var(--font-size-sm);
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: auto;
+}
+
+.vehicleCardReceipt {
+  margin-top: 13px;
+  border-top: 1px dashed #a9b6ba;
+  border-bottom: 1px dashed #a9b6ba;
+  padding: 9px 0;
+  color: var(--deep);
+  font-size: 11px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.vehicleCardReceipt + .vehicleCardReceipt {
+  border-top: none;
+  margin-top: 0;
+}
+
+.vehicleCardReceiptValue {
+  color: var(--amber);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.vehicleCardChips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.vehicleCardChip {
+  padding: 5px 8px;
+  border-radius: 15px;
+  background: #edf3f4;
+  color: var(--petrol);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+}
+
+/* ---------- Badge ---------- */
+.badge {
+  padding: 4px 9px;
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.badgeSuccess {
+  background: rgba(18, 128, 92, 0.12);
+  color: var(--green);
+}
+
+.badgeWarning {
+  background: rgba(232, 148, 43, 0.12);
+  color: var(--amber-dark);
+}
+
+.badgeInfo {
+  background: rgba(13, 59, 73, 0.1);
+  color: var(--petrol);
+}
+
+.badgeAmber {
+  background: rgba(232, 148, 43, 0.15);
+  color: var(--amber-dark);
+}
+
+.badgeDanger {
+  background: rgba(196, 69, 29, 0.12);
+  color: var(--rust);
+}
+
+/* ---------- Skeleton ---------- */
+.skeleton {
+  background: linear-gradient(90deg, var(--mist) 25%, var(--mist-dark) 50%, var(--mist) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-md);
+}
+
+.skeletonText {
+  height: 14px;
+  margin-bottom: 8px;
+}
+
+.skeletonTitle {
+  height: 22px;
+  width: 75%;
+  margin-bottom: 10px;
+}
+
+.skeletonImage {
+  height: 190px;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.skeletonCard {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+/* ---------- StarRating ---------- */
+.starRating {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.starFilled {
+  color: var(--amber);
+}
+
+.starEmpty {
+  color: var(--line);
+}
+
+/* ---------- PriceDisplay ---------- */
+.priceDisplay {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.priceCurrency {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.priceAmount {
+  font-size: var(--font-size-xl);
+  font-weight: 900;
+  color: var(--deep);
+}
+
+.priceAmountCompact {
+  font-size: var(--font-size-lg);
+  font-weight: 800;
+}
+
+.priceUnit {
+  font-size: var(--font-size-sm);
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* ---------- Input ---------- */
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.inputLabel {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--deep);
+}
+
+.input {
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  color: var(--text);
+  background: var(--white);
+  transition: border-color var(--transition-fast);
+  outline: none;
+}
+
+.input:focus {
+  border-color: var(--petrol);
+  box-shadow: 0 0 0 3px rgba(13, 59, 73, 0.08);
+}
+
+.input::placeholder {
+  color: var(--muted);
+}
+
+/* ---------- Select ---------- */
+.select {
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  color: var(--text);
+  background: var(--white);
+  transition: border-color var(--transition-fast);
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2366777D' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 34px;
+}
+
+.select:focus {
+  border-color: var(--petrol);
+  box-shadow: 0 0 0 3px rgba(13, 59, 73, 0.08);
+}
+
+/* ---------- RangeSlider ---------- */
+.rangeContainer {
+  padding: 4px 0;
+}
+
+.rangeLabels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 600;
+  margin-top: 6px;
+}
+
+.rangeInput {
+  width: 100%;
+  accent-color: var(--petrol);
+  cursor: pointer;
+}
+
+/* ---------- Chip Toggle ---------- */
+.chipToggle {
+  padding: 7px 14px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--line);
+  background: var(--white);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.chipToggle:hover {
+  border-color: var(--petrol);
+}
+
+.chipToggleActive {
+  background: var(--petrol);
+  color: var(--white);
+  border-color: var(--petrol);
+}
+
+/* ---------- Empty State ---------- */
+.emptyState {
+  text-align: center;
+  padding: 60px 24px;
+  color: var(--muted);
+}
+
+.emptyStateIcon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--mist);
+  display: grid;
+  place-items: center;
+  margin: 0 auto 16px;
+  color: var(--petrol);
+}
+
+.emptyStateTitle {
+  font-size: var(--font-size-lg);
+  font-weight: 800;
+  color: var(--deep);
+  margin-bottom: 6px;
+}
+
+.emptyStateDesc {
+  font-size: var(--font-size-base);
+  color: var(--muted);
+}

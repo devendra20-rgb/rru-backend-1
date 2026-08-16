@@ -1,0 +1,191 @@
+/* ============================================
+   BOOK A SERVICE FLOW
+   ============================================ */
+.page {
+  padding: var(--space-3xl) var(--content-padding) var(--space-4xl);
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-sm);
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.breadcrumb a {
+  color: var(--petrol);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.pageTitle {
+  font-size: var(--font-size-3xl);
+  letter-spacing: -0.8px;
+  margin: 0 0 4px;
+}
+
+.pageSubtitle {
+  color: var(--muted);
+  font-size: var(--font-size-base);
+  margin-bottom: 28px;
+}
+
+.serviceLayout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 30px;
+  align-items: start;
+}
+
+.bookingForm {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  padding: 28px;
+}
+
+.formSection {
+  margin-bottom: 24px;
+}
+
+.formSectionTitle {
+  font-size: var(--font-size-md);
+  font-weight: 800;
+  color: var(--deep);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.serviceTypeGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.serviceTypeCard {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.serviceTypeCard:hover {
+  border-color: var(--petrol);
+}
+
+.serviceTypeCardActive {
+  border-color: var(--petrol);
+  background: var(--mist);
+  box-shadow: 0 0 0 1px var(--petrol);
+}
+
+.serviceTypeIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--white);
+  display: grid;
+  place-items: center;
+  color: var(--petrol);
+  flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
+}
+
+.serviceTypeName {
+  font-size: var(--font-size-sm);
+  font-weight: 800;
+  color: var(--deep);
+}
+
+.serviceTypeEst {
+  font-size: 11px;
+  color: var(--amber-dark);
+  font-weight: 700;
+}
+
+.inputGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.inputField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.inputLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--deep);
+}
+
+.inputControl {
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  outline: none;
+  background: var(--white);
+}
+
+.inputControl:focus {
+  border-color: var(--petrol);
+}
+
+/* Summary Card */
+.summaryCard {
+  background: var(--mist);
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  position: sticky;
+  top: calc(var(--nav-height) + 16px);
+}
+
+.summaryTitle {
+  font-size: var(--font-size-md);
+  font-weight: 800;
+  color: var(--deep);
+  margin-bottom: 16px;
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  font-size: var(--font-size-sm);
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.summaryTotal {
+  display: flex;
+  justify-content: space-between;
+  padding: 14px 0 0;
+  font-size: var(--font-size-md);
+  font-weight: 900;
+  color: var(--deep);
+}
+
+.summarySubmit {
+  width: 100%;
+  margin-top: 18px;
+}
+
+@media (max-width: 1024px) {
+  .serviceLayout { grid-template-columns: 1fr; }
+  .summaryCard { position: static; }
+}
+
+@media (max-width: 600px) {
+  .serviceTypeGrid { grid-template-columns: 1fr; }
+  .inputGrid { grid-template-columns: 1fr; }
+}
