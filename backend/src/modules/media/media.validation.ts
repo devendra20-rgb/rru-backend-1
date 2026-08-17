@@ -4,10 +4,11 @@ import { PaginationQuerySchema } from '../../utils/pagination';
 
 export const createMediaSchema = z.object({
   body: z.object({
-    entityType: z.enum(['variant']),
+    folder: z.string().optional(),
+    entityType: z.enum(['variant', 'brand', 'model', 'generation']).optional(),
     entityId: z.string().refine((val) => Types.ObjectId.isValid(val), {
       message: 'Invalid entityId',
-    }),
+    }).optional(),
     mediaType: z.enum(['image', 'video']).optional().default('image'),
     altText: z.string().optional(),
     isPrimary: z

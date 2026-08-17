@@ -14,6 +14,21 @@ export class UserController {
     }
   };
 
+  bootstrapAdmin = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { User } = require('./user.model');
+      const count = await User.countDocuments();
+      if (count > 0) {
+        return sendSuccess(res, 403, 'Bootstrap forbidden: users already exist', null);
+      }
+      
+      const user = await this.userService.createUser({ ...req.body, role: 'admin' });
+      sendSuccess(res, 201, 'Bootstrap Admin created successfully', user);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   getUsers = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const page = parseInt(req.query.page as string) || 1;

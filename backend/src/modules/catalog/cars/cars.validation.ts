@@ -31,3 +31,18 @@ export const getCarDetailSchema = z.object({
     slug: z.string().min(1),
   }),
 });
+
+export const compareCarsSchema = z.object({
+  query: z.object({
+    variantIds: z
+      .string()
+      .min(1, 'variantIds query param is required')
+      .transform((val) => {
+        const ids = val.split(',').map((id) => id.trim()).filter(Boolean);
+        return Array.from(new Set(ids));
+      })
+      .refine((ids) => ids.length > 0, { message: 'At least one variant ID is required' })
+      .refine((ids) => ids.length <= 4, { message: 'Cannot compare more than 4 variants at once' })
+      .refine((ids) => ids.every((id) => Types.ObjectId.isValid(id)), { message: 'One or more invalid ObjectIds provided' }),
+  }),
+});

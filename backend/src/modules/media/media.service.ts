@@ -9,7 +9,7 @@ export class MediaService {
   private storage = StorageFactory.getProvider();
 
   async uploadMedia(file: Express.Multer.File, data: CreateMediaDTO) {
-    if (data.entityType === 'variant') {
+    if (data.entityType === 'variant' && data.entityId) {
       const variant = await variantRepository.findById(data.entityId);
       if (!variant) {
         throw new AppError('Variant not found', 404);
@@ -24,17 +24,22 @@ export class MediaService {
       size: file.size,
     };
 
-    // Prefix storage key with entityType
-    const prefix = `${data.entityType}-${data.entityId}`;
+    // Prefix storage key with folder or entityType
+    let prefix = 'general';
+    if (data.folder) {
+      prefix = data.folder;
+    } else if (data.entityType && data.entityId) {
+      prefix = `${data.entityType}-${data.entityId}`;
+    }
 
     // Upload via storage provider
     const storageKey = await this.storage.upload(fileData, prefix);
     const url = this.storage.getUrl(storageKey);
 
     // Handle isPrimary logic
-    if (data.isPrimary) {
+    if (data.isPrimary && data.entityType && data.entityId) {
       await mediaRepository.unsetPrimary(data.entityType, data.entityId);
-    } else {
+    } else if (data.entityType && data.entityId) {
       // If it's the first media, make it primary automatically
       const existing = await mediaRepository.findByEntity(data.entityType, data.entityId);
       if (existing.length === 0) {
@@ -44,6 +49,7 @@ export class MediaService {
 
     // Create DB record
     return mediaRepository.create({
+      folder: data.folder,
       entityType: data.entityType,
       entityId: data.entityId as any,
       mediaType: data.mediaType || 'image',
@@ -79,7 +85,7 @@ export class MediaService {
   async updateMedia(id: string, data: UpdateMediaDTO) {
     const media = await this.getMediaById(id);
 
-    if (data.isPrimary && !media.isPrimary) {
+    if (data.isPrimary && !media.isPrimary && media.entityType && media.entityId) {
       await mediaRepository.unsetPrimary(media.entityType, media.entityId.toString());
     }
 
@@ -94,7 +100,7 @@ export class MediaService {
     await mediaRepository.delete(id);
 
     // If it was primary, try to set another one as primary
-    if (media.isPrimary) {
+    if (media.isPrimary && media.entityType && media.entityId) {
       const others = await mediaRepository.findByEntity(
         media.entityType,
         media.entityId.toString(),

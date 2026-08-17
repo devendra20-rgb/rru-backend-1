@@ -3,14 +3,15 @@ import { IMedia } from './media.types';
 
 const mediaSchema = new Schema<IMedia>(
   {
+    folder: {
+      type: String,
+    },
     entityType: {
       type: String,
-      required: true,
-      enum: ['variant'],
+      enum: ['variant', 'brand', 'model', 'generation'],
     },
     entityId: {
       type: Schema.Types.ObjectId,
-      required: true,
       // Ref is dynamic but in our queries we'll manage it
     },
     mediaType: {

@@ -18,6 +18,9 @@ const userRepository = new UserRepository();
 const userService = new UserService(userRepository);
 const userController = new UserController(userService);
 
+// Bootstrap route for initial setup
+router.post('/bootstrap', validate(createUserSchema), userController.bootstrapAdmin);
+
 // Require authentication for all user routes
 router.use(authenticate);
 

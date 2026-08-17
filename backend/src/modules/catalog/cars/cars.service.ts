@@ -262,6 +262,37 @@ export class CarsService {
     const pipeline: any[] = [
       { $match: { slug, status: 'active' } },
       { $limit: 1 },
+      ...this.buildCarDetailPipeline(),
+    ];
+
+    const result = await Variant.aggregate(pipeline);
+
+    if (!result || result.length === 0) {
+      throw new AppError('Car not found or unavailable', 404);
+    }
+
+    return result[0];
+  }
+
+  async compareCars(variantIds: string[]): Promise<CarDetailResponse[]> {
+    const objectIds = variantIds.map((id) => new Types.ObjectId(id));
+    
+    const pipeline: any[] = [
+      { $match: { _id: { $in: objectIds }, status: 'active' } },
+      ...this.buildCarDetailPipeline(),
+    ];
+
+    const result = await Variant.aggregate(pipeline);
+
+    if (!result || result.length === 0) {
+      throw new AppError('No valid cars found for comparison', 404);
+    }
+
+    return result;
+  }
+
+  private buildCarDetailPipeline(): any[] {
+    return [
       // 1. Hierarchy lookups
       {
         $lookup: {
@@ -500,14 +531,6 @@ export class CarsService {
         },
       },
     ];
-
-    const result = await Variant.aggregate(pipeline);
-
-    if (!result || result.length === 0) {
-      throw new AppError('Car not found or unavailable', 404);
-    }
-
-    return result[0];
   }
 
   // Helper to pre-resolve generationIds for optimal querying

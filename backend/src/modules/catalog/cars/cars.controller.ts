@@ -49,4 +49,14 @@ export class CarsController {
       next(error);
     }
   };
+  compareCars = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const variantIdsStr = req.query.variantIds as string;
+      const variantIds = Array.from(new Set(variantIdsStr.split(',').map((id) => id.trim()).filter(Boolean)));
+      const compareResult = await this.carsService.compareCars(variantIds);
+      sendSuccess(res, 200, 'Cars compared successfully', compareResult);
+    } catch (error) {
+      next(error);
+    }
+  };
 }

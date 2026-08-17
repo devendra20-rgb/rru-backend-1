@@ -8,11 +8,11 @@ export const brandRepository = {
   },
 
   async findById(id: string | Types.ObjectId) {
-    return Brand.findById(id).lean();
+    return Brand.findById(id).populate('logoMediaId').lean();
   },
 
   async findBySlug(slug: string) {
-    return Brand.findOne({ slug }).lean();
+    return Brand.findOne({ slug }).populate('logoMediaId').lean();
   },
 
   async findByBrandCode(brandCode: string) {
@@ -44,6 +44,7 @@ export const brandRepository = {
     sort: Record<string, 1 | -1>,
   ) {
     return Brand.find(filter)
+      .populate('logoMediaId')
       .sort(sort as any)
       .skip(skip)
       .limit(limit)

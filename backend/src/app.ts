@@ -27,6 +27,8 @@ import authRoutes from './modules/auth/auth.routes';
 import carsRoutes from './modules/catalog/cars/cars.routes';
 import costToOwnRoutes from './modules/catalog/cost-to-own/cost-to-own.routes';
 import reviewRoutes from './modules/reviews/review.routes';
+import articleRoutes from './modules/articles/article.routes';
+import dashboardRoutes from './modules/dashboard/dashboard.routes';
 
 const app = express();
 
@@ -42,7 +44,7 @@ app.use(
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  max: 10000, // Limit each IP to 100 requests per windowMs
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -92,6 +94,8 @@ v1Router.use('/users', userRoutes);
 v1Router.use('/auth', authRoutes);
 v1Router.use('/cars', carsRoutes);
 v1Router.use('/cost-to-own', costToOwnRoutes);
+v1Router.use('/articles', articleRoutes);
+v1Router.use('/dashboard', dashboardRoutes);
 
 // Register API Routes
 app.use('/api/v1', v1Router);

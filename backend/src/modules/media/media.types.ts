@@ -3,8 +3,9 @@ import { PaginationQuery } from '../../utils/pagination';
 
 export interface IMedia extends Document {
   _id: Types.ObjectId;
-  entityType: 'variant'; // Only 'variant' initially supported
-  entityId: Types.ObjectId;
+  folder?: string;
+  entityType?: 'variant' | 'brand' | 'model' | 'generation';
+  entityId?: Types.ObjectId;
   mediaType: 'image' | 'video';
   storageProvider: 'local' | 's3';
   storageKey: string;
@@ -21,8 +22,9 @@ export interface IMedia extends Document {
 }
 
 export interface CreateMediaDTO {
-  entityType: 'variant';
-  entityId: string;
+  folder?: string;
+  entityType?: 'variant' | 'brand' | 'model' | 'generation';
+  entityId?: string;
   mediaType?: 'image' | 'video';
   altText?: string;
   isPrimary?: boolean | string;
