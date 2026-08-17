@@ -33,7 +33,9 @@ import dashboardRoutes from './modules/dashboard/dashboard.routes';
 const app = express();
 
 // Security Middlewares
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 app.use(
   cors({
     origin: env.CORS_ORIGIN,
