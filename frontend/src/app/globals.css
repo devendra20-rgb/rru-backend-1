@@ -79,9 +79,9 @@
   --transition-slow: 400ms ease;
 
   /* Layout */
-  --max-width: 1440px;
+  --max-width: 100%;
   --nav-height: 64px;
-  --content-padding: 70px;
+  --content-padding: max(32px, calc((100vw - 1440px) / 2 + 55px));
 }
 
 /* ---------- Base Reset ---------- */
@@ -105,6 +105,7 @@ body {
   line-height: 1.55;
   color: var(--text);
   background: var(--white);
+  overflow-x: hidden;
 }
 
 a {
@@ -143,7 +144,7 @@ h1, h2, h3, h4, h5, h6 {
 
 h1 {
   font-size: var(--font-size-hero);
-  letter-spacing: -2.5px;
+  letter-spacing: -2px;
 }
 
 h2 {
@@ -179,9 +180,10 @@ h3 {
 
 /* ---------- Layout Utilities ---------- */
 .page-container {
-  max-width: var(--max-width);
+  width: 100%;
   margin: 0 auto;
   background: var(--white);
+  min-height: 100vh;
 }
 
 .section-pad {

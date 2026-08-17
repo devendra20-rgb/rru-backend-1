@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { ChevronRight, SlidersHorizontal, Search } from 'lucide-react';
 import { vehiclesMock } from '@/data/vehicles.mock';
 import { BODY_TYPES, FUEL_TYPES, TRANSMISSIONS } from '@/lib/constants';
@@ -11,7 +12,10 @@ import styles from './newcars.module.css';
 
 type SortOption = 'popular' | 'price-low' | 'price-high' | 'cost-low' | 'newest';
 
-export default function NewCarsPage() {
+function NewCarsContent() {
+  const searchParams = useSearchParams();
+
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedBrand, setSelectedBrand] = useState<string>('');
   const [selectedBodyTypes, setSelectedBodyTypes] = useState<string[]>([]);
   const [selectedFuelTypes, setSelectedFuelTypes] = useState<string[]>([]);
@@ -21,6 +25,33 @@ export default function NewCarsPage() {
   const [maxPrice, setMaxPrice] = useState<string>('');
   const [sortBy, setSortBy] = useState<SortOption>('popular');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+
+  // Initialize filters from URL query parameters
+  useEffect(() => {
+    const q = searchParams.get('search');
+    if (q) setSearchQuery(q);
+
+    const brand = searchParams.get('brand');
+    if (brand) setSelectedBrand(brand);
+
+    const body = searchParams.get('bodyType');
+    if (body) setSelectedBodyTypes([body]);
+
+    const fuel = searchParams.get('fuelType');
+    if (fuel) setSelectedFuelTypes([fuel]);
+
+    const trans = searchParams.get('transmission');
+    if (trans) setSelectedTransmission(trans);
+
+    const seats = searchParams.get('seats');
+    if (seats) setSelectedSeats(seats);
+
+    const max = searchParams.get('maxPrice');
+    if (max) setMaxPrice(max);
+
+    const min = searchParams.get('minPrice');
+    if (min) setMinPrice(min);
+  }, [searchParams]);
 
   const toggleBodyType = (bt: string) => {
     setSelectedBodyTypes((prev) =>
@@ -35,6 +66,7 @@ export default function NewCarsPage() {
   };
 
   const clearFilters = () => {
+    setSearchQuery('');
     setSelectedBrand('');
     setSelectedBodyTypes([]);
     setSelectedFuelTypes([]);
@@ -45,6 +77,7 @@ export default function NewCarsPage() {
   };
 
   const hasActiveFilters =
+    searchQuery ||
     selectedBrand ||
     selectedBodyTypes.length > 0 ||
     selectedFuelTypes.length > 0 ||
@@ -55,6 +88,15 @@ export default function NewCarsPage() {
 
   const filteredVehicles = useMemo(() => {
     let result = vehiclesMock.filter((v) => v.status === 'active');
+
+    // Text search query filter
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      result = result.filter((v) => {
+        const text = `${v.brand} ${v.model} ${v.variant} ${v.bodyType} ${v.fuelType} ${(v.tags || []).join(' ')}`.toLowerCase();
+        return text.includes(q);
+      });
+    }
 
     if (selectedBrand) {
       result = result.filter((v) => v.brandSlug === selectedBrand);
@@ -102,10 +144,13 @@ export default function NewCarsPage() {
     }
 
     return result;
-  }, [selectedBrand, selectedBodyTypes, selectedFuelTypes, selectedTransmission, selectedSeats, minPrice, maxPrice, sortBy]);
+  }, [searchQuery, selectedBrand, selectedBodyTypes, selectedFuelTypes, selectedTransmission, selectedSeats, minPrice, maxPrice, sortBy]);
 
   const activeFilterTags: { label: string; clear: () => void }[] = [];
 
+  if (searchQuery) {
+    activeFilterTags.push({ label: `"${searchQuery}"`, clear: () => setSearchQuery('') });
+  }
   if (selectedBrand) {
     const brandName = brandsMock.find((b) => b.slug === selectedBrand)?.name || selectedBrand;
     activeFilterTags.push({ label: brandName, clear: () => setSelectedBrand('') });
@@ -121,6 +166,9 @@ export default function NewCarsPage() {
   }
   if (selectedSeats) {
     activeFilterTags.push({ label: `${selectedSeats}+ Seats`, clear: () => setSelectedSeats('') });
+  }
+  if (maxPrice) {
+    activeFilterTags.push({ label: `Under AED ${parseInt(maxPrice).toLocaleString()}`, clear: () => setMaxPrice('') });
   }
 
   return (
@@ -159,6 +207,18 @@ export default function NewCarsPage() {
                 Clear all
               </button>
             )}
+          </div>
+
+          {/* Search Box */}
+          <div className={styles.filterGroup}>
+            <label className={styles.filterLabel}>Search Keywords</label>
+            <input
+              type="text"
+              className={styles.filterPriceInput}
+              placeholder="e.g. 7 seater, hybrid..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
 
           {/* Brand */}
@@ -317,7 +377,7 @@ export default function NewCarsPage() {
                 </div>
                 <div className={styles.emptyStateTitle}>No cars found</div>
                 <p className={styles.emptyStateDesc}>
-                  Try adjusting your filters to see more results.
+                  Try adjusting your filters or search keywords to see more results.
                 </p>
                 <button className="btn-primary" onClick={clearFilters}>
                   Clear All Filters
@@ -328,5 +388,13 @@ export default function NewCarsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function NewCarsPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: 40, textAlign: 'center' }}>Loading cars...</div>}>
+      <NewCarsContent />
+    </Suspense>
   );
 }

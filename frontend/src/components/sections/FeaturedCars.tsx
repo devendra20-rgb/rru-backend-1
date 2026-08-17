@@ -1,22 +1,41 @@
 'use client';
 
-import { useState } from 'react';
-import { Car } from 'lucide-react';
-import { vehiclesMock } from '@/data/vehicles.mock';
-import { formatPrice } from '@/lib/utils';
+import { useState, useMemo } from 'react';
+import Link from 'next/link';
+import { vehiclesMock, upcomingVehiclesMock } from '@/data/vehicles.mock';
+import VehicleCard from '@/components/ui/VehicleCard';
 import styles from './sections.module.css';
 
 const TABS = ['Popular', 'Latest', 'Upcoming'] as const;
+type TabType = (typeof TABS)[number];
 
 export default function FeaturedCars() {
-  const [activeTab, setActiveTab] = useState<string>('Popular');
+  const [activeTab, setActiveTab] = useState<TabType>('Popular');
+
+  const displayedCars = useMemo(() => {
+    if (activeTab === 'Upcoming') {
+      return upcomingVehiclesMock;
+    }
+    if (activeTab === 'Latest') {
+      return vehiclesMock.filter((v) => v.status === 'active').slice(4, 8);
+    }
+    // Popular
+    return vehiclesMock.filter((v) => v.status === 'active').slice(0, 4);
+  }, [activeTab]);
 
   return (
     <section className={styles.featured} id="featured-cars">
-      <h2 className="section-title">Explore New Cars</h2>
-      <p className="section-subtitle">
-        Popular and latest vehicles with useful information at a glance.
-      </p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <h2 className="section-title">Explore Cars</h2>
+          <p className="section-subtitle" style={{ marginBottom: 0 }}>
+            Popular, latest, and upcoming vehicles with useful information at a glance.
+          </p>
+        </div>
+        <Link href="/new-cars" className="btn-light" style={{ fontSize: 12, padding: '8px 16px' }}>
+          View All Cars →
+        </Link>
+      </div>
 
       <div className={styles.tabs}>
         {TABS.map((tab) => (
@@ -31,43 +50,8 @@ export default function FeaturedCars() {
       </div>
 
       <div className={styles.carsGrid}>
-        {vehiclesMock.map((vehicle) => (
-          <div key={vehicle._id} className={styles.car}>
-            <div className={styles.carImg}>
-              <div className={styles.carImgPlaceholder}>
-                <Car size={32} />
-                <span>VEHICLE IMAGE</span>
-              </div>
-            </div>
-            <div className={styles.carInfo}>
-              <div className={styles.carBrand}>{vehicle.brand}</div>
-              <h3 className={styles.carName}>
-                {vehicle.brand} {vehicle.model}
-              </h3>
-              <div className={styles.carMeta}>
-                {vehicle.bodyType} · {vehicle.fuelType} · {vehicle.transmission} · {vehicle.seats} Seats
-              </div>
-              <div className={styles.receipt}>
-                <span>Price from</span>
-                <span className={styles.receiptValue}>
-                  {formatPrice(vehicle.priceFrom || 0)}
-                </span>
-              </div>
-              <div className={styles.receipt}>
-                <span>Est. monthly ownership</span>
-                <span className={styles.receiptValue}>
-                  {formatPrice(vehicle.costToOwnMonthly || 0)}
-                </span>
-              </div>
-              {vehicle.tags && (
-                <div className={styles.chips}>
-                  {vehicle.tags.map((tag) => (
-                    <span key={tag} className={styles.chip}>{tag}</span>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+        {displayedCars.map((vehicle) => (
+          <VehicleCard key={vehicle._id} vehicle={vehicle} />
         ))}
       </div>
     </section>

@@ -9,7 +9,7 @@ export default function FinalCTA() {
         Discover. Compare. Decide with confidence.
       </p>
       <Link href="/new-cars" className="btn-primary">
-        Explore New Cars
+        Explore Cars
       </Link>
     </section>
   );

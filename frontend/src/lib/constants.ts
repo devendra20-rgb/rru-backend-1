@@ -10,33 +10,34 @@ export const DEFAULT_CITY = 'Dubai';
 export const DEFAULT_CURRENCY = 'AED';
 export const DEFAULT_LOCALE = 'en';
 
+export const AI_BOT_NAME = 'RideIQ';
+
 export const NAV_LINKS = [
-  { label: 'New Cars', href: '/new-cars' },
+  { label: 'Home', href: '/' },
+  { label: 'Explore Cars', href: '/new-cars' },
   { label: 'Compare', href: '/compare' },
-  { label: 'AI Assistant', href: '/ai-assistant' },
-  { label: 'Reviews', href: '/reviews' },
   { label: 'News & Blogs', href: '/news' },
-  { label: 'Book a Service', href: '/book-service' },
+  { label: 'Ask RideIQ', href: '/ai-assistant', isHighlighted: true },
 ] as const;
 
 export const FOOTER_LINKS = {
   cars: [
-    { label: 'New Cars', href: '/new-cars' },
+    { label: 'Explore Cars', href: '/new-cars' },
     { label: 'Compare', href: '/compare' },
     { label: 'Brands', href: '/brands' },
     { label: 'Upcoming Cars', href: '/new-cars?status=upcoming' },
   ],
   discover: [
-    { label: 'AI Assistant', href: '/ai-assistant' },
-    { label: 'Reviews', href: '/reviews' },
     { label: 'Cost to Own', href: '/cost-to-own' },
+    { label: 'Reviews', href: '/reviews' },
     { label: 'News & Blogs', href: '/news' },
+    { label: 'Ask RideIQ', href: '/ai-assistant' },
   ],
-  services: [
-    { label: 'Book a Service', href: '/book-service' },
-    { label: 'About', href: '/about' },
+  company: [
+    { label: 'About Us', href: '/about' },
     { label: 'Contact', href: '/contact' },
-    { label: 'Help', href: '/help' },
+    { label: 'Verified Dealers', href: '/dealers' },
+    { label: 'Help & FAQ', href: '/help' },
   ],
   legal: [
     { label: 'Privacy', href: '/privacy' },
@@ -51,31 +52,31 @@ export const BROWSE_HUBS = [
     title: 'By Body Type',
     description: 'SUV · Sedan · Hatchback',
     icon: 'car',
-    href: '/new-cars?filter=bodyType',
+    href: '/new-cars?bodyType=SUV',
   },
   {
     title: 'By Budget',
     description: 'Under 100k · 150k · 250k',
     icon: 'wallet',
-    href: '/new-cars?filter=budget',
+    href: '/new-cars?maxPrice=150000',
   },
   {
     title: 'By Fuel',
     description: 'Petrol · Diesel · Hybrid · EV',
     icon: 'fuel',
-    href: '/new-cars?filter=fuel',
+    href: '/new-cars?fuelType=Hybrid',
   },
   {
     title: 'By Seats',
     description: '5 · 7 · 7+ Seaters',
     icon: 'users',
-    href: '/new-cars?filter=seats',
+    href: '/new-cars?seats=7',
   },
   {
     title: 'By Use Case',
     description: 'Family · City · Off-road',
     icon: 'compass',
-    href: '/new-cars?filter=useCase',
+    href: '/new-cars?search=family',
   },
   {
     title: 'By Brand',

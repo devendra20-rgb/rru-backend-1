@@ -87,9 +87,9 @@ export default function AIAssistantPage() {
     <div className={styles.aiPage}>
       {/* Header */}
       <div className={styles.aiHeader}>
-        <h1 className={styles.aiTitle}>RideRoundUp AI Assistant</h1>
+        <h1 className={styles.aiTitle}>Ask RideIQ — AI Automotive Assistant</h1>
         <p className={styles.aiSubtitle}>
-          Ask about cars like you&apos;d ask a friend. Powered by structured vehicle data.
+          Ask about cars like you&apos;d ask a friend. Powered by RideRoundUp verified vehicle data.
         </p>
       </div>
 
@@ -100,10 +100,10 @@ export default function AIAssistantPage() {
             <div className={styles.chatWelcomeIcon}>
               <Bot size={28} />
             </div>
-            <h2 className={styles.chatWelcomeTitle}>How can I help?</h2>
+            <h2 className={styles.chatWelcomeTitle}>Hi, I&apos;m RideIQ! How can I help?</h2>
             <p className={styles.chatWelcomeDesc}>
               Tell me your budget, family size, fuel preference or use case.
-              I&apos;ll find matching vehicles and show my sources.
+              I&apos;ll find matching vehicles and show verified sources.
             </p>
             <div className={styles.suggestions}>
               {suggestedQuestions.map((q) => (

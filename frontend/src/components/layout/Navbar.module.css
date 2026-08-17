@@ -41,19 +41,20 @@
 
 .links {
   display: flex;
-  gap: 27px;
+  gap: 32px;
   align-items: center;
   flex: 1;
 }
 
 .navLink {
   white-space: nowrap;
-  font-size: 13px;
+  font-size: 14.5px;
   font-weight: 700;
   color: var(--text);
   transition: color var(--transition-fast);
   position: relative;
   padding: 4px 0;
+  text-decoration: none;
 }
 
 .navLink:hover {
@@ -84,11 +85,51 @@
   width: 100%;
 }
 
+/* Highlighted AI Chatbot Nav Link */
+.navLinkHighlight {
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, rgba(13, 59, 73, 0.05), rgba(232, 148, 43, 0.14));
+  border: 1px solid rgba(232, 148, 43, 0.45);
+  color: var(--deep);
+  font-weight: 800;
+  font-size: 14px;
+  transition: all var(--transition-fast);
+  text-decoration: none;
+}
+
+.navLinkHighlight:hover {
+  background: linear-gradient(135deg, rgba(13, 59, 73, 0.1), rgba(232, 148, 43, 0.25));
+  border-color: var(--amber);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(232, 148, 43, 0.2);
+  color: var(--petrol);
+}
+
+.navLinkHighlightActive {
+  background: var(--petrol);
+  color: var(--white);
+  border-color: var(--petrol);
+}
+
+.navLinkHighlightActive .navSparkleIcon {
+  color: var(--amber);
+}
+
+.navSparkleIcon {
+  color: var(--amber);
+}
+
 .utility {
   display: flex;
   align-items: center;
   gap: 10px;
   flex-shrink: 0;
+  position: relative;
 }
 
 .searchBtn {
@@ -100,12 +141,18 @@
   place-items: center;
   color: var(--text);
   transition: all var(--transition-fast);
+  background: transparent;
+  cursor: pointer;
 }
 
 .searchBtn:hover {
   border-color: var(--petrol);
   color: var(--petrol);
   background: var(--mist);
+}
+
+.marketWrapper {
+  position: relative;
 }
 
 .marketBtn {
@@ -119,11 +166,66 @@
   align-items: center;
   gap: 6px;
   transition: all var(--transition-fast);
+  background: transparent;
+  cursor: pointer;
 }
 
 .marketBtn:hover {
   border-color: var(--petrol);
   background: var(--mist);
+}
+
+.marketDropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 180px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 6px;
+  z-index: 150;
+  animation: fadeIn 0.2s ease;
+}
+
+.marketDropdownHeader {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--mist-dark);
+  margin-bottom: 4px;
+}
+
+.marketItem {
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.marketItem:hover {
+  background: var(--mist);
+  color: var(--petrol);
+}
+
+.marketItemActive {
+  background: var(--mist);
+  color: var(--petrol);
+  font-weight: 800;
 }
 
 .loginBtn {
@@ -135,6 +237,9 @@
   font-weight: 700;
   transition: all var(--transition-fast);
   border: 1px solid var(--petrol);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
 }
 
 .loginBtn:hover {
@@ -149,6 +254,100 @@
   height: 36px;
   place-items: center;
   color: var(--text);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+/* Search Overlay Modal */
+.searchModalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(7, 40, 48, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 250;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 80px 20px 20px;
+  animation: fadeIn 0.2s ease;
+}
+
+.searchModal {
+  width: 100%;
+  max-width: 620px;
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+  animation: fadeInUp 0.3s ease;
+}
+
+.searchModalHeader {
+  display: flex;
+  align-items: center;
+  padding: 18px 20px;
+  gap: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.searchModalInput {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 16px;
+  color: var(--text);
+  background: transparent;
+}
+
+.searchModalClose {
+  color: var(--muted);
+  cursor: pointer;
+  background: none;
+  border: none;
+  display: grid;
+  place-items: center;
+}
+
+.searchModalClose:hover {
+  color: var(--deep);
+}
+
+.searchModalSuggestions {
+  padding: 18px 20px;
+}
+
+.searchModalSectionTitle {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+
+.searchModalChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.searchModalChip {
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  background: var(--mist);
+  color: var(--petrol);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--line);
+  transition: all var(--transition-fast);
+}
+
+.searchModalChip:hover {
+  background: var(--petrol);
+  color: var(--white);
+  border-color: var(--petrol);
 }
 
 /* Mobile menu overlay */
@@ -190,6 +389,13 @@
   margin-bottom: 24px;
 }
 
+.mobileClose button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text);
+}
+
 .mobileLink {
   display: block;
   padding: 14px 0;
@@ -198,10 +404,18 @@
   color: var(--text);
   border-bottom: 1px solid var(--line);
   transition: color var(--transition-fast);
+  text-decoration: none;
 }
 
 .mobileLink:hover {
   color: var(--amber);
+}
+
+.mobileLinkHighlight {
+  color: var(--amber-dark);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .mobileActions {

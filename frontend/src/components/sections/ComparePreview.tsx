@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Car } from 'lucide-react';
+import { Car, GitCompare } from 'lucide-react';
 import { vehiclesMock } from '@/data/vehicles.mock';
 import { formatPrice } from '@/lib/utils';
 import styles from './sections.module.css';
@@ -10,7 +10,7 @@ export default function ComparePreview() {
 
   const compareData = [
     { label: 'Starting Price', a: formatPrice(carA.priceFrom || 0, 'AED', true), b: formatPrice(carB.priceFrom || 0, 'AED', true) },
-    { label: 'Seats', a: String(carA.seats), b: String(carB.seats) },
+    { label: 'Seats', a: `${carA.seats} Seats`, b: `${carB.seats} Seats` },
     { label: 'Fuel', a: carA.fuelType, b: carB.fuelType },
     { label: 'Ownership / month', a: formatPrice(carA.costToOwnMonthly || 0), b: formatPrice(carB.costToOwnMonthly || 0) },
   ];
@@ -23,23 +23,25 @@ export default function ComparePreview() {
       </p>
 
       <div className={styles.compareGrid}>
-        <div className={styles.compareCar}>
+        <Link href={`/new-cars/${carA.slug}`} className={styles.compareCar} style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className={styles.compareImg}>
             <Car size={32} />
           </div>
           <h3 className={styles.compareCarName}>{carA.brand} {carA.model}</h3>
-        </div>
+          <span style={{ fontSize: 12, color: 'var(--muted)' }}>{carA.variant}</span>
+        </Link>
 
         <div className={styles.vs}>
           <div className={styles.vsCircle}>VS</div>
         </div>
 
-        <div className={styles.compareCar}>
+        <Link href={`/new-cars/${carB.slug}`} className={styles.compareCar} style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className={styles.compareImg}>
             <Car size={32} />
           </div>
           <h3 className={styles.compareCarName}>{carB.brand} {carB.model}</h3>
-        </div>
+          <span style={{ fontSize: 12, color: 'var(--muted)' }}>{carB.variant}</span>
+        </Link>
       </div>
 
       <div className={styles.compareRows}>
@@ -54,7 +56,7 @@ export default function ComparePreview() {
 
       <div className={styles.compareCta}>
         <Link href="/compare" className="btn-primary">
-          Build Your Comparison
+          <GitCompare size={16} /> Build Your Comparison
         </Link>
       </div>
     </section>

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { FOOTER_LINKS } from '@/lib/constants';
 import styles from './Footer.module.css';
 
@@ -6,7 +7,7 @@ export default function Footer() {
   const footerSections = [
     { title: 'Cars', links: FOOTER_LINKS.cars },
     { title: 'Discover', links: FOOTER_LINKS.discover },
-    { title: 'Services', links: FOOTER_LINKS.services },
+    { title: 'Company', links: FOOTER_LINKS.company },
     { title: 'Legal', links: FOOTER_LINKS.legal },
   ];
 
@@ -17,7 +18,13 @@ export default function Footer() {
           {/* Brand column */}
           <div className={styles.footerBrand}>
             <div className={styles.footerLogo}>
-              ride<span className={styles.footerLogoRound}>roundup</span>
+              <Image
+                src="/logo.png"
+                alt="RideRoundUp"
+                width={130}
+                height={30}
+                style={{ height: '26px', width: 'auto', objectFit: 'contain', filter: 'brightness(0) invert(1)' }}
+              />
             </div>
             <p className={styles.footerTagline}>
               Automotive discovery built around better vehicle data and honest
@@ -31,7 +38,7 @@ export default function Footer() {
               <h4>{section.title}</h4>
               {section.links.map((link) => (
                 <Link
-                  key={link.href}
+                  key={link.label}
                   href={link.href}
                   className={styles.footerLink}
                 >

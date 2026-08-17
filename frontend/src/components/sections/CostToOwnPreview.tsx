@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Calculator } from 'lucide-react';
 import { costToOwnMock } from '@/data/homepage.mock';
 import styles from './sections.module.css';
 
@@ -30,13 +31,18 @@ export default function CostToOwnPreview() {
             that shape the real ownership decision.
           </p>
           <Link href="/cost-to-own" className="btn-primary">
-            See Cost to Own
+            <Calculator size={16} /> See Cost to Own Calculator
           </Link>
         </div>
 
         <div className={styles.costBox}>
           <div className={styles.costVehicle}>
-            {cost.vehicleName} · {cost.market}
+            <Link
+              href="/new-cars/toyota-land-cruiser-gxr-v6-2026"
+              style={{ color: 'inherit', textDecoration: 'none' }}
+            >
+              {cost.vehicleName} · {cost.market} →
+            </Link>
           </div>
           <div className={styles.costBig}>
             AED {cost.monthly.total.toLocaleString()}{' '}

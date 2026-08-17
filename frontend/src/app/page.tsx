@@ -8,7 +8,6 @@ import AIAssistantPreview from '@/components/sections/AIAssistantPreview';
 import ReviewsPreview from '@/components/sections/ReviewsPreview';
 import CommunityPoll from '@/components/sections/CommunityPoll';
 import NewsPreview from '@/components/sections/NewsPreview';
-import BookServicePreview from '@/components/sections/BookServicePreview';
 import WhyRRU from '@/components/sections/WhyRRU';
 import FinalCTA from '@/components/sections/FinalCTA';
 
@@ -21,7 +20,7 @@ export default function HomePage() {
       {/* 03 — Browse Hubs */}
       <BrowseHubs />
 
-      {/* 04 — Featured / New Cars */}
+      {/* 04 — Featured Cars */}
       <FeaturedCars />
 
       {/* 05 — Browse by Brand */}
@@ -33,7 +32,7 @@ export default function HomePage() {
       {/* 07 — Cost to Own */}
       <CostToOwnPreview />
 
-      {/* 08 — AI Assistant */}
+      {/* 08 — Ask RideIQ (AI Assistant) */}
       <AIAssistantPreview />
 
       {/* 09 — Reviews */}
@@ -45,13 +44,10 @@ export default function HomePage() {
       {/* 11 — News & Blogs */}
       <NewsPreview />
 
-      {/* 12 — Book a Service */}
-      <BookServicePreview />
-
-      {/* 13 — Why RRU */}
+      {/* 12 — Why RRU */}
       <WhyRRU />
 
-      {/* 14 — Final CTA */}
+      {/* 13 — Final CTA */}
       <FinalCTA />
     </>
   );

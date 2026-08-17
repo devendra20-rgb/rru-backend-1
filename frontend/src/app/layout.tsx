@@ -21,7 +21,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning>
-        <div className="page-container">
+        <div className="page-container" suppressHydrationWarning>
           <Navbar />
           <main>{children}</main>
           <Footer />

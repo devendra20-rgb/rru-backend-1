@@ -1,84 +1,104 @@
 /* ============================================
-   HERO SECTION
+   HERO SECTION & FLOATING DISCOVERY STRIP
    ============================================ */
+.heroWrapper {
+  position: relative;
+  width: 100%;
+  background: transparent;
+  margin-bottom: 10px;
+}
+
 .hero {
-  min-height: 565px;
-  background: var(--deep);
+  min-height: 440px;
+  background: #082932;
   color: var(--white);
-  padding: 105px var(--content-padding);
+  padding: 60px var(--content-padding) 65px;
   overflow: hidden;
   position: relative;
-}
-
-.heroOverlay {
-  position: absolute;
-  right: 0;
-  top: 0;
-  width: 53%;
-  height: 100%;
-  background: linear-gradient(100deg, rgba(7, 40, 48, 0.05), rgba(13, 59, 73, 0.85));
   display: flex;
   align-items: center;
-  justify-content: center;
 }
 
-.heroImagePlaceholder {
+/* Background Car Silhouette Graphic */
+.heroCarBackdrop {
+  position: absolute;
+  right: 1%;
+  top: 5%;
+  width: 52%;
+  height: 90%;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  opacity: 0.22;
+  transition: opacity var(--transition-slow);
+}
+
+.heroCarSvg {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0.25;
+  max-width: 760px;
+  height: auto;
+  fill: none;
+  stroke: #7db4c2;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .heroContent {
   position: relative;
-  z-index: 2;
-  width: 52%;
-  animation: fadeInUp 0.7s ease;
+  z-index: 3;
+  width: 100%;
+  max-width: 680px;
+  animation: fadeInUp 0.6s ease;
 }
 
 .heroEyebrow {
   font-size: 11px;
   letter-spacing: 2px;
-  color: #9fb9bf;
+  color: #8da9b0;
   font-weight: 800;
   text-transform: uppercase;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .heroTitle {
-  font-size: var(--font-size-hero);
-  line-height: 1.02;
-  letter-spacing: -2.5px;
-  margin: 0 0 18px;
+  font-size: 52px;
+  line-height: 1.05;
+  letter-spacing: -1.8px;
+  margin: 0 0 14px;
   color: var(--white);
+  font-weight: 900;
 }
 
 .heroTitleAccent {
   color: var(--amber);
   font-style: italic;
+  font-weight: 900;
 }
 
 .heroDesc {
-  font-size: var(--font-size-md);
-  line-height: 1.6;
-  color: #c9d7da;
-  max-width: 550px;
-  margin-bottom: 27px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #b7cbce;
+  max-width: 580px;
+  margin-bottom: 24px;
 }
 
+/* Search Box Capsule */
 .heroSearch {
   background: var(--white);
-  border-radius: var(--radius-lg);
-  padding: 6px 6px 6px 20px;
-  max-width: 620px;
+  border-radius: var(--radius-full);
+  padding: 5px 6px 5px 20px;
+  max-width: 560px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  box-shadow: var(--shadow-lg);
+  gap: 10px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
 }
 
 .heroSearchIcon {
-  color: var(--muted);
+  color: #7b8f95;
   flex-shrink: 0;
 }
 
@@ -86,56 +106,105 @@
   flex: 1;
   border: none;
   outline: none;
-  font-size: var(--font-size-base);
+  font-size: 15px;
   color: var(--text);
   background: transparent;
-  padding: 12px 0;
+  padding: 10px 0;
 }
 
 .heroSearchInput::placeholder {
-  color: #a2b0b5;
+  color: #8f9ea3;
 }
 
 .heroSearchDivider {
   width: 1px;
-  height: 28px;
+  height: 24px;
   background: var(--line);
   flex-shrink: 0;
+}
+
+.heroSearchLocationWrapper {
+  position: relative;
 }
 
 .heroSearchLocation {
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: var(--font-size-sm);
+  font-size: 13px;
   color: var(--text);
   font-weight: 600;
   flex-shrink: 0;
-  padding: 0 6px;
+  padding: 0 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.cityDropdown {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 30;
+  min-width: 130px;
+  padding: 4px;
+}
+
+.cityDropdownItem {
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.cityDropdownItem:hover {
+  background: var(--mist);
+  color: var(--petrol);
+}
+
+.cityDropdownItemActive {
+  background: var(--mist);
+  color: var(--petrol);
+  font-weight: 800;
 }
 
 .heroSearchBtn {
-  padding: 12px 24px;
+  padding: 11px 26px;
   background: var(--amber);
   color: var(--deep);
   font-weight: 800;
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-base);
+  border-radius: var(--radius-full);
+  font-size: 14px;
   transition: background var(--transition-fast);
   flex-shrink: 0;
+  border: none;
+  cursor: pointer;
 }
 
 .heroSearchBtn:hover {
   background: var(--amber-dark);
 }
 
+/* Suggestion Row */
 .heroSuggestions {
-  margin-top: 12px;
+  margin-top: 14px;
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: var(--font-size-sm);
+  font-size: 12px;
   color: #7fa0a8;
+  flex-wrap: wrap;
 }
 
 .heroSuggestionLink {
@@ -143,49 +212,147 @@
   font-weight: 600;
   transition: opacity var(--transition-fast);
   cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12px;
 }
 
 .heroSuggestionLink:hover {
   opacity: 0.8;
+  text-decoration: underline;
 }
 
-.heroActions {
+/* Floating Overlapping Quick Discovery Strip */
+.quickStrip {
+  position: relative;
+  z-index: 10;
+  margin-top: -38px;
+  padding: 0 var(--content-padding);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.quickCard {
+  background: var(--white);
+  border: 1px solid rgba(13, 59, 73, 0.08);
+  border-radius: 12px;
+  padding: 14px 16px;
   display: flex;
-  gap: 10px;
-  margin-top: 18px;
+  align-items: center;
+  gap: 13px;
+  box-shadow: 0 8px 24px rgba(7, 40, 48, 0.08), 0 1px 2px rgba(7, 40, 48, 0.04);
+  transition: all var(--transition-base);
+  text-decoration: none;
+  color: inherit;
 }
 
-@media (max-width: 1024px) {
-  .hero {
-    padding: 80px var(--content-padding);
-    min-height: auto;
-  }
-  .heroContent {
-    width: 100%;
-  }
-  .heroOverlay {
-    width: 100%;
-    opacity: 0.2;
+.quickCard:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 30px rgba(7, 40, 48, 0.14);
+  border-color: var(--petrol);
+}
+
+/* Specific Card Highlight: What will it cost me? */
+.quickCardAccent {
+  background: #fef8ed;
+  border-color: #f2dfc3;
+}
+
+.quickCardAccent:hover {
+  border-color: var(--amber);
+  box-shadow: 0 14px 30px rgba(232, 148, 43, 0.16);
+}
+
+/* Icon Styles */
+.quickCardIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.iconNewCars {
+  background: #e8f3f6;
+  color: #167a96;
+}
+
+.iconVerified {
+  background: #eaf6f0;
+  color: #12805c;
+}
+
+.iconCost {
+  background: #ffffff;
+  color: #0284c7;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.iconHelp {
+  background: #fdf2e2;
+  color: #e8942b;
+}
+
+.quickCardTitle {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--deep);
+  margin-bottom: 2px;
+}
+
+.quickCardSubtitle {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.quickCardSubtitleCost {
+  font-size: 11px;
+  color: #b36b00;
+  font-weight: 700;
+}
+
+@media (max-width: 1100px) {
+  .quickStrip {
+    grid-template-columns: repeat(2, 1fr);
+    margin-top: -30px;
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 900px) {
+  .heroTitle {
+    font-size: 40px;
+  }
+  .heroCarBackdrop {
+    opacity: 0.12;
+    width: 90%;
+  }
+}
+
+@media (max-width: 600px) {
   .hero {
-    padding: 60px var(--content-padding);
+    padding: 40px var(--content-padding) 50px;
+  }
+  .heroTitle {
+    font-size: 32px;
   }
   .heroSearch {
     flex-direction: column;
     align-items: stretch;
+    border-radius: var(--radius-xl);
     padding: 12px;
   }
   .heroSearchDivider {
     display: none;
   }
-  .heroSearchLocation {
-    padding: 8px 0;
-    border-top: 1px solid var(--line);
+  .heroSearchBtn {
+    border-radius: var(--radius-md);
   }
-  .heroActions {
-    flex-direction: column;
+  .quickStrip {
+    grid-template-columns: 1fr;
+    margin-top: -20px;
   }
 }
