@@ -23,14 +23,26 @@ import { getGenerations } from '../../../api/generations.api';
 
 const basicInfoSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  variantCode: z.string().optional(),
+  variantCode: z.string().min(1, 'Variant code is required'),
   brandId: z.string().min(1, 'Brand is required'),
   modelId: z.string().min(1, 'Model is required'),
   generationId: z.string().min(1, 'Generation is required'),
   modelYear: z.number().int().optional(),
-  bodyStyle: z.string().optional(),
-  trimLevel: z.string().optional(),
-  status: z.enum(['draft', 'active', 'archived']).default('draft'),
+  fuelType: z.enum(['petrol', 'diesel', 'hybrid', 'plug_in_hybrid', 'electric', 'cng', 'lpg', 'other']).optional(),
+  transmissionType: z.enum(['manual', 'automatic', 'cvt', 'dct', 'amt', 'other']).optional(),
+  drivetrain: z.enum(['fwd', 'rwd', 'awd', '4wd', 'other']).optional(),
+  engine: z.object({
+    displacementCc: z.number().optional(),
+    cylinders: z.number().optional(),
+    aspiration: z.string().optional(),
+    powerHp: z.number().optional(),
+    torqueNm: z.number().optional(),
+  }).optional(),
+  seatingCapacity: z.number().int().optional(),
+  doors: z.number().int().optional(),
+  description: z.string().optional(),
+  shortDescription: z.string().optional(),
+  status: z.enum(['draft', 'active', 'inactive']).default('draft'),
 });
 
 type BasicInfoData = z.infer<typeof basicInfoSchema>;
@@ -60,6 +72,18 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
       brandId: '',
       modelId: '',
       generationId: '',
+      fuelType: undefined,
+      transmissionType: undefined,
+      drivetrain: undefined,
+      engine: {
+        displacementCc: undefined,
+        cylinders: undefined,
+        aspiration: undefined,
+        powerHp: undefined,
+        torqueNm: undefined,
+      },
+      description: '',
+      shortDescription: '',
       status: 'draft'
     }
   });
@@ -102,8 +126,14 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
         modelId: variant.modelId?._id || variant.modelId || '',
         generationId: variant.generationId?._id || variant.generationId || '',
         modelYear: variant.modelYear,
-        bodyStyle: variant.bodyStyle || '',
-        trimLevel: variant.trimLevel || '',
+        fuelType: variant.fuelType,
+        transmissionType: variant.transmissionType,
+        drivetrain: variant.drivetrain,
+        engine: variant.engine || {},
+        seatingCapacity: variant.seatingCapacity,
+        doors: variant.doors,
+        description: variant.description || '',
+        shortDescription: variant.shortDescription || '',
         status: variant.status
       });
     }
@@ -258,29 +288,8 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
                 error={!!errors.modelYear}
                 helperText={errors.modelYear?.message}
                 onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value, 10) : undefined)}
+                value={field.value ?? ''}
               />
-            )}
-          />
-
-          <Controller
-            name="bodyStyle"
-            control={control}
-            render={({ field }) => (
-              <FormControl fullWidth error={!!errors.bodyStyle}>
-                <InputLabel>Body Style</InputLabel>
-                <Select {...field} label="Body Style">
-                  <MenuItem value="">None</MenuItem>
-                  <MenuItem value="Sedan">Sedan</MenuItem>
-                  <MenuItem value="SUV">SUV</MenuItem>
-                  <MenuItem value="Coupe">Coupe</MenuItem>
-                  <MenuItem value="Hatchback">Hatchback</MenuItem>
-                  <MenuItem value="Convertible">Convertible</MenuItem>
-                  <MenuItem value="Wagon">Wagon</MenuItem>
-                  <MenuItem value="Pickup">Pickup</MenuItem>
-                  <MenuItem value="Van">Van</MenuItem>
-                </Select>
-                {errors.bodyStyle && <FormHelperText>{errors.bodyStyle.message}</FormHelperText>}
-              </FormControl>
             )}
           />
 
@@ -290,13 +299,136 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
             render={({ field }) => (
               <FormControl fullWidth error={!!errors.status}>
                 <InputLabel>Status</InputLabel>
-                <Select {...field} label="Status">
+                <Select {...field} label="Status" value={field.value || 'draft'}>
                   <MenuItem value="draft">Draft</MenuItem>
                   <MenuItem value="active">Active</MenuItem>
-                  <MenuItem value="archived">Archived</MenuItem>
+                  <MenuItem value="inactive">Inactive</MenuItem>
                 </Select>
                 {errors.status && <FormHelperText>{errors.status.message}</FormHelperText>}
               </FormControl>
+            )}
+          />
+        </Box>
+
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Controller
+            name="shortDescription"
+            control={control}
+            render={({ field }) => (
+              <TextField {...field} label="Short Description" fullWidth multiline rows={2} value={field.value || ''} />
+            )}
+          />
+          <Controller
+            name="description"
+            control={control}
+            render={({ field }) => (
+              <TextField {...field} label="Full Description" fullWidth multiline rows={2} value={field.value || ''} />
+            )}
+          />
+        </Box>
+
+        {/* Powertrain Configuration */}
+        <Box sx={{ mt: 2, mb: 1 }}><Alert severity="info">Powertrain Configuration</Alert></Box>
+
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Controller
+            name="fuelType"
+            control={control}
+            render={({ field }) => (
+              <FormControl fullWidth>
+                <InputLabel>Fuel Type</InputLabel>
+                <Select {...field} label="Fuel Type" value={field.value || ''}>
+                  <MenuItem value="">None</MenuItem>
+                  {['petrol', 'diesel', 'hybrid', 'plug_in_hybrid', 'electric', 'cng', 'lpg', 'other'].map(v => <MenuItem key={v} value={v}>{v.replace(/_/g, ' ').toUpperCase()}</MenuItem>)}
+                </Select>
+              </FormControl>
+            )}
+          />
+          <Controller
+            name="transmissionType"
+            control={control}
+            render={({ field }) => (
+              <FormControl fullWidth>
+                <InputLabel>Transmission</InputLabel>
+                <Select {...field} label="Transmission" value={field.value || ''}>
+                  <MenuItem value="">None</MenuItem>
+                  {['manual', 'automatic', 'cvt', 'dct', 'amt', 'other'].map(v => <MenuItem key={v} value={v}>{v.toUpperCase()}</MenuItem>)}
+                </Select>
+              </FormControl>
+            )}
+          />
+          <Controller
+            name="drivetrain"
+            control={control}
+            render={({ field }) => (
+              <FormControl fullWidth>
+                <InputLabel>Drivetrain</InputLabel>
+                <Select {...field} label="Drivetrain" value={field.value || ''}>
+                  <MenuItem value="">None</MenuItem>
+                  {['fwd', 'rwd', 'awd', '4wd', 'other'].map(v => <MenuItem key={v} value={v}>{v.toUpperCase()}</MenuItem>)}
+                </Select>
+              </FormControl>
+            )}
+          />
+        </Box>
+
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Controller
+            name="engine.displacementCc"
+            control={control}
+            render={({ field }) => (
+              <TextField {...field} label="Displacement (CC)" type="number" fullWidth onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)} value={field.value ?? ''} />
+            )}
+          />
+          <Controller
+            name="engine.cylinders"
+            control={control}
+            render={({ field }) => (
+              <TextField {...field} label="Cylinders" type="number" fullWidth onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)} value={field.value ?? ''} />
+            )}
+          />
+          <Controller
+            name="engine.aspiration"
+            control={control}
+            render={({ field }) => (
+              <TextField {...field} label="Aspiration" placeholder="e.g. Turbocharged" fullWidth value={field.value || ''} />
+            )}
+          />
+        </Box>
+
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Controller
+            name="engine.powerHp"
+            control={control}
+            render={({ field }) => (
+              <TextField {...field} label="Power (HP)" type="number" fullWidth onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)} value={field.value ?? ''} />
+            )}
+          />
+          <Controller
+            name="engine.torqueNm"
+            control={control}
+            render={({ field }) => (
+              <TextField {...field} label="Torque (Nm)" type="number" fullWidth onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)} value={field.value ?? ''} />
+            )}
+          />
+        </Box>
+
+        {/* Body Configuration */}
+        <Box sx={{ mt: 2, mb: 1 }}><Alert severity="info">Body Configuration</Alert></Box>
+
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Controller
+            name="doors"
+            control={control}
+            render={({ field }) => (
+              <TextField {...field} label="Doors" type="number" fullWidth onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)} value={field.value ?? ''} />
+            )}
+          />
+          <Controller
+            name="seatingCapacity"
+            control={control}
+            render={({ field }) => (
+              <TextField {...field} label="Seating Capacity" type="number" fullWidth onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)} value={field.value ?? ''} />
             )}
           />
         </Box>

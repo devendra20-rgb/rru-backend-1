@@ -31,10 +31,26 @@ const CarDetail: React.FC = () => {
 
   const variant = variantData?.data;
   const spec = specsData?.data;
-  const features = featuresData?.data || [];
-  const colors = colorsData?.data || [];
-  const markets = marketsData?.data || [];
-  const mediaList = mediaData?.data || [];
+  const getArray = (resData: any, keys: string[]) => {
+    if (!resData) return [];
+    if (Array.isArray(resData)) return resData;
+    for (const key of keys) {
+      if (Array.isArray(resData[key])) return resData[key];
+    }
+    return [];
+  };
+
+  const features = getArray(featuresData?.data, ['variantFeatures', 'features']);
+  const colors = getArray(colorsData?.data, ['variantColors', 'colors']);
+  const markets = getArray(marketsData?.data, ['variantMarkets', 'markets']);
+  const mediaList = getArray(mediaData?.data, ['media']);
+
+  const resolveMediaUrl = (url?: string) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    const baseUrl = import.meta.env.VITE_API_URL?.replace(/\/api\/v1\/?$/, '') || 'http://localhost:5000';
+    return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+  };
 
   if (!variant) {
     return <Typography>Variant not found</Typography>;
@@ -80,8 +96,9 @@ const CarDetail: React.FC = () => {
             {primaryImage ? (
               <Box 
                 component="img" 
-                src={primaryImage.url} 
+                src={resolveMediaUrl(primaryImage.url)} 
                 alt={variant.name} 
+                onError={(e: any) => { e.target.src = 'https://placehold.co/400x250?text=Image+Error'; }}
                 sx={{ width: '100%', height: 'auto', borderRadius: 1, maxHeight: 250, objectFit: 'cover' }}
               />
             ) : (
@@ -270,7 +287,8 @@ const CarDetail: React.FC = () => {
               <Box key={m._id}>
                 <Box 
                   component="img" 
-                  src={m.url} 
+                  src={resolveMediaUrl(m.url)} 
+                  onError={(e: any) => { e.target.src = 'https://placehold.co/120x120?text=Error'; }}
                   sx={{ 
                     width: '100%', 
                     height: 120, 
