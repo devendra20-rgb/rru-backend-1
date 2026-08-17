@@ -13,7 +13,7 @@ export interface Color {
   createdAt: string;
   updatedAt: string;
 }
-
+//
 export const getColors = async (params?: Record<string, any>): Promise<any> => {
   const response = await api.get('/colors', { params });
   return response.data;
