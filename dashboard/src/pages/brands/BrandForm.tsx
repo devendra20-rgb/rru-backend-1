@@ -145,14 +145,14 @@ const BrandForm: React.FC = () => {
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>, onChange: (value: string) => void) => {
     const value = e.target.value;
     onChange(value);
-    
+
     if (!isEditMode) {
       const generatedSlug = value
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)+/g, '');
       setValue('slug', generatedSlug, { shouldValidate: true });
-      
+
       // Suggest a brand code (first 3 letters uppercase)
       if (value.length >= 3) {
         setValue('brandCode', value.substring(0, 3).toUpperCase(), { shouldValidate: true });
@@ -171,8 +171,8 @@ const BrandForm: React.FC = () => {
   return (
     <Box>
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-        <Button 
-          startIcon={<ArrowBackIcon />} 
+        <Button
+          startIcon={<ArrowBackIcon />}
           onClick={() => navigate('/brands')}
           sx={{ mr: 2 }}
         >
@@ -198,7 +198,7 @@ const BrandForm: React.FC = () => {
       <Paper sx={{ p: 3, maxWidth: 800 }}>
         <form onSubmit={handleSubmit(onSubmit)}>
           <Stack spacing={3}>
-            
+
             <Controller
               name="name"
               control={control}
@@ -302,9 +302,9 @@ const BrandForm: React.FC = () => {
                 {selectedMediaUrl ? (
                   <Box sx={{ position: 'relative', width: 120, height: 120, border: '1px solid #e0e0e0', borderRadius: 1, overflow: 'hidden' }}>
                     <img src={selectedMediaUrl} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                    <IconButton 
-                      size="small" 
-                      color="error" 
+                    <IconButton
+                      size="small"
+                      color="error"
                       sx={{ position: 'absolute', top: 2, right: 2, bgcolor: 'rgba(255,255,255,0.8)', '&:hover': { bgcolor: 'white' } }}
                       onClick={() => {
                         setSelectedMediaUrl('');
@@ -315,8 +315,8 @@ const BrandForm: React.FC = () => {
                     </IconButton>
                   </Box>
                 ) : (
-                  <Button 
-                    variant="outlined" 
+                  <Button
+                    variant="outlined"
                     startIcon={<ImageSearchIcon />}
                     onClick={() => setFilePickerOpen(true)}
                     sx={{ height: 120, width: 120, borderStyle: 'dashed' }}
