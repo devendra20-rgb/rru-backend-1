@@ -163,7 +163,7 @@ const GenerationForm: React.FC = () => {
   const handleBrandChange = (e: any) => {
     setSelectedBrandId(e.target.value);
     // Clear the model selection when brand changes
-    setValue('modelId', '', { shouldValidate: true });
+    setValue('modelId', '');
   };
 
   if (isFetching || isLoadingBrands) {

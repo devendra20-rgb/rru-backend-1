@@ -37,6 +37,16 @@ api.interceptors.response.use(
         return Promise.reject(refreshError);
       }
     }
+    if (error.response?.data?.message) {
+      let customMessage = error.response.data.message;
+      if (error.response.data.errors && Array.isArray(error.response.data.errors)) {
+        const details = error.response.data.errors
+          .map((el: any) => `${el.field}: ${el.message}`)
+          .join(', ');
+        customMessage = `${error.response.data.message} (${details})`;
+      }
+      error.message = customMessage;
+    }
     return Promise.reject(error);
   }
 );

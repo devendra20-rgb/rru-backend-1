@@ -8,7 +8,7 @@ export const variantRepository = {
   },
 
   async findById(id: string | Types.ObjectId) {
-    return Variant.findById(id).lean();
+    return Variant.findById(id).populate('generationId').lean();
   },
 
   async findBySlug(slug: string) {
@@ -51,6 +51,7 @@ export const variantRepository = {
     sort: Record<string, 1 | -1>,
   ) {
     return Variant.find(filter)
+      .populate('generationId')
       .sort(sort as any)
       .skip(skip)
       .limit(limit)

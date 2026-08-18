@@ -14,7 +14,6 @@ import {
   TableRow,
   TablePagination,
   IconButton,
-  Chip,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -26,13 +25,14 @@ import {
   FormControl,
   InputLabel,
   Select,
-  Stack
+  Stack,
+  Switch
 } from '@mui/material';
 import { type SelectChangeEvent } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
-import { getGenerations, deleteGeneration } from '../../api/generations.api';
+import { getGenerations, deleteGeneration, updateGeneration } from '../../api/generations.api';
 import { getBrands } from '../../api/brands.api';
 import { getModels } from '../../api/models.api';
 
@@ -76,6 +76,19 @@ const GenerationList: React.FC = () => {
       setDeleteId(null);
     }
   });
+
+  const toggleStatusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: 'active' | 'inactive' }) =>
+      updateGeneration(id, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['generations'] });
+    }
+  });
+
+  const handleStatusToggle = (id: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+    toggleStatusMutation.mutate({ id, status: newStatus });
+  };
 
   const handleChangePage = (_event: unknown, newPage: number) => {
     setPage(newPage);
@@ -196,10 +209,12 @@ const GenerationList: React.FC = () => {
                       {gen.startYear ? `${gen.startYear} - ${gen.endYear || 'Present'}` : '-'}
                     </TableCell>
                     <TableCell>
-                      <Chip 
-                        label={gen.status} 
-                        color={gen.status === 'active' ? 'success' : gen.status === 'draft' ? 'warning' : 'default'} 
-                        size="small" 
+                      <Switch
+                        checked={gen.status === 'active'}
+                        onChange={() => handleStatusToggle(gen._id, gen.status)}
+                        disabled={toggleStatusMutation.isPending}
+                        size="small"
+                        color="primary"
                       />
                     </TableCell>
                     <TableCell align="right">
