@@ -102,7 +102,8 @@ const ColorForm: React.FC = () => {
   const onSubmit = async (data: ColorFormData) => {
     const submitData = {
       ...data,
-      finishType: data.finishType === '' ? undefined : data.finishType
+      finishType: data.finishType === '' ? undefined : data.finishType,
+      colorFamily: data.colorFamily === '' ? undefined : data.colorFamily
     } as any;
     
     if (isEditMode && id) {

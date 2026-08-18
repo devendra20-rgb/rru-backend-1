@@ -1,0 +1,64 @@
+name: E2E Tests
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches:
+      - dev/admin
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    env:
+      API_URL: http://localhost:5000/api/v1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install backend deps
+        working-directory: backend
+        run: npm ci
+
+      - name: Seed database
+        working-directory: backend
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+        run: npx tsx scripts/seed-db.ts
+
+      - name: Start backend (dev)
+        working-directory: backend
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+        run: |
+          nohup npm run dev > backend.log 2>&1 & echo $! > backend.pid
+
+      - name: Wait for backend health
+        run: |
+          npx wait-on http://localhost:5000/api/v1/health || (sleep 2 && npx wait-on http://localhost:5000/api/v1/health)
+
+      - name: Run E2E script
+        working-directory: backend
+        env:
+          API_URL: http://localhost:5000/api/v1
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+        run: npm run e2e
+
+      - name: Collect backend log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-log
+          path: backend/backend.log
+
+      - name: Stop backend
+        if: always()
+        working-directory: backend
+        run: |
+          if [ -f backend.pid ]; then
+            kill -9 $(cat backend.pid) || true
+          fi

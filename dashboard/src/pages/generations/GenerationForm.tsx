@@ -130,10 +130,13 @@ const GenerationForm: React.FC = () => {
   });
 
   const onSubmit = (formData: GenerationFormData) => {
+    const submitData = { ...formData } as any;
+    if (submitData.description === '') delete submitData.description;
+
     if (isEditMode) {
-      updateMutation.mutate(formData);
+      updateMutation.mutate(submitData);
     } else {
-      createMutation.mutate(formData);
+      createMutation.mutate(submitData);
     }
   };
 

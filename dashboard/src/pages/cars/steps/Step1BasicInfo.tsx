@@ -158,10 +158,22 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
   });
 
   const onSubmit = (formData: any) => {
+    const submitData = { ...formData };
+    
+    if (submitData.description === '') delete submitData.description;
+    if (submitData.shortDescription === '') delete submitData.shortDescription;
+    if (submitData.fuelType === '') delete submitData.fuelType;
+    if (submitData.transmissionType === '') delete submitData.transmissionType;
+    if (submitData.drivetrain === '') delete submitData.drivetrain;
+    
+    if (submitData.engine) {
+      if (submitData.engine.aspiration === '') delete submitData.engine.aspiration;
+    }
+
     if (isEditMode) {
-      updateMutation.mutate(formData);
+      updateMutation.mutate(submitData);
     } else {
-      createMutation.mutate(formData);
+      createMutation.mutate(submitData);
     }
   };
 

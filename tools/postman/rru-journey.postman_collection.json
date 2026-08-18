@@ -1,0 +1,99 @@
+{
+  "info": {
+    "name": "RRU Backend - Full Journey",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Collection to exercise Brands -> Models -> Media full CRUD and media upload flow. Update `{{baseUrl}}` environment variable to point at your local backend (e.g., http://localhost:5000/api/v1)"
+  },
+  "item": [
+    {
+      "name": "Get Brands",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/brands",
+          "host": ["{{baseUrl}}"],
+          "path": ["brands"]
+        }
+      }
+    },
+    {
+      "name": "Create Brand",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"brandCode\": \"POST\",\n  \"name\": \"Postman Brand\",\n  \"slug\": \"postman-brand\",\n  \"originCountryCode\": \"US\",\n  \"websiteUrl\": \"https://example.com\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/brands",
+          "host": ["{{baseUrl}}"],
+          "path": ["brands"]
+        }
+      }
+    },
+    {
+      "name": "Create Model",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"brandId\": \"{{brandId}}\",\n  \"modelCode\": \"PM-001\",\n  \"name\": \"Postman Model\",\n  \"slug\": \"postman-model\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/models",
+          "host": ["{{baseUrl}}"],
+          "path": ["models"]
+        }
+      }
+    },
+    {
+      "name": "Upload Media (brand)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "file", "type": "file", "src": [] },
+            { "key": "folder", "value": "brands", "type": "text" },
+            { "key": "entityType", "value": "brand", "type": "text" },
+            { "key": "entityId", "value": "{{brandId}}", "type": "text" }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/media",
+          "host": ["{{baseUrl}}"],
+          "path": ["media"]
+        }
+      }
+    },
+    {
+      "name": "Attach Logo to Brand",
+      "request": {
+        "method": "PATCH",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{ \"logoMediaId\": \"{{mediaId}}\" }" },
+        "url": { "raw": "{{baseUrl}}/brands/{{brandId}}", "host": ["{{baseUrl}}"], "path": ["brands", "{{brandId}}"] }
+      }
+    },
+    {
+      "name": "Delete Media",
+      "request": { "method": "DELETE", "url": { "raw": "{{baseUrl}}/media/{{mediaId}}", "host": ["{{baseUrl}}"], "path": ["media","{{mediaId}}"] } }
+    },
+    {
+      "name": "Delete Model",
+      "request": { "method": "DELETE", "url": { "raw": "{{baseUrl}}/models/{{modelId}}", "host": ["{{baseUrl}}"], "path": ["models","{{modelId}}"] } }
+    },
+    {
+      "name": "Delete Brand",
+      "request": { "method": "DELETE", "url": { "raw": "{{baseUrl}}/brands/{{brandId}}", "host": ["{{baseUrl}}"], "path": ["brands","{{brandId}}"] } }
+    }
+  ]
+}

@@ -126,10 +126,15 @@ const BrandForm: React.FC = () => {
   });
 
   const onSubmit = (formData: any) => {
+    const submitData = { ...formData };
+    if (submitData.originCountryCode === '') delete submitData.originCountryCode;
+    if (submitData.websiteUrl === '') delete submitData.websiteUrl;
+    if (submitData.logoMediaId === '') delete submitData.logoMediaId;
+
     if (isEditMode) {
-      updateMutation.mutate(formData);
+      updateMutation.mutate(submitData);
     } else {
-      createMutation.mutate(formData);
+      createMutation.mutate(submitData);
     }
   };
 

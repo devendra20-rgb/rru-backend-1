@@ -117,10 +117,16 @@ const ModelForm: React.FC = () => {
   });
 
   const onSubmit = (formData: ModelFormData) => {
+    const submitData = { ...formData } as any;
+    if (submitData.bodyType === '') delete submitData.bodyType;
+    if (submitData.segment === '') delete submitData.segment;
+    if (submitData.description === '') delete submitData.description;
+    if (submitData.shortDescription === '') delete submitData.shortDescription;
+
     if (isEditMode) {
-      updateMutation.mutate(formData);
+      updateMutation.mutate(submitData);
     } else {
-      createMutation.mutate(formData);
+      createMutation.mutate(submitData);
     }
   };
 
