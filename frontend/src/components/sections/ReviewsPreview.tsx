@@ -1,0 +1,51 @@
+import Link from 'next/link';
+import { reviewsMock } from '@/data/homepage.mock';
+import styles from './sections.module.css';
+
+export default function ReviewsPreview() {
+  const main = reviewsMock[0];
+  const minis = reviewsMock.slice(1);
+
+  return (
+    <section className={styles.reviews} id="reviews-preview">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 12, marginBottom: 20 }}>
+        <div>
+          <h2 className="section-title">What drivers are saying.</h2>
+          <p className="section-subtitle" style={{ marginBottom: 0 }}>
+            Real-world opinions alongside structured vehicle information.
+          </p>
+        </div>
+        <Link href="/reviews" className="btn-light" style={{ fontSize: 12, padding: '8px 16px' }}>
+          View All Reviews →
+        </Link>
+      </div>
+
+      <div className={styles.reviewGrid}>
+        {/* Main review */}
+        <Link href="/reviews" className={styles.reviewMain} style={{ textDecoration: 'none', color: 'inherit' }}>
+          <div className={styles.stars}>★★★★★</div>
+          <div className={styles.reviewText}>
+            &ldquo;{main.content}&rdquo;
+          </div>
+          <div className={styles.reviewMeta}>
+            <span style={{ color: 'var(--green)', fontWeight: 700 }}>✓ Verified RRU Reader</span> · {main.authorLocation} · {main.vehicleName}
+          </div>
+        </Link>
+
+        {/* Mini reviews */}
+        <div className={styles.reviewCards}>
+          {minis.map((review) => (
+            <Link key={review._id} href="/reviews" className={styles.miniReview} style={{ textDecoration: 'none', color: 'inherit' }}>
+              <div className={styles.stars}>
+                {'★'.repeat(review.rating)}
+                {'☆'.repeat(5 - review.rating)}
+              </div>
+              <div className={styles.miniReviewTitle}>{review.title}</div>
+              <p className={styles.miniReviewText}>{review.content}</p>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}

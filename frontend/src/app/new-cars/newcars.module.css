@@ -1,0 +1,360 @@
+/* ============================================
+   NEW CARS LISTING PAGE
+   ============================================ */
+.listingPage {
+  padding: var(--space-3xl) var(--content-padding) var(--space-4xl);
+}
+
+/* --- Page Header --- */
+.listingHeader {
+  margin-bottom: var(--space-2xl);
+}
+
+.listingBreadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-sm);
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.listingBreadcrumb a {
+  color: var(--petrol);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.listingBreadcrumb a:hover {
+  text-decoration: underline;
+}
+
+.listingTitle {
+  font-size: var(--font-size-3xl);
+  letter-spacing: -0.8px;
+  margin: 0 0 4px;
+}
+
+.listingSubtitle {
+  color: var(--muted);
+  font-size: var(--font-size-base);
+}
+
+/* --- Layout --- */
+.listingLayout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+/* --- Sidebar / Filters --- */
+.filterSidebar {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  position: sticky;
+  top: calc(var(--nav-height) + 16px);
+}
+
+.filterHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.filterHeaderTitle {
+  font-size: var(--font-size-md);
+  font-weight: 800;
+  color: var(--deep);
+  margin: 0;
+}
+
+.filterClearBtn {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--amber);
+  cursor: pointer;
+  transition: color var(--transition-fast);
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.filterClearBtn:hover {
+  color: var(--amber-dark);
+}
+
+.filterGroup {
+  padding: 14px 0;
+  border-top: 1px solid var(--mist-dark);
+}
+
+.filterGroup:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+
+.filterLabel {
+  font-size: var(--font-size-sm);
+  font-weight: 800;
+  color: var(--deep);
+  margin-bottom: 10px;
+  display: block;
+}
+
+.filterChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.filterChip {
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--line);
+  background: var(--white);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.filterChip:hover {
+  border-color: var(--petrol);
+  color: var(--petrol);
+}
+
+.filterChipActive {
+  background: var(--petrol);
+  color: var(--white);
+  border-color: var(--petrol);
+}
+
+.filterSelect {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  color: var(--text);
+  background: var(--white);
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2366777D' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 30px;
+}
+
+.filterSelect:focus {
+  border-color: var(--petrol);
+}
+
+.filterPriceInputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.filterPriceInput {
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  color: var(--text);
+  outline: none;
+  width: 100%;
+}
+
+.filterPriceInput:focus {
+  border-color: var(--petrol);
+}
+
+.filterPriceInput::placeholder {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+/* --- Results Header --- */
+.resultsArea {
+  min-width: 0;
+}
+
+.resultsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.resultsCount {
+  font-size: var(--font-size-sm);
+  color: var(--muted);
+}
+
+.resultsCount strong {
+  color: var(--deep);
+  font-weight: 800;
+}
+
+.resultsSort {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.resultsSortLabel {
+  font-size: var(--font-size-sm);
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.resultsSortSelect {
+  padding: 7px 30px 7px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text);
+  background: var(--white);
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2366777D' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+.resultsSortSelect:focus {
+  border-color: var(--petrol);
+}
+
+/* --- Results Grid --- */
+.resultsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+/* --- Active Filters Strip --- */
+.activeFilters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.activeFilterTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: var(--radius-full);
+  background: var(--mist);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--petrol);
+  cursor: pointer;
+  border: none;
+  transition: background var(--transition-fast);
+}
+
+.activeFilterTag:hover {
+  background: var(--mist-dark);
+}
+
+.activeFilterTagX {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--muted);
+  line-height: 1;
+}
+
+/* --- Mobile Filter Toggle --- */
+.mobileFilterToggle {
+  display: none;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--white);
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--deep);
+  cursor: pointer;
+  margin-bottom: 16px;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+/* --- Empty State --- */
+.emptyState {
+  text-align: center;
+  padding: 60px 24px;
+  grid-column: 1 / -1;
+}
+
+.emptyStateIcon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--mist);
+  display: grid;
+  place-items: center;
+  margin: 0 auto 16px;
+  color: var(--petrol);
+}
+
+.emptyStateTitle {
+  font-size: var(--font-size-lg);
+  font-weight: 800;
+  color: var(--deep);
+  margin-bottom: 6px;
+}
+
+.emptyStateDesc {
+  font-size: var(--font-size-base);
+  color: var(--muted);
+  margin-bottom: 18px;
+}
+
+/* --- Responsive --- */
+@media (max-width: 1024px) {
+  .resultsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .listingLayout {
+    grid-template-columns: 220px 1fr;
+    gap: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .listingLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .filterSidebar {
+    position: static;
+    display: none;
+  }
+
+  .filterSidebarOpen {
+    display: block;
+  }
+
+  .mobileFilterToggle {
+    display: flex;
+  }
+
+  .resultsGrid {
+    grid-template-columns: 1fr;
+  }
+}

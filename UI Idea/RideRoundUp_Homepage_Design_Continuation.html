@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RideRoundUp — Homepage Design Continuation</title>
+<style>
+:root{
+  --petrol:#0D3B49;--deep:#072830;--amber:#E8942B;--green:#12805C;
+  --rust:#C4451D;--mist:#F4F6F7;--line:#DCE3E6;--text:#16313A;--muted:#66777D;--white:#fff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#e9edef;color:var(--text);font-family:Arial,Helvetica,sans-serif}
+.page{max-width:1440px;margin:auto;background:var(--white);box-shadow:0 0 40px rgba(0,0,0,.08)}
+.note{background:var(--deep);color:#fff;padding:11px 28px;font-size:12px;letter-spacing:.2px}
+section{position:relative;border-bottom:1px solid var(--line)}
+.tag{position:absolute;left:22px;top:14px;background:var(--petrol);color:#fff;padding:6px 9px;border-radius:5px;font-size:10px;font-weight:700;z-index:4}
+.nav{height:64px;padding:0 55px;display:flex;align-items:center;gap:40px;border-bottom:1px solid var(--line);background:#fff}
+.logo{font-size:20px;font-weight:900;letter-spacing:-.7px;white-space:nowrap;color:var(--deep)}
+.logo small{display:block;font-size:7px;letter-spacing:2.4px;font-weight:700;color:var(--petrol)}
+.links{display:flex;gap:27px;align-items:center;flex:1;font-size:13px;font-weight:700}
+.links span{white-space:nowrap}
+.utility{display:flex;align-items:center;gap:10px}
+.search{width:36px;height:36px;border:1px solid var(--line);border-radius:50%;display:grid;place-items:center}
+.market{padding:9px 12px;border:1px solid var(--line);border-radius:7px;font-size:12px}
+.login{padding:9px 14px;border-radius:7px;background:var(--petrol);color:#fff;font-size:12px;font-weight:700}
+
+.hero{min-height:565px;background:var(--deep);color:#fff;padding:105px 75px;overflow:hidden}
+.hero:after{content:"HERO VEHICLE / CINEMATIC IMAGE";position:absolute;right:0;top:0;width:53%;height:100%;display:grid;place-items:center;background:linear-gradient(100deg,rgba(7,40,48,.1),rgba(13,59,73,.9));color:#8ea8af;letter-spacing:2px;font-size:14px}
+.heroContent{position:relative;z-index:2;width:52%}
+.eyebrow{font-size:11px;letter-spacing:2px;color:#9fb9bf;font-weight:800;text-transform:uppercase}
+h1{font-size:57px;line-height:1.02;letter-spacing:-2.5px;margin:12px 0 18px}
+.hero p{font-size:16px;line-height:1.6;color:#c9d7da;max-width:550px}
+.heroSearch{margin-top:27px;background:#fff;color:#718087;border-radius:8px;padding:18px 20px;max-width:620px;font-size:14px}
+.heroActions{display:flex;gap:10px;margin-top:15px}
+.btn{padding:12px 18px;border-radius:7px;font-size:13px;font-weight:800;border:1px solid var(--petrol);display:inline-block}
+.btn.primary{background:var(--amber);border-color:var(--amber);color:#172b31}
+.btn.light{background:#fff;color:var(--petrol)}
+.btn.outline{background:transparent;border-color:#78939b;color:#fff}
+
+.pad{padding:65px 70px}.mist{background:var(--mist)}
+.title{font-size:31px;letter-spacing:-.8px;margin:0 0 8px;color:var(--deep)}
+.sub{color:var(--muted);font-size:14px;line-height:1.55;margin:0 0 26px}
+.hubs{display:grid;grid-template-columns:repeat(6,1fr);gap:13px}
+.hub{min-height:112px;border:1px solid var(--line);border-radius:10px;padding:18px;display:flex;flex-direction:column;justify-content:space-between;background:#fff}
+.hub strong{font-size:15px}.hub span{font-size:12px;color:var(--muted)}
+
+.tabs{display:flex;gap:25px;border-bottom:1px solid var(--line);margin:25px 0}.tab{padding-bottom:12px;font-size:13px;font-weight:800;color:#7b898e}.tab.active{color:var(--petrol);border-bottom:2px solid var(--petrol)}
+.cards4{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.car{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+.carImg{height:175px;background:#dfe6e8;display:grid;place-items:center;color:#728187;font-size:11px}
+.carInfo{padding:17px}.carInfo h3{margin:0 0 7px;font-size:18px}.meta{font-size:12px;color:var(--muted);line-height:1.6}
+.receipt{margin-top:13px;border-top:1px dashed #a9b6ba;border-bottom:1px dashed #a9b6ba;padding:9px 0;color:var(--deep);font-size:11px;display:flex;justify-content:space-between}.receipt b{color:var(--amber);font-size:13px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}.chip{padding:5px 8px;border-radius:15px;background:#edf3f4;color:var(--petrol);font-size:10px;font-weight:700}
+
+.brands{display:grid;grid-template-columns:repeat(8,1fr);gap:12px}.brand{height:76px;border:1px solid var(--line);border-radius:9px;display:grid;place-items:center;font-size:13px;font-weight:800;background:#fff}
+
+.compare{background:#eef3f4}.compareGrid{display:grid;grid-template-columns:1fr 70px 1fr;gap:16px;align-items:center}.compareCar{background:#fff;border:1px solid var(--line);border-radius:10px;padding:17px}.compareImg{height:150px;background:#dfe6e8;display:grid;place-items:center;color:#728187;font-size:11px}.vs{text-align:center;font-size:22px;font-weight:900;color:var(--petrol)}
+.compareRows{margin-top:18px;background:#fff;border:1px solid var(--line);border-radius:9px;overflow:hidden}.row{display:grid;grid-template-columns:1fr 1fr 1fr;padding:10px 15px;border-bottom:1px solid #edf0f1;font-size:12px}.row:last-child{border:0}.row b{text-align:center}.row span:last-child{text-align:right}
+
+.cost{background:#f7f2e9}.costGrid{display:grid;grid-template-columns:1.1fr .9fr;gap:35px;align-items:center}.costBox{background:#fff;border-radius:12px;padding:24px;box-shadow:0 10px 25px rgba(7,40,48,.07)}.costBig{font-size:37px;font-weight:900;color:var(--deep)}.costAmber{color:var(--amber);font-weight:800}.dash{border-top:1px dashed #aab7bb;margin:17px 0}.costLine{display:flex;justify-content:space-between;padding:8px 0;font-size:12px}
+
+.ai{background:var(--deep);color:#fff}.aiGrid{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center}.ai h2{font-size:38px;margin:0 0 12px}.ai p{color:#c8d5d8;line-height:1.6}.chat{background:#f6f8f8;color:var(--text);border-radius:12px;padding:18px}.bubble{padding:11px 13px;border-radius:9px;margin:8px 0;font-size:12px;max-width:90%}.user{background:#dfecee;margin-left:auto}.bot{background:#fff;border:1px solid var(--line)}.source{font-size:9px;color:var(--muted);margin-top:5px}
+
+.reviews{background:#fff}.reviewGrid{display:grid;grid-template-columns:1.2fr .8fr;gap:20px}.reviewMain{border:1px solid var(--line);border-radius:11px;padding:24px}.stars{color:var(--amber);letter-spacing:2px}.reviewText{font-size:22px;line-height:1.35;color:var(--deep);margin:15px 0}.reviewMeta{font-size:12px;color:var(--muted)}.reviewCards{display:grid;gap:12px}.miniReview{border:1px solid var(--line);border-radius:10px;padding:17px}.miniReview p{font-size:12px;line-height:1.5;color:var(--muted)}
+
+.poll{background:#f7efe3}.pollGrid{display:grid;grid-template-columns:1fr 1fr;gap:35px;align-items:center}.pollBox{background:#fff;border-radius:12px;padding:22px;box-shadow:0 8px 22px rgba(7,40,48,.07)}.bar{height:11px;background:#e8eeee;border-radius:10px;overflow:hidden;margin:10px 0 17px}.bar i{display:block;height:100%;width:54%;background:var(--petrol)}.votes{display:flex;justify-content:space-between;font-size:11px;font-weight:800}.voteBtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:15px}.vote{padding:10px;border:1px solid #b6c2c5;border-radius:7px;text-align:center;font-size:11px;font-weight:800}
+
+.blogGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.blog{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}.blogImg{height:165px;background:#dfe6e8;display:grid;place-items:center;color:#728187;font-size:11px}.blogInfo{padding:17px}.cat{font-size:9px;letter-spacing:1.2px;color:var(--green);font-weight:900}.blog h3{font-size:17px;margin:8px 0}.blog p{font-size:12px;color:var(--muted);line-height:1.5}
+
+.service{background:var(--petrol);color:#fff}.serviceGrid{display:grid;grid-template-columns:1fr 1fr;gap:35px;align-items:center}.service h2{font-size:38px;margin:0 0 10px}.service p{color:#c8d8dc;line-height:1.6}.serviceCards{display:grid;grid-template-columns:1fr 1fr;gap:12px}.serviceCard{padding:19px;border:1px solid #4c7480;border-radius:9px;background:#123f4c;font-size:13px}
+
+.whyGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}.why{border:1px solid var(--line);border-radius:10px;padding:22px}.why h3{font-size:16px;margin:0 0 8px}.why p{font-size:12px;color:var(--muted);line-height:1.5}
+
+.final{text-align:center;background:var(--deep);color:#fff;padding:75px 50px}.final h2{font-size:39px;margin:0 0 10px}.final p{color:#c7d4d7;font-size:14px}
+
+.footer{background:#061d24;color:#fff;padding:52px 70px}.footerGrid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:25px}.footer h4{margin:0 0 12px;font-size:13px}.footer li,.footer p{color:#a9bbc0;font-size:11px;line-height:1.9}.footer ul{list-style:none;padding:0;margin:0}
+
+@media(max-width:900px){
+.nav{padding:0 22px}.links{display:none}.hero{padding:90px 28px}.hero:after{width:100%;opacity:.25}.heroContent{width:100%}
+.pad,.footer{padding-left:25px;padding-right:25px}.hubs,.cards4,.brands,.whyGrid{grid-template-columns:repeat(2,1fr)}
+.costGrid,.aiGrid,.reviewGrid,.pollGrid,.serviceGrid,.footerGrid{grid-template-columns:1fr}.compareGrid{grid-template-columns:1fr}.vs{padding:5px}.blogGrid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="page">
+<div class="note">RRU HOMEPAGE — visual continuation of the approved website direction. Dealer section intentionally excluded. Layout follows the PPT design system: deep petrol, mist surfaces, amber cost accents, receipt-style pricing, restrained cards.</div>
+
+<section><span class="tag">01 — NAVBAR</span><header class="nav">
+<div class="logo">rideroundup<small>AUTOMOTIVE DISCOVERY</small></div>
+<nav class="links"><span>New Cars</span><span>Compare</span><span>AI Assistant</span><span>Research</span><span>News & Blogs</span></nav>
+<div class="utility"><div class="search">⌕</div><div class="market">UAE ▾</div><div class="login">Login</div></div>
+</header></section>
+
+<section class="hero"><span class="tag">02 — HERO / TOP SECTION</span>
+<div class="heroContent"><div class="eyebrow">COST HONESTY · CAR DISCOVERY</div>
+<h1>Know what your car really costs.</h1>
+<p>Discover cars, compare real ownership costs and make a better-informed decision — all in one place.</p>
+<div class="heroSearch">⌕ &nbsp; Try: “7 seater under AED 150k”</div>
+<div class="heroActions"><div class="btn primary">Explore New Cars</div><div class="btn light">Compare Cars</div></div>
+</div></section>
+
+<section class="pad"><span class="tag">03 — BROWSE HUBS</span><h2 class="title">Find cars your way.</h2><p class="sub">Start with the way you think about your next car — not a complicated filter.</p>
+<div class="hubs"><div class="hub"><strong>By Body Type</strong><span>SUV · Sedan · Hatchback</span></div><div class="hub"><strong>By Budget</strong><span>Under 100k · 150k · 250k</span></div><div class="hub"><strong>By Fuel</strong><span>Petrol · Diesel · Hybrid · EV</span></div><div class="hub"><strong>By Seats</strong><span>5 · 7 · 7+ Seaters</span></div><div class="hub"><strong>By Use Case</strong><span>Family · City · Off-road</span></div><div class="hub"><strong>By Brand</strong><span>Browse all brands</span></div></div></section>
+
+<section class="pad mist"><span class="tag">04 — FEATURED / NEW CARS</span><h2 class="title">Explore New Cars</h2><p class="sub">Popular and latest vehicles with useful information at a glance.</p>
+<div class="tabs"><div class="tab active">Popular</div><div class="tab">Latest</div><div class="tab">Upcoming</div></div>
+<div class="cards4">
+<div class="car"><div class="carImg">VEHICLE IMAGE</div><div class="carInfo"><h3>Toyota Land Cruiser</h3><div class="meta">SUV · Petrol · Automatic · 7 Seats</div><div class="receipt"><span>Price from</span><b>AED 335,000</b></div><div class="receipt"><span>Est. monthly ownership</span><b>AED 4,850</b></div><div class="chips"><span class="chip">4WD</span><span class="chip">7 Seats</span><span class="chip">Verified</span></div></div></div>
+<div class="car"><div class="carImg">VEHICLE IMAGE</div><div class="carInfo"><h3>Nissan Patrol</h3><div class="meta">SUV · Petrol · Automatic · 7 Seats</div><div class="receipt"><span>Price from</span><b>AED 239,900</b></div><div class="receipt"><span>Est. monthly ownership</span><b>AED 3,920</b></div><div class="chips"><span class="chip">V8</span><span class="chip">7 Seats</span><span class="chip">Verified</span></div></div></div>
+<div class="car"><div class="carImg">VEHICLE IMAGE</div><div class="carInfo"><h3>BMW X5</h3><div class="meta">SUV · Hybrid · Automatic · 5 Seats</div><div class="receipt"><span>Price from</span><b>AED 365,000</b></div><div class="receipt"><span>Est. monthly ownership</span><b>AED 4,620</b></div><div class="chips"><span class="chip">Hybrid</span><span class="chip">Premium</span></div></div></div>
+<div class="car"><div class="carImg">VEHICLE IMAGE</div><div class="carInfo"><h3>Tesla Model Y</h3><div class="meta">SUV · Electric · Automatic · 5 Seats</div><div class="receipt"><span>Price from</span><b>AED 179,990</b></div><div class="receipt"><span>Est. monthly ownership</span><b>AED 2,410</b></div><div class="chips"><span class="chip">EV</span><span class="chip">Fast Charge</span></div></div></div>
+</div></section>
+
+<section class="pad"><span class="tag">05 — BROWSE BY BRAND</span><h2 class="title">Browse by Brand</h2><p class="sub">Explore the brands available in your market.</p><div class="brands"><div class="brand">Toyota</div><div class="brand">Nissan</div><div class="brand">BMW</div><div class="brand">Mercedes-Benz</div><div class="brand">Hyundai</div><div class="brand">Kia</div><div class="brand">Audi</div><div class="brand">Lexus</div></div></section>
+
+<section class="pad compare"><span class="tag">06 — COMPARE</span><h2 class="title">Compare cars before you buy.</h2><p class="sub">Put two vehicles side by side and see the differences that actually matter.</p>
+<div class="compareGrid"><div class="compareCar"><div class="compareImg">LAND CRUISER IMAGE</div><h3>Toyota Land Cruiser</h3></div><div class="vs">VS</div><div class="compareCar"><div class="compareImg">PATROL IMAGE</div><h3>Nissan Patrol</h3></div></div>
+<div class="compareRows"><div class="row"><span>Starting Price</span><b>AED 335k</b><span>AED 239.9k</span></div><div class="row"><span>Seats</span><b>7</b><span>7</span></div><div class="row"><span>Fuel</span><b>Petrol</b><span>Petrol</span></div><div class="row"><span>Ownership / month</span><b>AED 4,850</b><span>AED 3,920</span></div></div></section>
+
+<section class="pad cost"><span class="tag">07 — COST TO OWN</span><div class="costGrid"><div><div class="eyebrow" style="color:var(--amber)">THE RRU DIFFERENTIATOR</div><h2 class="title" style="font-size:39px;margin-top:10px">See the cost beyond the sticker price.</h2><p class="sub">Purchase price is only the beginning. RRU surfaces the running costs that shape the real ownership decision.</p><div class="btn primary">See Cost to Own</div></div>
+<div class="costBox"><div class="muted">Toyota Land Cruiser · UAE</div><div class="costBig">AED 4,850 <small style="font-size:13px;font-weight:600">/ month</small></div><div class="costAmber">Estimated ownership cost</div><div class="dash"></div><div class="costLine"><span>Fuel</span><b>AED 1,420</b></div><div class="costLine"><span>Insurance</span><b>AED 720</b></div><div class="costLine"><span>Maintenance</span><b>AED 410</b></div><div class="costLine"><span>Registration / fees</span><b>AED 300</b></div></div></div></section>
+
+<section class="pad ai"><span class="tag">08 — AI ASSISTANT</span><div class="aiGrid"><div><div class="eyebrow">RIDE ROUNDUP AI</div><h2>Ask for a car like you’d ask a friend.</h2><p>Tell us your budget, family size, fuel preference or use case. The assistant answers from RRU’s structured vehicle data and shows its assumptions and sources.</p><div class="btn primary">Ask the AI Assistant</div></div>
+<div class="chat"><div class="bubble user">I need a 7-seater under AED 150k for family trips.</div><div class="bubble bot"><b>Here are 3 strong matches.</b><br><br>1. Nissan X-Terra — AED 146k<br>2. Kia Sorento — AED 139k<br>3. Hyundai Palisade — AED 149k<div class="source">Based on UAE market data · verified 06 Aug 2026</div></div></div></div></section>
+
+<section class="pad reviews"><span class="tag">09 — REVIEWS</span><h2 class="title">What drivers are saying.</h2><p class="sub">Real-world opinions alongside structured vehicle information.</p><div class="reviewGrid"><div class="reviewMain"><div class="stars">★★★★★</div><div class="reviewText">“The comparison made the decision much easier. I could see the ownership cost instead of looking only at the purchase price.”</div><div class="reviewMeta">Verified RRU reader · Dubai · Toyota Land Cruiser</div></div><div class="reviewCards"><div class="miniReview"><div class="stars">★★★★★</div><b>Very useful comparison</b><p>Clean information and easy to understand.</p></div><div class="miniReview"><div class="stars">★★★★☆</div><b>Good vehicle research</b><p>The running-cost view is what stood out.</p></div></div></div></section>
+
+<section class="pad poll"><span class="tag">10 — COMMUNITY POLL / ENGAGEMENT</span><div class="pollGrid"><div><div class="eyebrow" style="color:var(--amber)">LIGHTWEIGHT ENGAGEMENT</div><h2 class="title" style="font-size:39px;margin-top:10px">Which one would you pick?</h2><p class="sub">A simple recurring interaction keeps the homepage alive and naturally funnels users into comparison pages.</p></div><div class="pollBox"><h3 style="margin:0">Land Cruiser vs Patrol</h3><div class="votes"><span>Toyota Land Cruiser · 54%</span><span>Nissan Patrol · 46%</span></div><div class="bar"><i></i></div><div class="voteBtns"><div class="vote">Vote Land Cruiser</div><div class="vote">Vote Patrol</div></div></div></div></section>
+
+<section class="pad mist"><span class="tag">11 — NEWS & BLOGS</span><h2 class="title">Latest from the automotive world.</h2><p class="sub">News, buying guides, reviews and useful car content.</p><div class="blogGrid"><div class="blog"><div class="blogImg">BLOG IMAGE</div><div class="blogInfo"><div class="cat">BUYING GUIDE</div><h3>Best 7-Seater SUVs for Family Use</h3><p>What to look for beyond price, including running cost and practicality.</p></div></div><div class="blog"><div class="blogImg">BLOG IMAGE</div><div class="blogInfo"><div class="cat">EV</div><h3>What Changes When You Switch to an EV?</h3><p>Charging, maintenance and real ownership considerations.</p></div></div><div class="blog"><div class="blogImg">BLOG IMAGE</div><div class="blogInfo"><div class="cat">NEWS</div><h3>Latest Cars Entering the UAE Market</h3><p>A quick look at new launches and important updates.</p></div></div></div></section>
+
+<section class="pad service"><span class="tag">12 — BOOK A SERVICE</span><div class="serviceGrid"><div><div class="eyebrow">AFTER THE PURCHASE</div><h2>Keep your car running right.</h2><p>Book routine maintenance and essential services through a simple, guided flow.</p><div class="btn light">Book a Service</div></div><div class="serviceCards"><div class="serviceCard">🔧 &nbsp; <b>Periodic Service</b></div><div class="serviceCard">❄️ &nbsp; <b>AC Service</b></div><div class="serviceCard">🛠 &nbsp; <b>General Service</b></div><div class="serviceCard">🔍 &nbsp; <b>Inspection</b></div></div></div></section>
+
+<section class="pad"><span class="tag">13 — WHY RRU</span><h2 class="title">Why RideRoundUp?</h2><p class="sub">Built around trustworthy vehicle data, useful comparisons and transparent ownership information.</p><div class="whyGrid"><div class="why"><h3>Structured Data</h3><p>Brand, model, variant, specifications, features, colors and market data are organized consistently.</p></div><div class="why"><h3>Cost Honesty</h3><p>See ownership costs instead of relying only on the sticker price.</p></div><div class="why"><h3>Compare Clearly</h3><p>Make side-by-side decisions using the same structured attributes.</p></div><div class="why"><h3>AI With Sources</h3><p>The assistant answers from RRU data and makes assumptions visible.</p></div></div></section>
+
+<section class="final"><span class="tag">14 — FINAL CTA</span><h2>Ready to find your next car?</h2><p>Discover. Compare. Decide with confidence.</p><div class="btn primary">Explore New Cars</div></section>
+
+<footer class="footer"><span class="tag">15 — FOOTER</span><div class="footerGrid"><div><div class="logo" style="color:#fff">rideroundup</div><p>Automotive discovery built around better vehicle data and honest ownership information.</p></div><div><h4>Cars</h4><ul><li>New Cars</li><li>Compare</li><li>Brands</li><li>Upcoming Cars</li></ul></div><div><h4>Discover</h4><ul><li>AI Assistant</li><li>Reviews</li><li>Cost to Own</li><li>News & Blogs</li></ul></div><div><h4>Services</h4><ul><li>Book a Service</li><li>About</li><li>Contact</li><li>Help</li></ul></div><div><h4>Legal</h4><ul><li>Privacy</li><li>Terms</li><li>Cookie Policy</li><li>Accessibility</li></ul></div></div></footer>
+</div>
+</body>
+</html>
