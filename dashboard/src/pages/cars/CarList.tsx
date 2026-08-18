@@ -14,7 +14,6 @@ import {
   TableRow,
   TablePagination,
   IconButton,
-  Chip,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -26,14 +25,15 @@ import {
   FormControl,
   InputLabel,
   Select,
-  Stack
+  Stack,
+  Switch
 } from '@mui/material';
 import { type SelectChangeEvent } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import { getVariants, deleteVariant } from '../../api/variants.api';
+import { getVariants, deleteVariant, updateVariant } from '../../api/variants.api';
 import { getBrands } from '../../api/brands.api';
 import { getModels } from '../../api/models.api';
 import { getGenerations } from '../../api/generations.api';
@@ -85,6 +85,19 @@ const CarList: React.FC = () => {
       setDeleteId(null);
     }
   });
+
+  const toggleStatusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: 'active' | 'inactive' }) =>
+      updateVariant(id, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['variants'] });
+    }
+  });
+
+  const handleStatusToggle = (id: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+    toggleStatusMutation.mutate({ id, status: newStatus });
+  };
 
   const handleChangePage = (_event: unknown, newPage: number) => {
     setPage(newPage);
@@ -224,10 +237,12 @@ const CarList: React.FC = () => {
                     <TableCell>{variant.generationId?.name || 'Unknown'}</TableCell>
                     <TableCell>{variant.modelYear || '-'}</TableCell>
                     <TableCell>
-                      <Chip 
-                        label={variant.status} 
-                        color={variant.status === 'active' ? 'success' : variant.status === 'draft' ? 'warning' : 'default'} 
-                        size="small" 
+                      <Switch
+                        checked={variant.status === 'active'}
+                        onChange={() => handleStatusToggle(variant._id, variant.status)}
+                        disabled={toggleStatusMutation.isPending}
+                        size="small"
+                        color="primary"
                       />
                     </TableCell>
                     <TableCell align="right">

@@ -105,10 +105,14 @@ const MarketForm: React.FC = () => {
   });
 
   const onSubmit = (formData: MarketFormData) => {
+    const submitData = { ...formData };
+    if (submitData.currencySymbol === '') delete submitData.currencySymbol;
+    if (submitData.region === '') delete submitData.region;
+
     if (isEditMode) {
-      updateMutation.mutate(formData);
+      updateMutation.mutate(submitData);
     } else {
-      createMutation.mutate(formData);
+      createMutation.mutate(submitData);
     }
   };
 

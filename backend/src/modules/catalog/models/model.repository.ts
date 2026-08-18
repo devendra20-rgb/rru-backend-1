@@ -8,7 +8,7 @@ export const modelRepository = {
   },
 
   async findById(id: string | Types.ObjectId) {
-    return VehicleModel.findById(id).lean();
+    return VehicleModel.findById(id).populate('brandId').lean();
   },
 
   async findBySlug(slug: string) {
@@ -51,6 +51,7 @@ export const modelRepository = {
     sort: Record<string, 1 | -1>,
   ) {
     return VehicleModel.find(filter)
+      .populate('brandId')
       .sort(sort as any)
       .skip(skip)
       .limit(limit)

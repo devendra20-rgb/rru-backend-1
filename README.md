@@ -27,6 +27,13 @@ This repository uses a monorepo-style structure intended for future expansion.
    ```
    Ensure you have a MongoDB instance running.
 
+   For CI-driven E2E testing (GitHub Actions), add the following repository secret:
+
+   - `MONGODB_URI` — your MongoDB connection string (e.g., mongodb+srv://...)
+
+   The workflow `.github/workflows/e2e.yml` will use this secret to seed the database
+   and run the automated E2E script.
+
 4. **Run development server:**
    ```bash
    npm run dev

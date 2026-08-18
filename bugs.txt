@@ -1,0 +1,10 @@
+Bugs : 
+1. All the validation errors or mandatory fields errors etc, they show status code rather than a proper error message. Fix that
+
+2. Across catalog and vehicle data tabs, give a toggle button for the status column to make it active or inactive
+
+3. In the models dashboard table, brand is showing as unknown.
+
+4. Similarly in generations table, model is showing as unknown and in vehicles, generation is being shown as unknown.
+
+5. While creating the car, in the media tab, instead of the sort button, let's give the drag and drop to rank the images.

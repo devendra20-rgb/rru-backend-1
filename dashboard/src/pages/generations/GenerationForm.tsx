@@ -130,10 +130,13 @@ const GenerationForm: React.FC = () => {
   });
 
   const onSubmit = (formData: GenerationFormData) => {
+    const submitData = { ...formData } as any;
+    if (submitData.description === '') delete submitData.description;
+
     if (isEditMode) {
-      updateMutation.mutate(formData);
+      updateMutation.mutate(submitData);
     } else {
-      createMutation.mutate(formData);
+      createMutation.mutate(submitData);
     }
   };
 
@@ -160,7 +163,7 @@ const GenerationForm: React.FC = () => {
   const handleBrandChange = (e: any) => {
     setSelectedBrandId(e.target.value);
     // Clear the model selection when brand changes
-    setValue('modelId', '', { shouldValidate: true });
+    setValue('modelId', '');
   };
 
   if (isFetching || isLoadingBrands) {

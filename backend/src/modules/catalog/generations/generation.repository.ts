@@ -8,7 +8,7 @@ export const generationRepository = {
   },
 
   async findById(id: string | Types.ObjectId) {
-    return Generation.findById(id).lean();
+    return Generation.findById(id).populate('modelId').lean();
   },
 
   async findBySlug(slug: string) {
@@ -51,6 +51,7 @@ export const generationRepository = {
     sort: Record<string, 1 | -1>,
   ) {
     return Generation.find(filter)
+      .populate('modelId')
       .sort(sort as any)
       .skip(skip)
       .limit(limit)

@@ -14,7 +14,6 @@ import {
   TableRow,
   TablePagination,
   IconButton,
-  Chip,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -25,13 +24,14 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  Select
+  Select,
+  Switch
 } from '@mui/material';
 import { type SelectChangeEvent } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
-import { getModels, deleteModel } from '../../api/models.api';
+import { getModels, deleteModel, updateModel } from '../../api/models.api';
 import { getBrands } from '../../api/brands.api';
 
 const ModelList: React.FC = () => {
@@ -66,6 +66,19 @@ const ModelList: React.FC = () => {
       setDeleteId(null);
     }
   });
+
+  const toggleStatusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: 'active' | 'inactive' }) =>
+      updateModel(id, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['models'] });
+    }
+  });
+
+  const handleStatusToggle = (id: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+    toggleStatusMutation.mutate({ id, status: newStatus });
+  };
 
   const handleChangePage = (_event: unknown, newPage: number) => {
     setPage(newPage);
@@ -162,10 +175,12 @@ const ModelList: React.FC = () => {
                     <TableCell>{model.brandId?.name || 'Unknown'}</TableCell>
                     <TableCell>{model.bodyType || '-'}</TableCell>
                     <TableCell>
-                      <Chip 
-                        label={model.status} 
-                        color={model.status === 'active' ? 'success' : model.status === 'draft' ? 'warning' : 'default'} 
-                        size="small" 
+                      <Switch
+                        checked={model.status === 'active'}
+                        onChange={() => handleStatusToggle(model._id, model.status)}
+                        disabled={toggleStatusMutation.isPending}
+                        size="small"
+                        color="primary"
                       />
                     </TableCell>
                     <TableCell align="right">

@@ -14,19 +14,19 @@ import {
   TableRow,
   TablePagination,
   IconButton,
-  Chip,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogContentText,
   DialogActions,
   CircularProgress,
-  Alert
+  Alert,
+  Switch
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
-import { getFeatures, deleteFeature } from '../../api/features.api';
+import { getFeatures, deleteFeature, updateFeature } from '../../api/features.api';
 
 const FeatureList: React.FC = () => {
   const navigate = useNavigate();
@@ -48,6 +48,19 @@ const FeatureList: React.FC = () => {
       setDeleteId(null);
     }
   });
+
+  const toggleStatusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: 'active' | 'inactive' }) =>
+      updateFeature(id, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['features'] });
+    }
+  });
+
+  const handleStatusToggle = (id: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+    toggleStatusMutation.mutate({ id, status: newStatus });
+  };
 
   const handleChangePage = (_event: unknown, newPage: number) => {
     setPage(newPage);
@@ -116,10 +129,12 @@ const FeatureList: React.FC = () => {
                     <TableCell component="th" scope="row">{feature.name}</TableCell>
                     <TableCell>{feature.category}</TableCell>
                     <TableCell>
-                      <Chip 
-                        label={feature.status} 
-                        color={feature.status === 'active' ? 'success' : 'default'} 
-                        size="small" 
+                      <Switch
+                        checked={feature.status === 'active'}
+                        onChange={() => handleStatusToggle(feature._id, feature.status)}
+                        disabled={toggleStatusMutation.isPending}
+                        size="small"
+                        color="primary"
                       />
                     </TableCell>
                     <TableCell align="right">

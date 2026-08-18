@@ -117,10 +117,16 @@ const ModelForm: React.FC = () => {
   });
 
   const onSubmit = (formData: ModelFormData) => {
+    const submitData = { ...formData } as any;
+    if (submitData.bodyType === '') delete submitData.bodyType;
+    if (submitData.segment === '') delete submitData.segment;
+    if (submitData.description === '') delete submitData.description;
+    if (submitData.shortDescription === '') delete submitData.shortDescription;
+
     if (isEditMode) {
-      updateMutation.mutate(formData);
+      updateMutation.mutate(submitData);
     } else {
-      createMutation.mutate(formData);
+      createMutation.mutate(submitData);
     }
   };
 
@@ -254,14 +260,21 @@ const ModelForm: React.FC = () => {
                 name="bodyType"
                 control={control}
                 render={({ field }) => (
-                  <TextField
-                    {...field}
-                    label="Body Type"
-                    fullWidth
-                    placeholder="e.g. SUV, Sedan, Hatchback"
-                    error={!!errors.bodyType}
-                    helperText={errors.bodyType?.message}
-                  />
+                  <FormControl fullWidth error={!!errors.bodyType}>
+                    <InputLabel>Body Type</InputLabel>
+                    <Select {...field} label="Body Type">
+                      <MenuItem value=""><em>None</em></MenuItem>
+                      <MenuItem value="Sedan">Sedan</MenuItem>
+                      <MenuItem value="SUV">SUV</MenuItem>
+                      <MenuItem value="Coupe">Coupe</MenuItem>
+                      <MenuItem value="Hatchback">Hatchback</MenuItem>
+                      <MenuItem value="Convertible">Convertible</MenuItem>
+                      <MenuItem value="Wagon">Wagon</MenuItem>
+                      <MenuItem value="Pickup">Pickup</MenuItem>
+                      <MenuItem value="Van">Van</MenuItem>
+                    </Select>
+                    {errors.bodyType && <FormHelperText>{errors.bodyType.message}</FormHelperText>}
+                  </FormControl>
                 )}
               />
 

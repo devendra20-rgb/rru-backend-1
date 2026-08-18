@@ -41,7 +41,6 @@ const colorSchema = new Schema<IColor>(
   },
 );
 
-colorSchema.index({ slug: 1 }, { unique: true });
 colorSchema.index({ type: 1 });
 colorSchema.index({ status: 1 });
 colorSchema.index({ name: 'text' });

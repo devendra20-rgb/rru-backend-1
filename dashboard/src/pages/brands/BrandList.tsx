@@ -14,19 +14,19 @@ import {
   TableRow,
   TablePagination,
   IconButton,
-  Chip,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogContentText,
   DialogActions,
   CircularProgress,
-  Alert
+  Alert,
+  Switch
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
-import { getBrands, deleteBrand } from '../../api/brands.api';
+import { getBrands, deleteBrand, updateBrand } from '../../api/brands.api';
 
 const BrandList: React.FC = () => {
   const navigate = useNavigate();
@@ -48,6 +48,19 @@ const BrandList: React.FC = () => {
       setDeleteId(null);
     }
   });
+
+  const toggleStatusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: 'active' | 'inactive' }) =>
+      updateBrand(id, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['brands'] });
+    }
+  });
+
+  const handleStatusToggle = (id: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+    toggleStatusMutation.mutate({ id, status: newStatus });
+  };
 
   const handleChangePage = (_event: unknown, newPage: number) => {
     setPage(newPage);
@@ -125,10 +138,12 @@ const BrandList: React.FC = () => {
                   <TableCell>{brand.brandCode}</TableCell>
                   <TableCell>{brand.slug}</TableCell>
                   <TableCell>
-                    <Chip 
-                      label={brand.status} 
-                      color={brand.status === 'active' ? 'success' : 'default'} 
-                      size="small" 
+                    <Switch
+                      checked={brand.status === 'active'}
+                      onChange={() => handleStatusToggle(brand._id, brand.status)}
+                      disabled={toggleStatusMutation.isPending}
+                      size="small"
+                      color="primary"
                     />
                   </TableCell>
                   <TableCell align="right">
