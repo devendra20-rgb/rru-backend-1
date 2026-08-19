@@ -115,8 +115,25 @@ export const variantService = {
     if (!variant) throw new AppError('Variant not found', 404);
 
     // Fetch parent context
-    const generation = await generationRepository.findById(variant.generationId.toString());
-    const model = generation ? await modelRepository.findById(generation.modelId.toString()) : null;
+    // `variant.generationId` may be either an ObjectId string or a populated object.
+    let generation = null;
+    try {
+      const generationId = (variant.generationId as any)?._id
+        ? (variant.generationId as any)._id.toString()
+        : (variant.generationId as any)?.toString();
+
+      generation = generationId ? await generationRepository.findById(generationId) : null;
+    } catch (err) {
+      // If cast fails or unexpected shape, leave generation as null but do not crash
+      generation = null;
+    }
+
+    const modelId = generation
+      ? ((generation.modelId as any)?._id
+        ? (generation.modelId as any)._id.toString()
+        : (generation.modelId as any)?.toString())
+      : null;
+    const model = modelId ? await modelRepository.findById(modelId) : null;
 
     return {
       ...variant,
@@ -129,8 +146,23 @@ export const variantService = {
     const variant = await variantRepository.findBySlug(slug);
     if (!variant) throw new AppError('Variant not found', 404);
 
-    const generation = await generationRepository.findById(variant.generationId.toString());
-    const model = generation ? await modelRepository.findById(generation.modelId.toString()) : null;
+    let generation = null;
+    try {
+      const generationId = (variant.generationId as any)?._id
+        ? (variant.generationId as any)._id.toString()
+        : (variant.generationId as any)?.toString();
+
+      generation = generationId ? await generationRepository.findById(generationId) : null;
+    } catch (err) {
+      generation = null;
+    }
+
+    const modelId = generation
+      ? ((generation.modelId as any)?._id
+        ? (generation.modelId as any)._id.toString()
+        : (generation.modelId as any)?.toString())
+      : null;
+    const model = modelId ? await modelRepository.findById(modelId) : null;
 
     return {
       ...variant,
@@ -154,7 +186,9 @@ export const variantService = {
 
     const currentGenerationId = data.generationId
       ? data.generationId.toString()
-      : variant.generationId.toString();
+      : ((variant.generationId as any)?._id
+        ? (variant.generationId as any)._id.toString()
+        : (variant.generationId as any)?.toString());
 
     if (data.variantCode) {
       updateData.variantCode = data.variantCode.toUpperCase().trim();

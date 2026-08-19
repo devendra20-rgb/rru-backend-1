@@ -6,6 +6,7 @@ export interface FileData {
 }
 
 export interface IStorageProvider {
+  readonly providerName: 'local' | 's3';
   /**
    * Uploads a file and returns the storage key.
    */

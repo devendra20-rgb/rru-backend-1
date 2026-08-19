@@ -56,7 +56,7 @@ export class MediaService {
       altText: data.altText,
       isPrimary: Boolean(data.isPrimary),
       sortOrder: data.sortOrder !== undefined ? Number(data.sortOrder) : 0,
-      storageProvider: 'local', // We are currently only using local
+      storageProvider: this.storage.providerName,
       storageKey,
       url,
       originalName: file.originalname,

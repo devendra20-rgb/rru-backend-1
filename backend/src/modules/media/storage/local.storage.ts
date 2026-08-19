@@ -5,6 +5,7 @@ import { IStorageProvider, FileData } from './storage.interface';
 import { env } from '../../../config/env';
 
 export class LocalStorageProvider implements IStorageProvider {
+  readonly providerName = 'local';
   private uploadDir: string;
   private baseUrl: string;
 

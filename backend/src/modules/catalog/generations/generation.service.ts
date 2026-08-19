@@ -93,7 +93,11 @@ export const generationService = {
       }
     }
 
-    const currentModelId = data.modelId ? data.modelId.toString() : generation.modelId.toString();
+    const currentModelId = data.modelId
+      ? data.modelId.toString()
+      : ((generation.modelId as any)?._id
+        ? (generation.modelId as any)._id.toString()
+        : (generation.modelId as any)?.toString());
 
     if (data.generationCode) {
       updateData.generationCode = data.generationCode.toUpperCase().trim();

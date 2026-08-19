@@ -13,7 +13,9 @@ import {
   FormHelperText,
   CircularProgress,
   Alert,
-  Stack
+  Stack,
+  Typography,
+  Divider
 } from '@mui/material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getVariant, createVariant, updateVariant } from '../../../api/variants.api';
@@ -122,8 +124,8 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
       reset({
         name: variant.name,
         variantCode: variant.variantCode || '',
-        brandId: variant.brandId?._id || variant.brandId || '',
-        modelId: variant.modelId?._id || variant.modelId || '',
+        brandId: variant.model?.brandId?._id || variant.model?.brandId || '',
+        modelId: variant.model?._id || '',
         generationId: variant.generationId?._id || variant.generationId || '',
         modelYear: variant.modelYear,
         fuelType: variant.fuelType,
@@ -187,7 +189,11 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
   return (
     <Box component="form" onSubmit={handleSubmit(onSubmit)}>
       {isError && <Alert severity="error" sx={{ mb: 3 }}>Failed to load vehicle data.</Alert>}
-      {saveError && <Alert severity="error" sx={{ mb: 3 }}>Failed to save vehicle.</Alert>}
+      {saveError && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {saveError instanceof Error ? saveError.message : 'Failed to save vehicle.'}
+        </Alert>
+      )}
 
       <Stack spacing={3}>
         <Box sx={{ display: 'flex', gap: 2 }}>
@@ -340,7 +346,12 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
         </Box>
 
         {/* Powertrain Configuration */}
-        <Box sx={{ mt: 2, mb: 1 }}><Alert severity="info">Powertrain Configuration</Alert></Box>
+        <Box sx={{ mt: 3, mb: 1 }}>
+          <Typography variant="h6" gutterBottom>
+            Powertrain Configuration
+          </Typography>
+          <Divider sx={{ mb: 2 }} />
+        </Box>
 
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Controller

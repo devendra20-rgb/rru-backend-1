@@ -137,6 +137,7 @@ const Step2Specifications: React.FC<Step2Props> = ({ variantId, onNext, onBack }
   };
 
   const isSaving = createMutation.isPending || updateMutation.isPending;
+  const saveError = createMutation.error || updateMutation.error;
 
   if (isLoading) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>;
@@ -144,9 +145,9 @@ const Step2Specifications: React.FC<Step2Props> = ({ variantId, onNext, onBack }
 
   return (
     <Box component="form" onSubmit={handleSubmit(onSubmit)}>
-      {(!data?.data || (Array.isArray(data?.data) && data.data.length === 0)) && (
-        <Alert severity="info" sx={{ mb: 3 }}>
-          No specifications found. A new specification document will be created.
+      {saveError && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {saveError instanceof Error ? saveError.message : 'Failed to save specifications.'}
         </Alert>
       )}
       

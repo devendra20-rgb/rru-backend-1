@@ -101,7 +101,11 @@ export const modelService = {
       }
     }
 
-    const currentBrandId = data.brandId ? data.brandId.toString() : model.brandId.toString();
+    const currentBrandId = data.brandId
+      ? data.brandId.toString()
+      : ((model.brandId as any)?._id
+        ? (model.brandId as any)._id.toString()
+        : (model.brandId as any)?.toString());
 
     if (data.modelCode) {
       updateData.modelCode = data.modelCode.toUpperCase().trim();
