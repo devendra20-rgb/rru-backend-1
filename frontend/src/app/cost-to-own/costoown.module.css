@@ -1,0 +1,341 @@
+/* ============================================
+   COST TO OWN PAGE
+   ============================================ */
+.costPage {
+  padding: var(--space-3xl) var(--content-padding) var(--space-4xl);
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-sm);
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.breadcrumb a {
+  color: var(--petrol);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.pageTitle {
+  font-size: var(--font-size-3xl);
+  letter-spacing: -0.8px;
+  margin: 0 0 4px;
+}
+
+.pageSubtitle {
+  color: var(--muted);
+  font-size: var(--font-size-base);
+  margin-bottom: 28px;
+}
+
+/* --- Layout --- */
+.costLayout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 30px;
+  align-items: start;
+}
+
+/* --- Config Panel --- */
+.configPanel {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  position: sticky;
+  top: calc(var(--nav-height) + 16px);
+}
+
+.configTitle {
+  font-size: var(--font-size-md);
+  font-weight: 800;
+  margin: 0 0 18px;
+  color: var(--deep);
+}
+
+.configGroup {
+  margin-bottom: 18px;
+}
+
+.configLabel {
+  font-size: var(--font-size-sm);
+  font-weight: 800;
+  color: var(--deep);
+  margin-bottom: 8px;
+  display: block;
+}
+
+.configSelect {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  color: var(--text);
+  background: var(--white);
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2366777D' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 30px;
+}
+
+.configSlider {
+  width: 100%;
+  accent-color: var(--petrol);
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+.configSliderMeta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.configSliderValue {
+  color: var(--deep);
+  font-weight: 800;
+}
+
+.configDivider {
+  border-top: 1px solid var(--mist-dark);
+  margin: 16px 0;
+}
+
+/* --- Results --- */
+.resultsPanel {
+  min-width: 0;
+}
+
+/* Receipt card */
+.receiptCard {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  padding: 28px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-md);
+}
+
+.receiptVehicle {
+  font-size: var(--font-size-sm);
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.receiptBig {
+  font-size: 48px;
+  font-weight: 900;
+  color: var(--deep);
+  line-height: 1.1;
+}
+
+.receiptUnit {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.receiptLabel {
+  color: var(--amber);
+  font-weight: 800;
+  font-size: var(--font-size-sm);
+  margin-top: 2px;
+  margin-bottom: 4px;
+}
+
+.receiptTotal3yr {
+  font-size: var(--font-size-sm);
+  color: var(--muted);
+}
+
+.receiptTotal3yr strong {
+  color: var(--deep);
+}
+
+.receiptDash {
+  border-top: 1px dashed #aab7bb;
+  margin: 20px 0;
+}
+
+.receiptLine {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  font-size: var(--font-size-base);
+}
+
+.receiptLineLabel {
+  color: var(--text);
+}
+
+.receiptLineNote {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 400;
+  margin-left: 6px;
+}
+
+.receiptLineValue {
+  font-weight: 700;
+  color: var(--deep);
+}
+
+.receiptTotalLine {
+  display: flex;
+  justify-content: space-between;
+  padding: 14px 0;
+  border-top: 2px solid var(--deep);
+  margin-top: 8px;
+  font-weight: 900;
+  font-size: var(--font-size-md);
+  color: var(--deep);
+}
+
+/* Hidden costs */
+.hiddenSection {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  padding: 24px 28px;
+  margin-bottom: 24px;
+}
+
+.hiddenTitle {
+  font-size: var(--font-size-md);
+  font-weight: 800;
+  color: var(--rust);
+  margin: 0 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hiddenList {
+  background: #fef5f2;
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+}
+
+.hiddenRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  font-size: var(--font-size-sm);
+  border-bottom: 1px solid rgba(196, 69, 29, 0.08);
+}
+
+.hiddenRow:last-child {
+  border-bottom: none;
+  font-weight: 800;
+}
+
+/* Segment comparison chart */
+.segmentSection {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  padding: 24px 28px;
+  margin-bottom: 24px;
+}
+
+.segmentTitle {
+  font-size: var(--font-size-md);
+  font-weight: 800;
+  margin: 0 0 16px;
+  color: var(--deep);
+}
+
+.segmentRow {
+  display: grid;
+  grid-template-columns: 180px 1fr 100px;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--mist-dark);
+}
+
+.segmentRow:last-child {
+  border-bottom: none;
+}
+
+.segmentName {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--deep);
+}
+
+.segmentNameCurrent {
+  color: var(--amber);
+}
+
+.segmentBar {
+  height: 18px;
+  background: var(--mist);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.segmentBarFill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--petrol);
+  transition: width 0.6s ease;
+}
+
+.segmentBarFillCurrent {
+  background: var(--amber);
+}
+
+.segmentCost {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--deep);
+  text-align: right;
+}
+
+/* Assumptions */
+.assumptions {
+  background: var(--mist);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  font-size: var(--font-size-sm);
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.assumptions strong {
+  color: var(--deep);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .costLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .configPanel {
+    position: static;
+  }
+}
+
+@media (max-width: 768px) {
+  .receiptBig {
+    font-size: 36px;
+  }
+
+  .segmentRow {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+}

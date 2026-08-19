@@ -1,0 +1,512 @@
+/* ============================================
+   VEHICLE DETAIL PAGE (VDP)
+   ============================================ */
+.vdpPage {
+  padding: var(--space-3xl) var(--content-padding) var(--space-4xl);
+}
+
+/* --- Breadcrumb --- */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-sm);
+  color: var(--muted);
+  margin-bottom: 20px;
+}
+
+.breadcrumb a {
+  color: var(--petrol);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.breadcrumb a:hover {
+  text-decoration: underline;
+}
+
+/* --- Top Section --- */
+.vdpTop {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 30px;
+  margin-bottom: 35px;
+}
+
+/* --- Gallery --- */
+.gallery {
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+
+.galleryMain {
+  height: 380px;
+  background: linear-gradient(135deg, #dfe6e8, #c8d4d8);
+  display: grid;
+  place-items: center;
+  color: #8ea5ab;
+  border-radius: var(--radius-xl);
+  position: relative;
+}
+
+.galleryPlaceholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.galleryBadges {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  display: flex;
+  gap: 6px;
+}
+
+.galleryThumbs {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.galleryThumb {
+  height: 70px;
+  background: linear-gradient(135deg, #e4eaec, #d0d9dc);
+  border-radius: var(--radius-md);
+  display: grid;
+  place-items: center;
+  color: #b0bec1;
+  font-size: 10px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color var(--transition-fast);
+}
+
+.galleryThumb:hover,
+.galleryThumbActive {
+  border-color: var(--petrol);
+}
+
+/* --- Info Panel --- */
+.infoPanel {
+  display: flex;
+  flex-direction: column;
+}
+
+.infoBrand {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.infoTitle {
+  font-size: var(--font-size-3xl);
+  letter-spacing: -0.8px;
+  margin: 0 0 4px;
+}
+
+.infoVariant {
+  font-size: var(--font-size-md);
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+
+/* Key specs strip */
+.specsStrip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.specItem {
+  background: var(--mist);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  text-align: center;
+}
+
+.specItemValue {
+  font-size: var(--font-size-md);
+  font-weight: 800;
+  color: var(--deep);
+  display: block;
+}
+
+.specItemLabel {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+  display: block;
+}
+
+/* Price section */
+.priceSection {
+  background: var(--mist);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.priceRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.priceLabel {
+  font-size: var(--font-size-sm);
+  color: var(--muted);
+}
+
+.priceValue {
+  font-size: var(--font-size-2xl);
+  font-weight: 900;
+  color: var(--deep);
+}
+
+.priceMonthlyCost {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+}
+
+.priceMonthlyCostLabel {
+  font-size: var(--font-size-sm);
+  color: var(--muted);
+}
+
+.priceMonthlyCostValue {
+  font-size: var(--font-size-lg);
+  font-weight: 800;
+  color: var(--amber);
+}
+
+/* Action buttons */
+.vdpActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+/* Dealer card */
+.dealerCard {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.dealerAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--mist);
+  display: grid;
+  place-items: center;
+  color: var(--petrol);
+  flex-shrink: 0;
+}
+
+.dealerInfo {
+  flex: 1;
+}
+
+.dealerName {
+  font-size: var(--font-size-base);
+  font-weight: 800;
+  color: var(--deep);
+}
+
+.dealerMeta {
+  font-size: 11px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dealerVerified {
+  color: var(--green);
+  font-weight: 700;
+}
+
+/* --- Tabbed Content --- */
+.tabsSection {
+  margin-top: 10px;
+}
+
+.vdpTabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--line);
+  overflow-x: auto;
+}
+
+.vdpTab {
+  padding: 14px 24px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all var(--transition-fast);
+  background: none;
+  white-space: nowrap;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+}
+
+.vdpTab:hover {
+  color: var(--petrol);
+}
+
+.vdpTabActive {
+  color: var(--petrol);
+  border-bottom-color: var(--petrol);
+}
+
+.tabContent {
+  padding: 28px 0;
+}
+
+/* --- Overview Tab --- */
+.overviewGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.overviewCard {
+  background: var(--mist);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+}
+
+.overviewCardTitle {
+  font-size: var(--font-size-base);
+  font-weight: 800;
+  color: var(--deep);
+  margin: 0 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.overviewCardIcon {
+  color: var(--petrol);
+}
+
+.overviewRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+  font-size: var(--font-size-sm);
+}
+
+.overviewRow:last-child {
+  border-bottom: none;
+}
+
+.overviewRowLabel {
+  color: var(--muted);
+}
+
+.overviewRowValue {
+  font-weight: 700;
+  color: var(--deep);
+}
+
+/* --- Cost Tab --- */
+.costPanel {
+  max-width: 600px;
+}
+
+.costHeader {
+  margin-bottom: 20px;
+}
+
+.costHeaderVehicle {
+  font-size: var(--font-size-sm);
+  color: var(--muted);
+}
+
+.costHeaderBig {
+  font-size: 42px;
+  font-weight: 900;
+  color: var(--deep);
+  margin-top: 4px;
+}
+
+.costHeaderUnit {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.costHeaderLabel {
+  color: var(--amber);
+  font-weight: 800;
+  font-size: var(--font-size-sm);
+  margin-top: 2px;
+}
+
+.costDash {
+  border-top: 1px dashed #aab7bb;
+  margin: 18px 0;
+}
+
+.costLine {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  font-size: var(--font-size-base);
+}
+
+.costLineLabel {
+  color: var(--text);
+}
+
+.costLineNote {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 400;
+  margin-left: 6px;
+}
+
+.costLineValue {
+  font-weight: 700;
+  color: var(--deep);
+}
+
+.costTotalLine {
+  display: flex;
+  justify-content: space-between;
+  padding: 14px 0;
+  border-top: 2px solid var(--deep);
+  margin-top: 8px;
+  font-weight: 900;
+  font-size: var(--font-size-md);
+  color: var(--deep);
+}
+
+.costHidden {
+  margin-top: 28px;
+}
+
+.costHiddenTitle {
+  font-size: var(--font-size-md);
+  font-weight: 800;
+  color: var(--rust);
+  margin: 0 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.costHiddenList {
+  background: #fef5f2;
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+}
+
+.costHiddenRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 7px 0;
+  font-size: var(--font-size-sm);
+  border-bottom: 1px solid rgba(196, 69, 29, 0.08);
+}
+
+.costHiddenRow:last-child {
+  border-bottom: none;
+}
+
+.costAssumptions {
+  margin-top: 20px;
+  padding: 16px;
+  background: var(--mist);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-sm);
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.costAssumptions strong {
+  color: var(--deep);
+}
+
+/* --- Similar Cars --- */
+.similarSection {
+  margin-top: 45px;
+}
+
+.similarTitle {
+  font-size: var(--font-size-xl);
+  font-weight: 800;
+  margin: 0 0 18px;
+}
+
+.similarGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+/* --- Responsive --- */
+@media (max-width: 1024px) {
+  .vdpTop {
+    grid-template-columns: 1fr;
+  }
+
+  .similarGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .specsStrip {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .overviewGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .vdpActions {
+    grid-template-columns: 1fr;
+  }
+
+  .galleryMain {
+    height: 260px;
+  }
+
+  .galleryThumbs {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .similarGrid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,115 @@
+/* ============================================
+   AUTH PAGES (Login & Register)
+   ============================================ */
+.authContainer {
+  min-height: calc(100vh - var(--nav-height) - 150px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px var(--content-padding);
+  background: var(--mist);
+}
+
+.authCard {
+  width: 100%;
+  max-width: 440px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  padding: 36px 32px;
+  box-shadow: var(--shadow-md);
+}
+
+.authLogo {
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--petrol);
+  letter-spacing: -0.5px;
+  margin-bottom: 20px;
+  display: inline-block;
+}
+
+.authLogo span {
+  color: var(--amber);
+}
+
+.authTitle {
+  font-size: var(--font-size-2xl);
+  font-weight: 800;
+  color: var(--deep);
+  margin: 0 0 6px;
+}
+
+.authSubtitle {
+  font-size: var(--font-size-sm);
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.formLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--deep);
+}
+
+.formInput {
+  padding: 11px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  outline: none;
+  background: var(--white);
+}
+
+.formInput:focus {
+  border-color: var(--petrol);
+  box-shadow: 0 0 0 3px rgba(13, 59, 73, 0.08);
+}
+
+.formExtra {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--font-size-sm);
+  margin-bottom: 20px;
+}
+
+.forgotLink {
+  color: var(--petrol);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.forgotLink:hover {
+  text-decoration: underline;
+}
+
+.submitBtn {
+  width: 100%;
+}
+
+.authFooter {
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--muted);
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--mist-dark);
+}
+
+.authFooter a {
+  color: var(--petrol);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.authFooter a:hover {
+  text-decoration: underline;
+}
