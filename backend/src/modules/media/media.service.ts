@@ -4,9 +4,19 @@ import { variantRepository } from '../catalog/variants/variant.repository';
 import { StorageFactory } from './storage/storage.factory';
 import { FileData } from './storage/storage.interface';
 import { CreateMediaDTO, UpdateMediaDTO, MediaQuery } from './media.types';
+import { env } from '../../config/env';
 
 export class MediaService {
   private storage = StorageFactory.getProvider();
+
+  private attachUrl(media: any) {
+    if (!media) return media;
+    // Handle both Mongoose documents and plain objects
+    const obj = typeof media.toObject === 'function' ? media.toObject() : { ...media };
+    const baseUrl = env.API_BASE_URL || 'http://localhost:5000/api/v1';
+    obj.url = `${baseUrl}/media/file/${obj.storageKey}`;
+    return obj;
+  }
 
   async uploadMedia(file: Express.Multer.File, data: CreateMediaDTO) {
     if (data.entityType === 'variant' && data.entityId) {
@@ -34,7 +44,6 @@ export class MediaService {
 
     // Upload via storage provider
     const storageKey = await this.storage.upload(fileData, prefix);
-    const url = this.storage.getUrl(storageKey);
 
     // Handle isPrimary logic
     if (data.isPrimary && data.entityType && data.entityId) {
@@ -48,7 +57,7 @@ export class MediaService {
     }
 
     // Create DB record
-    return mediaRepository.create({
+    const created = await mediaRepository.create({
       folder: data.folder,
       entityType: data.entityType,
       entityId: data.entityId as any,
@@ -56,18 +65,23 @@ export class MediaService {
       altText: data.altText,
       isPrimary: Boolean(data.isPrimary),
       sortOrder: data.sortOrder !== undefined ? Number(data.sortOrder) : 0,
-      storageProvider: 'local', // We are currently only using local
+      storageProvider: this.storage.constructor.name === 'S3StorageProvider' ? 's3' : 'local',
       storageKey,
-      url,
       originalName: file.originalname,
       mimeType: file.mimetype,
       size: file.size,
       status: 'active',
     });
+    
+    return this.attachUrl(created);
   }
 
   async getMediaList(query: MediaQuery) {
-    return mediaRepository.findAll(query);
+    const result = await mediaRepository.findAll(query);
+    return {
+      data: result.data.map(m => this.attachUrl(m)),
+      total: result.total,
+    };
   }
 
   async getMediaById(id: string) {
@@ -75,11 +89,12 @@ export class MediaService {
     if (!media || media.status === 'inactive') {
       throw new AppError('Media not found', 404);
     }
-    return media;
+    return this.attachUrl(media);
   }
 
   async getMediaByEntity(entityType: string, entityId: string) {
-    return mediaRepository.findByEntity(entityType, entityId);
+    const result = await mediaRepository.findByEntity(entityType, entityId);
+    return result.map(m => this.attachUrl(m));
   }
 
   async updateMedia(id: string, data: UpdateMediaDTO) {
@@ -90,11 +105,18 @@ export class MediaService {
     }
 
     const updated = await mediaRepository.update(id, data);
-    return updated;
+    return this.attachUrl(updated);
   }
 
   async deleteMedia(id: string) {
-    const media = await this.getMediaById(id);
+    const media = await mediaRepository.findById(id);
+    if (!media) {
+      throw new AppError('Media not found', 404);
+    }
+
+    // Physically delete file
+    const provider = StorageFactory.getProvider(media.storageProvider);
+    await provider.delete(media.storageKey);
 
     // We soft-delete the record
     await mediaRepository.delete(id);

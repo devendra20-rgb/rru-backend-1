@@ -11,6 +11,10 @@ export class MediaRepository {
     return Media.findById(id);
   }
 
+  async findByStorageKey(storageKey: string): Promise<IMedia | null> {
+    return Media.findOne({ storageKey });
+  }
+
   async findAll(query: MediaQuery): Promise<{ data: IMedia[]; total: number }> {
     const { page = 1, limit = 10, sortBy = 'sortOrder', sortOrder = 'asc', ...filters } = query;
 

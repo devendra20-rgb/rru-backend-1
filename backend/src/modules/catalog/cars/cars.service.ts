@@ -6,6 +6,7 @@ import { VehicleModel } from '../models/model.model';
 import { Brand } from '../brands/brand.model';
 import { GetCarsQuery, CarListingCard, CarDetailResponse } from './cars.types';
 import { AppError } from '../../../middlewares/error.middleware';
+import { env } from '../../../config/env';
 
 export class CarsService {
   async getCarsListing(query: GetCarsQuery): Promise<{ data: CarListingCard[]; total: number }> {
@@ -243,13 +244,20 @@ export class CarsService {
         brand: { _id: '$brand._id', name: '$brand.name', slug: '$brand.slug' },
         model: { _id: '$model._id', name: '$model.name', slug: '$model.slug' },
         generation: { _id: '$generation._id', name: '$generation.name', slug: '$generation.slug' },
-        primaryMedia: { url: '$primaryMedia.url', altText: '$primaryMedia.altText' },
+        primaryMedia: { storageKey: '$primaryMedia.storageKey', altText: '$primaryMedia.altText' },
         pricing: '$marketInfo.pricing',
         availabilityStatus: '$marketInfo.availabilityStatus',
       },
     });
 
     const data = await Variant.aggregate(pipeline);
+
+    const baseUrl = env.API_BASE_URL || 'http://localhost:5000/api/v1';
+    data.forEach((car: any) => {
+      if (car.primaryMedia && car.primaryMedia.storageKey) {
+        car.primaryMedia.url = `${baseUrl}/media/file/${car.primaryMedia.storageKey}`;
+      }
+    });
 
     return { data, total };
   }
@@ -271,7 +279,17 @@ export class CarsService {
       throw new AppError('Car not found or unavailable', 404);
     }
 
-    return result[0];
+    const car = result[0];
+    const baseUrl = env.API_BASE_URL || 'http://localhost:5000/api/v1';
+    if (car.media && Array.isArray(car.media)) {
+      car.media.forEach((m: any) => {
+        if (m.storageKey) {
+          m.url = `${baseUrl}/media/file/${m.storageKey}`;
+        }
+      });
+    }
+
+    return car;
   }
 
   async compareCars(variantIds: string[]): Promise<CarDetailResponse[]> {
@@ -287,6 +305,17 @@ export class CarsService {
     if (!result || result.length === 0) {
       throw new AppError('No valid cars found for comparison', 404);
     }
+
+    const baseUrl = env.API_BASE_URL || 'http://localhost:5000/api/v1';
+    result.forEach(car => {
+      if (car.media && Array.isArray(car.media)) {
+        car.media.forEach((m: any) => {
+          if (m.storageKey) {
+            m.url = `${baseUrl}/media/file/${m.storageKey}`;
+          }
+        });
+      }
+    });
 
     return result;
   }
@@ -343,7 +372,7 @@ export class CarsService {
             {
               $project: {
                 _id: 0,
-                url: 1,
+                storageKey: 1,
                 mediaType: 1,
                 isPrimary: 1,
                 sortOrder: 1,

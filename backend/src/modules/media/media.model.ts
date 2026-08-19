@@ -31,10 +31,6 @@ const mediaSchema = new Schema<IMedia>(
       required: true,
       unique: true,
     },
-    url: {
-      type: String,
-      required: true,
-    },
     originalName: {
       type: String,
       required: true,

@@ -30,6 +30,7 @@ const upload = multer({
 });
 
 // Public routes
+mediaRoutes.use('/file', mediaController.getFileProxy);
 mediaRoutes.get('/', validate(mediaQuerySchema as any), mediaController.getMediaList);
 mediaRoutes.get('/:id', mediaController.getMediaById);
 

@@ -38,8 +38,4 @@ export class LocalStorageProvider implements IStorageProvider {
       // If file doesn't exist, we consider it deleted
     }
   }
-
-  getUrl(storageKey: string): string {
-    return `${this.baseUrl}/${storageKey}`;
-  }
 }

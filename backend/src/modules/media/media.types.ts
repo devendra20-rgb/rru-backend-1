@@ -9,7 +9,6 @@ export interface IMedia extends Document {
   mediaType: 'image' | 'video';
   storageProvider: 'local' | 's3';
   storageKey: string;
-  url: string;
   originalName: string;
   mimeType: string;
   size: number;

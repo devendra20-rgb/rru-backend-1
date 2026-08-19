@@ -17,7 +17,8 @@ export interface IStorageProvider {
   delete(storageKey: string): Promise<void>;
 
   /**
-   * Gets the public URL for a given storage key.
+   * Generates a short-lived presigned URL for direct access.
+   * Required for providers that keep files private (e.g., S3).
    */
-  getUrl(storageKey: string): string;
+  getPresignedUrl?(storageKey: string): Promise<string>;
 }

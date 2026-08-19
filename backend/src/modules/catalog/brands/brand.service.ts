@@ -7,6 +7,14 @@ import {
   getPaginationMeta,
   PaginationQuery,
 } from '../../../utils/pagination';
+import { mediaService } from '../../media/media.service';
+
+const enrichBrandMedia = (brand: any) => {
+  if (brand?.logoMediaId && typeof brand.logoMediaId === 'object') {
+    brand.logoMediaId = mediaService.enrichMediaWithUrl(brand.logoMediaId);
+  }
+  return brand;
+};
 
 export const brandService = {
   async createBrand(data: Partial<IBrand>) {
@@ -57,7 +65,7 @@ export const brandService = {
     ]);
 
     return {
-      data,
+      data: data.map(enrichBrandMedia),
       meta: getPaginationMeta(total, page, limit),
     };
   },
@@ -65,13 +73,13 @@ export const brandService = {
   async getBrandById(id: string) {
     const brand = await brandRepository.findById(id);
     if (!brand) throw new AppError('Brand not found', 404);
-    return brand;
+    return enrichBrandMedia(brand);
   },
 
   async getBrandBySlug(slug: string) {
     const brand = await brandRepository.findBySlug(slug);
     if (!brand) throw new AppError('Brand not found', 404);
-    return brand;
+    return enrichBrandMedia(brand);
   },
 
   async updateBrand(id: string, data: Partial<IBrand>) {
