@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { ReviewController } from './review.controller';
 import { validate } from '../../middlewares/validate.middleware';
-import { authenticate, authorize } from '../../middlewares/auth.middleware';
+import { authenticate, authorize, extractUser } from '../../middlewares/auth.middleware';
 import {
   createReviewSchema,
   updateReviewSchema,
@@ -21,8 +21,16 @@ router.get(
   controller.getVariantReviews,
 );
 
-// Protected routes
+// Moderation / general endpoints for reviews
+router.get('/reviews', extractUser, controller.getReviews);
+router.get(
+  '/reviews/:id',
+  extractUser,
+  validate(getReviewSchema),
+  controller.getReviewById,
+);
 
+// Protected routes
 // We'll also mount the creation at /api/v1/variants/:variantId/reviews to be clean
 router.post(
   '/variants/:variantId/reviews',
@@ -34,16 +42,6 @@ router.post(
   },
   validate(createReviewSchema),
   controller.createReview,
-);
-
-// Admin moderation endpoints for all reviews
-router.get('/reviews', authenticate, authorize('admin', 'editor'), controller.getReviews);
-router.get(
-  '/reviews/:id',
-  authenticate,
-  authorize('admin', 'editor'),
-  validate(getReviewSchema),
-  controller.getReviewById,
 );
 
 // Update/Delete a specific review by ID

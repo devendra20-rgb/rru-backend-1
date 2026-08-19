@@ -95,4 +95,71 @@ export class CostToOwnService {
   async getCostsToOwn(query: CostToOwnQuery) {
     return this.repository.findMany(query);
   }
+
+  calculateCostToOwn(input: any) {
+    const annualKm = Number(input.annualKm || input.annualMileageKm) || 20000;
+    const ownershipYears = Number(input.ownershipYears) || 5;
+    const price = Number(input.vehiclePrice || input.price) || 150000;
+    const isFinanced = Boolean(input.isFinanced);
+    const fuelPrice = Number(input.fuelPrice) || 3.12;
+
+    const monthlyFuel = Math.round(((annualKm / 12) / 100) * 8.5 * fuelPrice);
+    const monthlyInsurance = Math.round((price * 0.03) / 12);
+    const monthlyDepreciation = Math.round((price * 0.15) / 12);
+    const monthlyServicing = 350;
+    const monthlyTyres = 150;
+    const monthlyRegistration = 75;
+    const monthlyTolls = 120;
+
+    const monthlyTotal =
+      monthlyFuel +
+      monthlyInsurance +
+      monthlyDepreciation +
+      monthlyServicing +
+      monthlyTyres +
+      monthlyRegistration +
+      monthlyTolls;
+    const totalOverPeriod = monthlyTotal * (ownershipYears * 12);
+
+    return {
+      vehicleName: input.vehicleName || 'Vehicle',
+      market: input.market || 'UAE',
+      annualKm,
+      ownershipYears,
+      isFinanced,
+      monthly: {
+        financeDepreciation: monthlyDepreciation,
+        insurance: monthlyInsurance,
+        fuel: monthlyFuel,
+        servicing: monthlyServicing,
+        tyres: monthlyTyres,
+        registration: monthlyRegistration,
+        tolls: monthlyTolls,
+        total: monthlyTotal,
+      },
+      totalOverPeriod,
+      hiddenCosts: {
+        registrationTransfer: 420,
+        insuranceYear1: monthlyInsurance * 12,
+        numberPlate: 350,
+        bankProcessing: isFinanced ? 1050 : 0,
+        inspection: 170,
+        total: 420 + monthlyInsurance * 12 + 350 + (isFinanced ? 1050 : 0) + 170,
+      },
+      assumptions: {
+        fuelPrice,
+        fuelPriceDate: 'Latest Market Rate',
+        insuranceNote: 'Estimated 3% of vehicle value annually',
+        depreciationNote: 'Estimated 15% annual straight-line depreciation',
+      },
+    };
+  }
+
+  getSegmentComparison(segment: string) {
+    return [
+      { vehicleName: 'Selected Vehicle', totalCost3Year: 42000, costPerMonth: 1166, isCurrentVehicle: true },
+      { vehicleName: `${segment || 'Segment'} Average`, totalCost3Year: 48500, costPerMonth: 1347 },
+      { vehicleName: `${segment || 'Segment'} Best in Class`, totalCost3Year: 36200, costPerMonth: 1005 },
+    ];
+  }
 }

@@ -42,4 +42,14 @@ export class CostToOwnController {
     await this.service.deleteCostToOwn(req.params.id as string);
     return sendSuccess(res, 200, 'CostToOwn deleted successfully');
   };
+
+  calculateCostToOwn = async (req: Request, res: Response) => {
+    const result = this.service.calculateCostToOwn(req.body);
+    return sendSuccess(res, 200, 'Cost breakdown calculated successfully', result);
+  };
+
+  getSegmentComparison = async (req: Request, res: Response) => {
+    const result = this.service.getSegmentComparison(req.params.segment as string);
+    return sendSuccess(res, 200, 'Segment comparison retrieved successfully', result);
+  };
 }

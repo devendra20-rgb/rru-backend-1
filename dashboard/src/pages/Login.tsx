@@ -45,22 +45,43 @@ const Login: React.FC = () => {
   };
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', bgcolor: 'grey.100' }}>
-      <Paper elevation={3} sx={{ p: 4, width: '100%', maxWidth: 400 }}>
-        <Typography variant="h5" component="h1" gutterBottom align="center" sx={{ fontWeight: 'bold' }}>
-          Ride Round Up Admin
-        </Typography>
+    <Box sx={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', bgcolor: '#F4F6F7', p: 2 }}>
+      <Paper elevation={0} sx={{ p: 4.5, width: '100%', maxWidth: 420, border: '1px solid #DCE3E6', borderRadius: '16px', boxShadow: '0 4px 20px rgba(7, 40, 48, 0.06)' }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
+          <Box
+            sx={{
+              width: 48,
+              height: 48,
+              borderRadius: '12px',
+              bgcolor: '#0D3B49',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#E8942B',
+              mb: 1.5,
+              boxShadow: '0 4px 12px rgba(13, 59, 73, 0.2)',
+            }}
+          >
+            <Typography sx={{ fontSize: '1.4rem' }}>🚗</Typography>
+          </Box>
+          <Typography variant="h5" component="h1" align="center" sx={{ fontWeight: 800, color: '#072830', letterSpacing: '-0.5px' }}>
+            RideRoundUp Admin
+          </Typography>
+          <Typography variant="body2" align="center" sx={{ color: '#66777D', mt: 0.5 }}>
+            Sign in to manage catalog, vehicles & content
+          </Typography>
+        </Box>
         
         {mutation.isError && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {(mutation.error as any).response?.data?.message || 'Login failed. Please try again.'}
+          <Alert severity="error" sx={{ mb: 2.5, borderRadius: '8px' }}>
+            {(mutation.error as any).response?.data?.message || 'Login failed. Please verify your credentials.'}
           </Alert>
         )}
 
         <form onSubmit={handleSubmit(onSubmit)}>
           <TextField
             fullWidth
-            label="Email"
+            label="Email Address"
             variant="outlined"
             margin="normal"
             {...register('email')}
@@ -83,9 +104,18 @@ const Login: React.FC = () => {
             variant="contained"
             size="large"
             disabled={mutation.isPending}
-            sx={{ mt: 3, mb: 2 }}
+            sx={{
+              mt: 3,
+              mb: 1.5,
+              py: 1.3,
+              fontWeight: 700,
+              bgcolor: '#0D3B49',
+              '&:hover': {
+                bgcolor: '#072830',
+              },
+            }}
           >
-            {mutation.isPending ? 'Logging in...' : 'Login'}
+            {mutation.isPending ? 'Authenticating...' : 'Sign In to Dashboard'}
           </Button>
         </form>
       </Paper>

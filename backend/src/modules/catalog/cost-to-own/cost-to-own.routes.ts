@@ -14,6 +14,8 @@ const controller = new CostToOwnController();
 
 // Public routes
 router.get('/', controller.getCostsToOwn);
+router.post('/calculate', controller.calculateCostToOwn);
+router.get('/segment/:segment', controller.getSegmentComparison);
 router.get('/:id', validate(getCostToOwnSchema), controller.getCostToOwnById);
 
 // Protected routes

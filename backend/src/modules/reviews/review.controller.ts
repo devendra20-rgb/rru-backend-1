@@ -37,7 +37,15 @@ export class ReviewController {
 
   getReviews = async (req: Request, res: Response) => {
     const { page, limit } = getPaginationOptions(req.query as any);
-    const result = await this.service.getReviews(req.query as any);
+    const query: any = { ...req.query };
+
+    // If unauthenticated or not admin/editor, only return approved reviews
+    const userRole = req.user?.role;
+    if (userRole !== 'admin' && userRole !== 'editor') {
+      query.status = 'approved';
+    }
+
+    const result = await this.service.getReviews(query);
 
     return sendSuccess(
       res,

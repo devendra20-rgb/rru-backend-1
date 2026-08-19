@@ -95,6 +95,7 @@ v1Router.use('/media', mediaRoutes);
 v1Router.use('/users', userRoutes);
 v1Router.use('/auth', authRoutes);
 v1Router.use('/cars', carsRoutes);
+v1Router.use('/vehicles', carsRoutes);
 v1Router.use('/cost-to-own', costToOwnRoutes);
 v1Router.use('/articles', articleRoutes);
 v1Router.use('/dashboard', dashboardRoutes);

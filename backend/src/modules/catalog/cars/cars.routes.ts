@@ -15,6 +15,7 @@ router.get('/featured', validate(getCarsQuerySchema), carsController.getFeatured
 
 router.get('/compare', validate(compareCarsSchema), carsController.compareCars);
 
+router.get('/slug/:slug', validate(getCarDetailSchema), carsController.getCarDetail);
 router.get('/:slug', validate(getCarDetailSchema), carsController.getCarDetail);
 
 export default router;
