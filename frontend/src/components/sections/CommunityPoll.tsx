@@ -2,30 +2,35 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { pollMock } from '@/data/homepage.mock';
 import { percentage } from '@/lib/utils';
 import { Check, Flame } from 'lucide-react';
 import styles from './sections.module.css';
 
+const DEFAULT_POLL = {
+  _id: 'p1',
+  title: 'Land Cruiser vs Patrol',
+  optionA: { label: 'Toyota Land Cruiser', votes: 5400, vehicleSlug: 'toyota-land-cruiser-gxr-v6-2026' },
+  optionB: { label: 'Nissan Patrol', votes: 4600, vehicleSlug: 'nissan-patrol-le-platinum-2026' },
+};
+
 export default function CommunityPoll() {
-  const [votesA, setVotesA] = useState(pollMock.optionA.votes);
-  const [votesB, setVotesB] = useState(pollMock.optionB.votes);
+  const [votesA, setVotesA] = useState(DEFAULT_POLL.optionA.votes);
+  const [votesB, setVotesB] = useState(DEFAULT_POLL.optionB.votes);
   const [userVoted, setUserVoted] = useState<'A' | 'B' | null>(null);
 
-  // Check existing vote from local storage
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(`rru_poll_${pollMock._id}`);
+      const saved = localStorage.getItem(`rru_poll_${DEFAULT_POLL._id}`);
       if (saved === 'A' || saved === 'B') {
         setUserVoted(saved);
       }
     } catch {
-      // ignore in SSR
+      // ignore
     }
   }, []);
 
   const handleVote = (option: 'A' | 'B') => {
-    if (userVoted) return; // Prevent double voting
+    if (userVoted) return;
 
     if (option === 'A') {
       setVotesA((prev) => prev + 1);
@@ -36,7 +41,7 @@ export default function CommunityPoll() {
     }
 
     try {
-      localStorage.setItem(`rru_poll_${pollMock._id}`, option);
+      localStorage.setItem(`rru_poll_${DEFAULT_POLL._id}`, option);
     } catch {
       // ignore
     }
@@ -65,13 +70,13 @@ export default function CommunityPoll() {
         </div>
 
         <div className={styles.pollBox}>
-          <h3 className={styles.pollQuestion}>{pollMock.title}</h3>
+          <h3 className={styles.pollQuestion}>{DEFAULT_POLL.title}</h3>
           <div className={styles.pollVotes}>
             <span>
-              {pollMock.optionA.label} · {pctA}% {userVoted === 'A' && '✓ (Your pick)'}
+              {DEFAULT_POLL.optionA.label} · {pctA}% {userVoted === 'A' && '✓ (Your pick)'}
             </span>
             <span>
-              {pollMock.optionB.label} · {pctB}% {userVoted === 'B' && '✓ (Your pick)'}
+              {DEFAULT_POLL.optionB.label} · {pctB}% {userVoted === 'B' && '✓ (Your pick)'}
             </span>
           </div>
 

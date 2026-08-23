@@ -13,7 +13,15 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
   return (
     <Link href={`/new-cars/${vehicle.slug}`} className={styles.vehicleCard}>
       <div className={styles.vehicleCardImg}>
-        <Car size={32} />
+        {vehicle.imageUrl ? (
+          <img
+            src={vehicle.imageUrl}
+            alt={`${vehicle.brand} ${vehicle.model}`}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        ) : (
+          <Car size={32} />
+        )}
         {vehicle.badges && vehicle.badges.length > 0 && (
           <div className={styles.vehicleCardBadges}>
             {vehicle.badges.map((badge) => (

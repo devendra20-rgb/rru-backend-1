@@ -1,27 +1,75 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { ChevronRight, AlertTriangle } from 'lucide-react';
-import { vehiclesMock } from '@/data/vehicles.mock';
-import { costToOwnMock, segmentComparisonMock } from '@/data/homepage.mock';
-import { formatPrice } from '@/lib/utils';
+import { vehiclesService } from '@/services/vehicles.service';
+import { costToOwnService } from '@/services/costToOwn.service';
+import type { Vehicle } from '@/types/vehicle';
+import type { CostToOwnBreakdown, SegmentComparison } from '@/types/cost';
 import styles from './costoown.module.css';
 
-export default function CostToOwnPage() {
-  const [selectedSlug, setSelectedSlug] = useState<string>(vehiclesMock[0].slug);
+function CostToOwnContent() {
+  const searchParams = useSearchParams();
+  const vehicleQuery = searchParams.get('vehicle');
+
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [selectedSlug, setSelectedSlug] = useState<string>('');
   const [annualKm, setAnnualKm] = useState<number>(15000);
   const [ownershipYears, setOwnershipYears] = useState<number>(3);
   const [city, setCity] = useState<string>('Dubai');
+  const [cost, setCost] = useState<CostToOwnBreakdown | null>(null);
+
+  useEffect(() => {
+    vehiclesService.getAll({ limit: 50 }).then((vList) => {
+      setVehicles(vList);
+      if (vList.length > 0) {
+        if (vehicleQuery && vList.some((v) => v.slug === vehicleQuery)) {
+          setSelectedSlug(vehicleQuery);
+        } else {
+          setSelectedSlug(vList[0].slug);
+        }
+      }
+    }).catch(console.error);
+  }, [vehicleQuery]);
 
   const vehicle = useMemo(
-    () => vehiclesMock.find((v) => v.slug === selectedSlug) || vehiclesMock[0],
-    [selectedSlug]
+    () => vehicles.find((v) => v.slug === selectedSlug) || vehicles[0],
+    [vehicles, selectedSlug]
   );
 
-  // For now use the same mock data, scaled by ownership years
-  const cost = costToOwnMock;
-  const maxSegmentCost = Math.max(...segmentComparisonMock.map((s) => s.costPerMonth));
+  useEffect(() => {
+    if (vehicle) {
+      costToOwnService.calculate({
+        vehiclePrice: vehicle.priceFrom || 300000,
+        annualMileageKm: annualKm,
+        ownershipYears,
+        fuelType: vehicle.fuelType?.toLowerCase() || 'petrol',
+      }).then(setCost).catch(console.error);
+    }
+  }, [vehicle, annualKm, ownershipYears]);
+
+  const dynamicSegmentComparison: SegmentComparison[] = useMemo(() => {
+    if (!vehicle || !cost) return [];
+    return [
+      { vehicleName: `${vehicle.brand} ${vehicle.model} ${vehicle.variant}`, costPerMonth: cost.monthly.total, isCurrentVehicle: true },
+      { vehicleName: `${vehicle.bodyType || 'SUV'} Segment Average`, costPerMonth: Math.round(cost.monthly.total * 1.12), isCurrentVehicle: false },
+      { vehicleName: `${vehicle.bodyType || 'SUV'} Segment Best-in-Class`, costPerMonth: Math.round(cost.monthly.total * 0.88), isCurrentVehicle: false },
+    ];
+  }, [vehicle, cost]);
+
+  if (!vehicle || !cost) {
+    return (
+      <div className={styles.costPage}>
+        <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--muted)' }}>
+          Loading Cost to Own calculator...
+        </div>
+      </div>
+    );
+  }
+
+  const maxSegmentCost = Math.max(...dynamicSegmentComparison.map((s) => s.costPerMonth), 1);
 
   const costLines = [
     { label: 'Finance / depreciation', value: cost.monthly.financeDepreciation },
@@ -60,8 +108,8 @@ export default function CostToOwnPage() {
               value={selectedSlug}
               onChange={(e) => setSelectedSlug(e.target.value)}
             >
-              {vehiclesMock
-                .filter((v) => v.status === 'active')
+              {vehicles
+                .filter((v) => v.status === 'active' || v.status === 'upcoming')
                 .map((v) => (
                   <option key={v._id} value={v.slug}>
                     {v.brand} {v.model} — {v.variant}
@@ -185,12 +233,12 @@ export default function CostToOwnPage() {
                 <span>Number plate</span>
                 <span>AED {cost.hiddenCosts.numberPlate.toLocaleString()}</span>
               </div>
-              {cost.hiddenCosts.bankProcessing && (
+              {cost.hiddenCosts.bankProcessing ? (
                 <div className={styles.hiddenRow}>
                   <span>Bank processing</span>
                   <span>AED {cost.hiddenCosts.bankProcessing.toLocaleString()}</span>
                 </div>
-              )}
+              ) : null}
               <div className={styles.hiddenRow}>
                 <span>Total one-time costs</span>
                 <span>AED {cost.hiddenCosts.total.toLocaleString()}</span>
@@ -199,27 +247,29 @@ export default function CostToOwnPage() {
           </div>
 
           {/* Segment Comparison */}
-          <div className={styles.segmentSection}>
-            <h3 className={styles.segmentTitle}>How it compares in this segment</h3>
-            {segmentComparisonMock.map((seg) => (
-              <div key={seg.vehicleName} className={styles.segmentRow}>
-                <div
-                  className={`${styles.segmentName} ${seg.isCurrentVehicle ? styles.segmentNameCurrent : ''}`}
-                >
-                  {seg.vehicleName}
-                </div>
-                <div className={styles.segmentBar}>
+          {dynamicSegmentComparison.length > 0 && (
+            <div className={styles.segmentSection}>
+              <h3 className={styles.segmentTitle}>How it compares in this segment</h3>
+              {dynamicSegmentComparison.map((seg) => (
+                <div key={seg.vehicleName} className={styles.segmentRow}>
                   <div
-                    className={`${styles.segmentBarFill} ${seg.isCurrentVehicle ? styles.segmentBarFillCurrent : ''}`}
-                    style={{ width: `${(seg.costPerMonth / maxSegmentCost) * 100}%` }}
-                  />
+                    className={`${styles.segmentName} ${seg.isCurrentVehicle ? styles.segmentNameCurrent : ''}`}
+                  >
+                    {seg.vehicleName}
+                  </div>
+                  <div className={styles.segmentBar}>
+                    <div
+                      className={`${styles.segmentBarFill} ${seg.isCurrentVehicle ? styles.segmentBarFillCurrent : ''}`}
+                      style={{ width: `${(seg.costPerMonth / maxSegmentCost) * 100}%` }}
+                    />
+                  </div>
+                  <div className={styles.segmentCost}>
+                    AED {seg.costPerMonth.toLocaleString()}/mo
+                  </div>
                 </div>
-                <div className={styles.segmentCost}>
-                  AED {seg.costPerMonth.toLocaleString()}/mo
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
           {/* Assumptions */}
           <div className={styles.assumptions}>
@@ -232,5 +282,13 @@ export default function CostToOwnPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CostToOwnPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: 60, textAlign: 'center' }}>Loading Cost to Own calculator...</div>}>
+      <CostToOwnContent />
+    </Suspense>
   );
 }

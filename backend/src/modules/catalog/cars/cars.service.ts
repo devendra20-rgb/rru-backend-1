@@ -29,7 +29,9 @@ export class CarsService {
       sortOrder = 'desc',
     } = query;
 
-    const skip = (page - 1) * limit;
+    const pageNum = Number(query.page) || 1;
+    const limitNum = Number(query.limit) || 10;
+    const skip = (pageNum - 1) * limitNum;
 
     // 1. Build initial variantMatch with only active variants
     const variantMatch: any = { status: 'active' };
@@ -129,7 +131,7 @@ export class CarsService {
     if (!isPriceSort) {
       pipeline.push({ $sort: { [sortBy]: sortOrder === 'desc' ? -1 : 1 } });
       pipeline.push({ $skip: skip });
-      pipeline.push({ $limit: limit });
+      pipeline.push({ $limit: limitNum });
     }
 
     // 5. Lookups for parent hierarchy
@@ -227,7 +229,7 @@ export class CarsService {
         },
       });
       pipeline.push({ $skip: skip });
-      pipeline.push({ $limit: limit });
+      pipeline.push({ $limit: limitNum });
     }
 
     // 9. Projection

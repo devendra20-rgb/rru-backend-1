@@ -1,9 +1,21 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { FileText } from 'lucide-react';
-import { articlesMock } from '@/data/homepage.mock';
+import { articlesService } from '@/services/articles.service';
+import type { Article } from '@/types/article';
 import styles from './sections.module.css';
 
 export default function NewsPreview() {
+  const [articles, setArticles] = useState<Article[]>([]);
+
+  useEffect(() => {
+    articlesService.getAll().then(setArticles).catch(console.error);
+  }, []);
+
+  if (articles.length === 0) return null;
+
   return (
     <section className={styles.news} id="news-preview">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 12, marginBottom: 20 }}>
@@ -19,7 +31,7 @@ export default function NewsPreview() {
       </div>
 
       <div className={styles.newsGrid}>
-        {articlesMock.map((article) => (
+        {articles.map((article) => (
           <Link
             key={article._id}
             href={`/news/${article.slug}`}

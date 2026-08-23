@@ -3,10 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Search, ChevronDown, Check, FileSpreadsheet, Sparkles } from 'lucide-react';
+import { Search, Check, FileSpreadsheet, Sparkles } from 'lucide-react';
 import styles from './HeroSection.module.css';
-
-const LOCATIONS = ['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman'];
 
 const HERO_SUGGESTIONS = [
   { label: 'GCC spec SUV under AED 80k', query: 'SUV under 80000' },
@@ -17,8 +15,6 @@ const HERO_SUGGESTIONS = [
 export default function HeroSection() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCity, setSelectedCity] = useState('Dubai');
-  const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
 
   const handleSearch = (customQuery?: string) => {
     const q = customQuery !== undefined ? customQuery : searchTerm;
@@ -118,35 +114,6 @@ export default function HeroSection() {
               onChange={(e) => setSearchTerm(e.target.value)}
               id="hero-search-input"
             />
-            <div className={styles.heroSearchDivider} />
-
-            <div className={styles.heroSearchLocationWrapper}>
-              <button
-                type="button"
-                className={styles.heroSearchLocation}
-                onClick={() => setCityDropdownOpen(!cityDropdownOpen)}
-              >
-                {selectedCity} <ChevronDown size={12} />
-              </button>
-
-              {cityDropdownOpen && (
-                <div className={styles.cityDropdown}>
-                  {LOCATIONS.map((loc) => (
-                    <button
-                      key={loc}
-                      type="button"
-                      className={`${styles.cityDropdownItem} ${selectedCity === loc ? styles.cityDropdownItemActive : ''}`}
-                      onClick={() => {
-                        setSelectedCity(loc);
-                        setCityDropdownOpen(false);
-                      }}
-                    >
-                      {loc}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
 
             <button type="submit" className={styles.heroSearchBtn}>
               Search

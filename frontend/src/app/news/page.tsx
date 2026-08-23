@@ -1,18 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ChevronRight, FileText } from 'lucide-react';
-import { articlesMock } from '@/data/homepage.mock';
+import { articlesService } from '@/services/articles.service';
+import type { Article } from '@/types/article';
 import { formatDate } from '@/lib/utils';
 import styles from '@/app/reviews/content.module.css';
 
 export default function NewsPage() {
+  const [articles, setArticles] = useState<Article[]>([]);
   const [selectedCat, setSelectedCat] = useState<string>('all');
 
+  useEffect(() => {
+    articlesService.getAll().then(setArticles).catch(console.error);
+  }, []);
+
   const filteredArticles = selectedCat === 'all'
-    ? articlesMock
-    : articlesMock.filter((a) => a.category === selectedCat);
+    ? articles
+    : articles.filter((a) => a.category === selectedCat);
 
   return (
     <div className={styles.page}>

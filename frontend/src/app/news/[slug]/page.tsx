@@ -1,17 +1,38 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ChevronRight, Calendar, User, Clock, FileText } from 'lucide-react';
-import { articlesMock } from '@/data/homepage.mock';
+import { articlesService } from '@/services/articles.service';
+import type { Article } from '@/types/article';
 import { formatDate } from '@/lib/utils';
 import styles from '@/app/reviews/content.module.css';
 
 export default function ArticleDetailPage() {
   const params = useParams();
   const slug = params.slug as string;
+  const [article, setArticle] = useState<Article | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const article = articlesMock.find((a) => a.slug === slug);
+  useEffect(() => {
+    if (slug) {
+      articlesService.getBySlug(slug).then((res) => {
+        setArticle(res || null);
+        setLoading(false);
+      }).catch(() => setLoading(false));
+    }
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <div className={styles.page}>
+        <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--muted)' }}>
+          Loading article...
+        </div>
+      </div>
+    );
+  }
 
   if (!article) {
     return (
@@ -60,18 +81,19 @@ export default function ArticleDetailPage() {
       </header>
 
       <div className={styles.articleHeroImg}>
-        <FileText size={48} />
+        {article.imageUrl ? (
+          <img src={article.imageUrl} alt={article.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        ) : (
+          <FileText size={48} />
+        )}
       </div>
 
       <div className={styles.articleBody}>
-        <p>
+        <p style={{ fontWeight: 600, fontSize: 18, marginBottom: 20 }}>
           {article.excerpt}
         </p>
         <p>
-          When shopping for a vehicle in the UAE market, upfront price often dominates the conversation. However, factors like localized GCC specifications, high-temperature cooling packages, regional fuel pricing, and realistic annual depreciation trends play a far more substantial role over a 3-to-5 year ownership cycle.
-        </p>
-        <p>
-          At RideRoundUp, our mission is to empower automotive consumers with structured data transparency. Whether comparing powertrain efficiency, scheduled maintenance intervals, or insurance brackets, understanding total cost of ownership is the foundation of confident automotive decisions.
+          {article.content || 'When shopping for a vehicle in the UAE market, upfront price often dominates the conversation. However, factors like localized GCC specifications, high-temperature cooling packages, regional fuel pricing, and realistic annual depreciation trends play a far more substantial role over a 3-to-5 year ownership cycle.'}
         </p>
       </div>
 

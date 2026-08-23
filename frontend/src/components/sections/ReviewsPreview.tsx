@@ -1,10 +1,22 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { reviewsMock } from '@/data/homepage.mock';
+import { reviewsService } from '@/services/reviews.service';
+import type { Review } from '@/types/review';
 import styles from './sections.module.css';
 
 export default function ReviewsPreview() {
-  const main = reviewsMock[0];
-  const minis = reviewsMock.slice(1);
+  const [reviews, setReviews] = useState<Review[]>([]);
+
+  useEffect(() => {
+    reviewsService.getAll().then(setReviews).catch(console.error);
+  }, []);
+
+  if (reviews.length === 0) return null;
+
+  const main = reviews[0];
+  const minis = reviews.slice(1, 4);
 
   return (
     <section className={styles.reviews} id="reviews-preview">
@@ -28,7 +40,7 @@ export default function ReviewsPreview() {
             &ldquo;{main.content}&rdquo;
           </div>
           <div className={styles.reviewMeta}>
-            <span style={{ color: 'var(--green)', fontWeight: 700 }}>✓ Verified RRU Reader</span> · {main.authorLocation} · {main.vehicleName}
+            <span style={{ color: 'var(--green)', fontWeight: 700 }}>✓ Verified RRU Reader</span> · {main.authorLocation || 'Dubai'} · {main.vehicleName}
           </div>
         </Link>
 

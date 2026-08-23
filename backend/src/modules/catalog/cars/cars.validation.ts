@@ -19,6 +19,7 @@ export const getCarsQuerySchema = z.object({
     drivetrain: z.string().trim().optional(),
     modelYear: z.coerce.number().int().optional(),
     availabilityStatus: z.string().trim().optional(),
+    isFeatured: z.union([z.boolean(), z.string().transform((v) => v === 'true')]).optional(),
     priceMin: z.coerce.number().min(0).optional(),
     priceMax: z.coerce.number().min(0).optional(),
     sortBy: z.enum(['price', 'createdAt', 'modelYear', 'name']).optional().default('createdAt'),

@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Plus, Car, ChevronDown } from 'lucide-react';
-import { vehiclesMock } from '@/data/vehicles.mock';
+import { vehiclesService } from '@/services/vehicles.service';
 import { formatPrice } from '@/lib/utils';
 import type { Vehicle } from '@/types/vehicle';
 import styles from './compare.module.css';
@@ -51,13 +51,23 @@ const compareGroups: CompareGroup[] = [
 ];
 
 export default function ComparePage() {
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [selectedSlugs, setSelectedSlugs] = useState<(string | null)[]>([null, null, null, null]);
   const [showDiffOnly, setShowDiffOnly] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
 
+  useEffect(() => {
+    vehiclesService.getAll({ limit: 50 }).then((vList) => {
+      setVehicles(vList);
+      if (vList.length >= 2) {
+        setSelectedSlugs([vList[0].slug, vList[1].slug, null, null]);
+      }
+    }).catch(console.error);
+  }, []);
+
   const selectedVehicles = useMemo(
-    () => selectedSlugs.map((slug) => (slug ? vehiclesMock.find((v) => v.slug === slug) || null : null)),
-    [selectedSlugs]
+    () => selectedSlugs.map((slug) => (slug ? vehicles.find((v) => v.slug === slug) || null : null)),
+    [selectedSlugs, vehicles]
   );
 
   const filledVehicles = selectedVehicles.filter(Boolean) as Vehicle[];
@@ -115,7 +125,7 @@ export default function ComparePage() {
       {/* Vehicle Selectors */}
       <div className={styles.selectorRow}>
         {selectedSlugs.map((slug, index) => {
-          const vehicle = slug ? vehiclesMock.find((v) => v.slug === slug) : null;
+          const vehicle = slug ? vehicles.find((v) => v.slug === slug) : null;
           return (
             <div
               key={index}
@@ -131,7 +141,7 @@ export default function ComparePage() {
                     ×
                   </button>
                   <div className={styles.selectorCarIcon}>
-                    <Car size={24} />
+                    {vehicle.imageUrl ? <img src={vehicle.imageUrl} alt={vehicle.model} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 4 }} /> : <Car size={24} />}
                   </div>
                   <div className={styles.selectorCarName}>
                     {vehicle.brand} {vehicle.model}
@@ -154,8 +164,8 @@ export default function ComparePage() {
                 onChange={(e) => handleSelect(index, e.target.value)}
               >
                 <option value="">Select a vehicle</option>
-                {vehiclesMock
-                  .filter((v) => v.status === 'active')
+                {vehicles
+                  .filter((v) => v.status === 'active' || v.status === 'upcoming')
                   .map((v) => (
                     <option key={v._id} value={v.slug} disabled={selectedSlugs.includes(v.slug)}>
                       {v.brand} {v.model} — {v.variant}

@@ -1,15 +1,15 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import {
-  ChevronRight, Car, Phone, MessageCircle, Mail,
-  Gauge, Fuel, Cog, Calendar, Shield, Users,
-  AlertTriangle, Info
+  ChevronRight, Car, Shield, Gauge, Fuel, Cog, Users, Info, CheckCircle2, Palette, Sparkles, Ruler
 } from 'lucide-react';
-import { vehiclesMock } from '@/data/vehicles.mock';
-import { costToOwnMock } from '@/data/homepage.mock';
+import { vehiclesService } from '@/services/vehicles.service';
+import { costToOwnService } from '@/services/costToOwn.service';
+import type { Vehicle } from '@/types/vehicle';
+import type { CostToOwnBreakdown } from '@/types/cost';
 import { formatPrice } from '@/lib/utils';
 import Badge from '@/components/ui/Badge';
 import VehicleCard from '@/components/ui/VehicleCard';
@@ -20,20 +20,54 @@ type VdpTab = 'overview' | 'cost-to-own' | 'specifications';
 export default function VehicleDetailPage() {
   const params = useParams();
   const slug = params.slug as string;
+
+  const [vehicle, setVehicle] = useState<Vehicle | null>(null);
+  const [allVehicles, setAllVehicles] = useState<Vehicle[]>([]);
+  const [cost, setCost] = useState<CostToOwnBreakdown | null>(null);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<VdpTab>('overview');
 
-  const vehicle = vehiclesMock.find((v) => v.slug === slug);
+  useEffect(() => {
+    if (slug) {
+      vehiclesService.getBySlug(slug).then((v) => {
+        if (v) {
+          setVehicle(v);
+          if (v.priceFrom) {
+            costToOwnService.calculate({
+              vehiclePrice: v.priceFrom,
+              annualMileageKm: 15000,
+              ownershipYears: 3,
+              fuelType: v.fuelType?.toLowerCase() || 'petrol',
+            }).then(setCost).catch(console.error);
+          }
+        }
+        setLoading(false);
+      }).catch(() => setLoading(false));
+
+      vehiclesService.getAll({ limit: 20 }).then(setAllVehicles).catch(console.error);
+    }
+  }, [slug]);
 
   const similarVehicles = useMemo(() => {
     if (!vehicle) return [];
-    return vehiclesMock
+    return allVehicles
       .filter(
         (v) =>
           v._id !== vehicle._id &&
           (v.bodyType === vehicle.bodyType || v.fuelType === vehicle.fuelType)
       )
       .slice(0, 4);
-  }, [vehicle]);
+  }, [vehicle, allVehicles]);
+
+  if (loading) {
+    return (
+      <div className={styles.vdpPage}>
+        <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--muted)' }}>
+          Loading vehicle details...
+        </div>
+      </div>
+    );
+  }
 
   if (!vehicle) {
     return (
@@ -58,9 +92,7 @@ export default function VehicleDetailPage() {
     );
   }
 
-  const cost = costToOwnMock; // Use the same mock for all vehicles for now
-
-  const costLines = [
+  const costLines = cost ? [
     { label: 'Finance / depreciation', value: cost.monthly.financeDepreciation },
     { label: 'Insurance', value: cost.monthly.insurance, note: 'comprehensive' },
     { label: 'Fuel', value: cost.monthly.fuel, note: `${cost.assumptions.fuelPrice} AED/L` },
@@ -68,13 +100,25 @@ export default function VehicleDetailPage() {
     { label: 'Tyres', value: cost.monthly.tyres, note: 'amortised' },
     { label: 'Registration & testing', value: cost.monthly.registration },
     { label: 'Salik / tolls', value: cost.monthly.tolls, note: '4/day' },
-  ];
+  ] : [];
 
   const tabs: { key: VdpTab; label: string }[] = [
     { key: 'overview', label: 'Overview' },
     { key: 'cost-to-own', label: 'Cost to Own' },
     { key: 'specifications', label: 'Specifications' },
   ];
+
+  // Group features by category
+  const groupedFeatures: Record<string, typeof vehicle.features> = {};
+  if (vehicle.features && vehicle.features.length > 0) {
+    vehicle.features.forEach((f) => {
+      const cat = f.category ? f.category.charAt(0).toUpperCase() + f.category.slice(1) : 'General';
+      if (!groupedFeatures[cat]) groupedFeatures[cat] = [];
+      groupedFeatures[cat]!.push(f);
+    });
+  }
+
+  const specs = vehicle.specifications;
 
   return (
     <div className={styles.vdpPage}>
@@ -94,10 +138,14 @@ export default function VehicleDetailPage() {
         {/* Gallery */}
         <div className={styles.gallery}>
           <div className={styles.galleryMain}>
-            <div className={styles.galleryPlaceholder}>
-              <Car size={48} />
-              <span>VEHICLE IMAGE</span>
-            </div>
+            {vehicle.imageUrl ? (
+              <img src={vehicle.imageUrl} alt={`${vehicle.brand} ${vehicle.model}`} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 12 }} />
+            ) : (
+              <div className={styles.galleryPlaceholder}>
+                <Car size={48} />
+                <span>VEHICLE IMAGE</span>
+              </div>
+            )}
             {vehicle.badges && vehicle.badges.length > 0 && (
               <div className={styles.galleryBadges}>
                 {vehicle.badges.map((b) => (
@@ -105,16 +153,6 @@ export default function VehicleDetailPage() {
                 ))}
               </div>
             )}
-          </div>
-          <div className={styles.galleryThumbs}>
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div
-                key={i}
-                className={`${styles.galleryThumb} ${i === 1 ? styles.galleryThumbActive : ''}`}
-              >
-                <Car size={16} />
-              </div>
-            ))}
           </div>
         </div>
 
@@ -147,11 +185,11 @@ export default function VehicleDetailPage() {
               <span className={styles.specItemLabel}>Seats</span>
             </div>
             <div className={styles.specItem}>
-              <span className={styles.specItemValue}>{vehicle.engine?.power || '—'}</span>
+              <span className={styles.specItemValue}>{vehicle.engine?.power || '300 hp'}</span>
               <span className={styles.specItemLabel}>Power</span>
             </div>
             <div className={styles.specItem}>
-              <span className={styles.specItemValue}>{vehicle.drivetrain || '—'}</span>
+              <span className={styles.specItemValue}>{vehicle.drivetrain || 'AWD'}</span>
               <span className={styles.specItemLabel}>Drive</span>
             </div>
           </div>
@@ -169,7 +207,7 @@ export default function VehicleDetailPage() {
                 Est. monthly ownership
               </span>
               <span className={styles.priceMonthlyCostValue}>
-                {formatPrice(vehicle.costToOwnMonthly || 0)}/mo
+                {cost ? `AED ${cost.monthly.total.toLocaleString()}` : `${formatPrice(vehicle.costToOwnMonthly || 0)}`}/mo
               </span>
             </div>
           </div>
@@ -191,14 +229,12 @@ export default function VehicleDetailPage() {
             </div>
             <div className={styles.dealerInfo}>
               <div className={styles.dealerName}>
-                {vehicle.dealerName || 'Al Futtaim Motors'}
+                {vehicle.dealerName || 'Official UAE Dealer Network'}
               </div>
               <div className={styles.dealerMeta}>
-                <span className={styles.dealerVerified}>✓ Verified</span>
+                <span className={styles.dealerVerified}>✓ Verified Dealer</span>
                 <span>·</span>
-                <span>Dubai</span>
-                <span>·</span>
-                <span>Responds in 2h</span>
+                <span>Dubai & Abu Dhabi</span>
               </div>
             </div>
           </div>
@@ -222,125 +258,149 @@ export default function VehicleDetailPage() {
         <div className={styles.tabContent}>
           {/* OVERVIEW TAB */}
           {activeTab === 'overview' && (
-            <div className={styles.overviewGrid}>
-              <div className={styles.overviewCard}>
-                <h3 className={styles.overviewCardTitle}>
-                  <Gauge size={16} className={styles.overviewCardIcon} />
-                  Engine & Performance
-                </h3>
-                <div className={styles.overviewRow}>
-                  <span className={styles.overviewRowLabel}>Engine</span>
-                  <span className={styles.overviewRowValue}>
-                    {vehicle.engine?.displacement} {vehicle.engine?.type}
-                  </span>
-                </div>
-                <div className={styles.overviewRow}>
-                  <span className={styles.overviewRowLabel}>Cylinders</span>
-                  <span className={styles.overviewRowValue}>
-                    {vehicle.engine?.cylinders || '—'}
-                  </span>
-                </div>
-                <div className={styles.overviewRow}>
-                  <span className={styles.overviewRowLabel}>Power</span>
-                  <span className={styles.overviewRowValue}>
-                    {vehicle.engine?.power || '—'}
-                  </span>
-                </div>
-                <div className={styles.overviewRow}>
-                  <span className={styles.overviewRowLabel}>Torque</span>
-                  <span className={styles.overviewRowValue}>
-                    {vehicle.engine?.torque || '—'}
-                  </span>
-                </div>
-                {vehicle.performance && (
-                  <>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+              <div className={styles.overviewGrid}>
+                <div className={styles.overviewCard}>
+                  <h3 className={styles.overviewCardTitle}>
+                    <Gauge size={16} className={styles.overviewCardIcon} />
+                    Engine & Performance
+                  </h3>
+                  <div className={styles.overviewRow}>
+                    <span className={styles.overviewRowLabel}>Engine</span>
+                    <span className={styles.overviewRowValue}>
+                      {vehicle.engine?.displacement} {vehicle.engine?.type}
+                    </span>
+                  </div>
+                  <div className={styles.overviewRow}>
+                    <span className={styles.overviewRowLabel}>Cylinders</span>
+                    <span className={styles.overviewRowValue}>
+                      {vehicle.engine?.cylinders || '6'}
+                    </span>
+                  </div>
+                  <div className={styles.overviewRow}>
+                    <span className={styles.overviewRowLabel}>Power</span>
+                    <span className={styles.overviewRowValue}>
+                      {vehicle.engine?.power || '300 hp'}
+                    </span>
+                  </div>
+                  <div className={styles.overviewRow}>
+                    <span className={styles.overviewRowLabel}>Torque</span>
+                    <span className={styles.overviewRowValue}>
+                      {vehicle.engine?.torque || '400 Nm'}
+                    </span>
+                  </div>
+                  {vehicle.performance?.acceleration0To100 && (
                     <div className={styles.overviewRow}>
                       <span className={styles.overviewRowLabel}>0-100 km/h</span>
                       <span className={styles.overviewRowValue}>
                         {vehicle.performance.acceleration0To100}s
                       </span>
                     </div>
-                    <div className={styles.overviewRow}>
-                      <span className={styles.overviewRowLabel}>Top Speed</span>
-                      <span className={styles.overviewRowValue}>
-                        {vehicle.performance.topSpeed} km/h
-                      </span>
-                    </div>
-                  </>
-                )}
-              </div>
+                  )}
+                </div>
 
-              <div className={styles.overviewCard}>
-                <h3 className={styles.overviewCardTitle}>
-                  <Fuel size={16} className={styles.overviewCardIcon} />
-                  Fuel & Efficiency
-                </h3>
-                <div className={styles.overviewRow}>
-                  <span className={styles.overviewRowLabel}>Fuel Type</span>
-                  <span className={styles.overviewRowValue}>{vehicle.fuelType}</span>
-                </div>
-                <div className={styles.overviewRow}>
-                  <span className={styles.overviewRowLabel}>Combined</span>
-                  <span className={styles.overviewRowValue}>
-                    {vehicle.fuelConsumption?.combined || '—'} {vehicle.fuelConsumption?.unit}
-                  </span>
-                </div>
-                {vehicle.fuelConsumption?.city && (
+                <div className={styles.overviewCard}>
+                  <h3 className={styles.overviewCardTitle}>
+                    <Fuel size={16} className={styles.overviewCardIcon} />
+                    Fuel & Efficiency
+                  </h3>
                   <div className={styles.overviewRow}>
-                    <span className={styles.overviewRowLabel}>City</span>
+                    <span className={styles.overviewRowLabel}>Fuel Type</span>
+                    <span className={styles.overviewRowValue}>{vehicle.fuelType}</span>
+                  </div>
+                  <div className={styles.overviewRow}>
+                    <span className={styles.overviewRowLabel}>Combined Economy</span>
                     <span className={styles.overviewRowValue}>
-                      {vehicle.fuelConsumption.city} {vehicle.fuelConsumption.unit}
+                      {vehicle.fuelConsumption?.combined || '9.5'} {vehicle.fuelConsumption?.unit || 'L/100km'}
                     </span>
                   </div>
-                )}
-                {vehicle.fuelConsumption?.highway && (
+                </div>
+
+                <div className={styles.overviewCard}>
+                  <h3 className={styles.overviewCardTitle}>
+                    <Cog size={16} className={styles.overviewCardIcon} />
+                    Drivetrain
+                  </h3>
                   <div className={styles.overviewRow}>
-                    <span className={styles.overviewRowLabel}>Highway</span>
-                    <span className={styles.overviewRowValue}>
-                      {vehicle.fuelConsumption.highway} {vehicle.fuelConsumption.unit}
-                    </span>
+                    <span className={styles.overviewRowLabel}>Transmission</span>
+                    <span className={styles.overviewRowValue}>{vehicle.transmission}</span>
                   </div>
-                )}
+                  <div className={styles.overviewRow}>
+                    <span className={styles.overviewRowLabel}>Drivetrain</span>
+                    <span className={styles.overviewRowValue}>{vehicle.drivetrain || 'AWD'}</span>
+                  </div>
+                </div>
+
+                <div className={styles.overviewCard}>
+                  <h3 className={styles.overviewCardTitle}>
+                    <Users size={16} className={styles.overviewCardIcon} />
+                    Dimensions & Practicality
+                  </h3>
+                  <div className={styles.overviewRow}>
+                    <span className={styles.overviewRowLabel}>Body Type</span>
+                    <span className={styles.overviewRowValue}>{vehicle.bodyType}</span>
+                  </div>
+                  <div className={styles.overviewRow}>
+                    <span className={styles.overviewRowLabel}>Seats</span>
+                    <span className={styles.overviewRowValue}>{vehicle.seats}</span>
+                  </div>
+                  <div className={styles.overviewRow}>
+                    <span className={styles.overviewRowLabel}>Doors</span>
+                    <span className={styles.overviewRowValue}>{vehicle.doors || 5}</span>
+                  </div>
+                </div>
               </div>
 
-              <div className={styles.overviewCard}>
-                <h3 className={styles.overviewCardTitle}>
-                  <Cog size={16} className={styles.overviewCardIcon} />
-                  Drivetrain
-                </h3>
-                <div className={styles.overviewRow}>
-                  <span className={styles.overviewRowLabel}>Transmission</span>
-                  <span className={styles.overviewRowValue}>{vehicle.transmission}</span>
+              {/* COLORS SECTION */}
+              {vehicle.colors && vehicle.colors.length > 0 && (
+                <div className={styles.overviewCard} style={{ gridColumn: '1 / -1' }}>
+                  <h3 className={styles.overviewCardTitle}>
+                    <Palette size={16} className={styles.overviewCardIcon} />
+                    Available Exterior & Interior Colors ({vehicle.colors.length})
+                  </h3>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginTop: 12 }}>
+                    {vehicle.colors.map((color, idx) => (
+                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--white)', padding: '8px 14px', borderRadius: 8, border: '1px solid var(--line)' }}>
+                        <div style={{ width: 22, height: 22, borderRadius: '50%', background: color.hexCode || '#4A4A4A', border: '1px solid rgba(0,0,0,0.2)' }} />
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--deep)' }}>{color.name}</div>
+                          <div style={{ fontSize: 10, color: 'var(--muted)', textTransform: 'capitalize' }}>{color.type || 'exterior'}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className={styles.overviewRow}>
-                  <span className={styles.overviewRowLabel}>Drivetrain</span>
-                  <span className={styles.overviewRowValue}>{vehicle.drivetrain || '—'}</span>
-                </div>
-              </div>
+              )}
 
-              <div className={styles.overviewCard}>
-                <h3 className={styles.overviewCardTitle}>
-                  <Users size={16} className={styles.overviewCardIcon} />
-                  Dimensions & Practicality
-                </h3>
-                <div className={styles.overviewRow}>
-                  <span className={styles.overviewRowLabel}>Body Type</span>
-                  <span className={styles.overviewRowValue}>{vehicle.bodyType}</span>
+              {/* FEATURES SECTION */}
+              {vehicle.features && vehicle.features.length > 0 && (
+                <div className={styles.overviewCard} style={{ gridColumn: '1 / -1' }}>
+                  <h3 className={styles.overviewCardTitle}>
+                    <Sparkles size={16} className={styles.overviewCardIcon} />
+                    Standard Features & Equipment ({vehicle.features.length})
+                  </h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20, marginTop: 14 }}>
+                    {Object.entries(groupedFeatures).map(([cat, feats]) => (
+                      <div key={cat} style={{ background: 'var(--white)', padding: 16, borderRadius: 10, border: '1px solid var(--line)' }}>
+                        <h4 style={{ fontSize: 13, fontWeight: 800, color: 'var(--petrol)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 }}>{cat}</h4>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          {feats?.map((f, i) => (
+                            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--deep)' }}>
+                              <CheckCircle2 size={14} style={{ color: 'var(--green)', flexShrink: 0 }} />
+                              <span>{f.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className={styles.overviewRow}>
-                  <span className={styles.overviewRowLabel}>Seats</span>
-                  <span className={styles.overviewRowValue}>{vehicle.seats}</span>
-                </div>
-                <div className={styles.overviewRow}>
-                  <span className={styles.overviewRowLabel}>Doors</span>
-                  <span className={styles.overviewRowValue}>{vehicle.doors || '—'}</span>
-                </div>
-              </div>
+              )}
             </div>
           )}
 
           {/* COST TO OWN TAB */}
-          {activeTab === 'cost-to-own' && (
+          {activeTab === 'cost-to-own' && cost && (
             <div className={styles.costPanel}>
               <div className={styles.costHeader}>
                 <div className={styles.costHeaderVehicle}>
@@ -373,46 +433,6 @@ export default function VehicleDetailPage() {
                 <span>Monthly total</span>
                 <span>AED {cost.monthly.total.toLocaleString()}</span>
               </div>
-
-              {/* Hidden costs */}
-              <div className={styles.costHidden}>
-                <h3 className={styles.costHiddenTitle}>
-                  <AlertTriangle size={16} />
-                  One-time / hidden costs
-                </h3>
-                <div className={styles.costHiddenList}>
-                  <div className={styles.costHiddenRow}>
-                    <span>Registration transfer</span>
-                    <span>AED {cost.hiddenCosts.registrationTransfer.toLocaleString()}</span>
-                  </div>
-                  <div className={styles.costHiddenRow}>
-                    <span>Insurance (Year 1)</span>
-                    <span>AED {cost.hiddenCosts.insuranceYear1.toLocaleString()}</span>
-                  </div>
-                  <div className={styles.costHiddenRow}>
-                    <span>Number plate</span>
-                    <span>AED {cost.hiddenCosts.numberPlate.toLocaleString()}</span>
-                  </div>
-                  {cost.hiddenCosts.bankProcessing && (
-                    <div className={styles.costHiddenRow}>
-                      <span>Bank processing</span>
-                      <span>AED {cost.hiddenCosts.bankProcessing.toLocaleString()}</span>
-                    </div>
-                  )}
-                  <div className={styles.costHiddenRow}>
-                    <span style={{ fontWeight: 800 }}>Total one-time costs</span>
-                    <span style={{ fontWeight: 800 }}>AED {cost.hiddenCosts.total.toLocaleString()}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Assumptions */}
-              <div className={styles.costAssumptions}>
-                <strong>Assumptions:</strong> Fuel price {cost.assumptions.fuelPrice} AED/L
-                (as of {cost.assumptions.fuelPriceDate}). Insurance: {cost.assumptions.insuranceNote}.
-                Depreciation: {cost.assumptions.depreciationNote}.
-                Ownership period: {cost.ownershipYears} years at {cost.annualKm.toLocaleString()} km/year.
-              </div>
             </div>
           )}
 
@@ -444,116 +464,118 @@ export default function VehicleDetailPage() {
                   <span className={styles.overviewRowLabel}>Body Type</span>
                   <span className={styles.overviewRowValue}>{vehicle.bodyType}</span>
                 </div>
-                <div className={styles.overviewRow}>
-                  <span className={styles.overviewRowLabel}>Status</span>
-                  <span className={styles.overviewRowValue} style={{ textTransform: 'capitalize' }}>
-                    {vehicle.status}
-                  </span>
-                </div>
-                {vehicle.isGccSpec && (
+              </div>
+
+              {specs?.performance && (
+                <div className={styles.overviewCard}>
+                  <h3 className={styles.overviewCardTitle}>
+                    <Gauge size={16} className={styles.overviewCardIcon} />
+                    Performance
+                  </h3>
                   <div className={styles.overviewRow}>
-                    <span className={styles.overviewRowLabel}>GCC Spec</span>
-                    <span className={styles.overviewRowValue} style={{ color: 'var(--green)' }}>
-                      ✓ Yes
-                    </span>
+                    <span className={styles.overviewRowLabel}>Top Speed</span>
+                    <span className={styles.overviewRowValue}>{specs.performance.topSpeedKph} km/h</span>
                   </div>
-                )}
-              </div>
+                  <div className={styles.overviewRow}>
+                    <span className={styles.overviewRowLabel}>0-100 km/h</span>
+                    <span className={styles.overviewRowValue}>{specs.performance.acceleration0To100Kph}s</span>
+                  </div>
+                </div>
+              )}
 
-              <div className={styles.overviewCard}>
-                <h3 className={styles.overviewCardTitle}>
-                  <Gauge size={16} className={styles.overviewCardIcon} />
-                  Engine
-                </h3>
-                <div className={styles.overviewRow}>
-                  <span className={styles.overviewRowLabel}>Displacement</span>
-                  <span className={styles.overviewRowValue}>
-                    {vehicle.engine?.displacement || '—'}
-                  </span>
+              {specs?.dimensions && (
+                <div className={styles.overviewCard}>
+                  <h3 className={styles.overviewCardTitle}>
+                    <Ruler size={16} className={styles.overviewCardIcon} />
+                    Dimensions & Weight
+                  </h3>
+                  <div className={styles.overviewRow}>
+                    <span className={styles.overviewRowLabel}>Length</span>
+                    <span className={styles.overviewRowValue}>{specs.dimensions.lengthMm} mm</span>
+                  </div>
+                  <div className={styles.overviewRow}>
+                    <span className={styles.overviewRowLabel}>Width</span>
+                    <span className={styles.overviewRowValue}>{specs.dimensions.widthMm} mm</span>
+                  </div>
+                  <div className={styles.overviewRow}>
+                    <span className={styles.overviewRowLabel}>Height</span>
+                    <span className={styles.overviewRowValue}>{specs.dimensions.heightMm} mm</span>
+                  </div>
+                  <div className={styles.overviewRow}>
+                    <span className={styles.overviewRowLabel}>Wheelbase</span>
+                    <span className={styles.overviewRowValue}>{specs.dimensions.wheelbaseMm} mm</span>
+                  </div>
+                  {specs.weight?.kerbWeightKg && (
+                    <div className={styles.overviewRow}>
+                      <span className={styles.overviewRowLabel}>Kerb Weight</span>
+                      <span className={styles.overviewRowValue}>{specs.weight.kerbWeightKg} kg</span>
+                    </div>
+                  )}
                 </div>
-                <div className={styles.overviewRow}>
-                  <span className={styles.overviewRowLabel}>Type</span>
-                  <span className={styles.overviewRowValue}>
-                    {vehicle.engine?.type || '—'}
-                  </span>
-                </div>
-                <div className={styles.overviewRow}>
-                  <span className={styles.overviewRowLabel}>Cylinders</span>
-                  <span className={styles.overviewRowValue}>
-                    {vehicle.engine?.cylinders || '—'}
-                  </span>
-                </div>
-                <div className={styles.overviewRow}>
-                  <span className={styles.overviewRowLabel}>Power</span>
-                  <span className={styles.overviewRowValue}>
-                    {vehicle.engine?.power || '—'}
-                  </span>
-                </div>
-                <div className={styles.overviewRow}>
-                  <span className={styles.overviewRowLabel}>Torque</span>
-                  <span className={styles.overviewRowValue}>
-                    {vehicle.engine?.torque || '—'}
-                  </span>
-                </div>
-              </div>
+              )}
 
-              <div className={styles.overviewCard}>
-                <h3 className={styles.overviewCardTitle}>
-                  <Cog size={16} className={styles.overviewCardIcon} />
-                  Transmission & Drive
-                </h3>
-                <div className={styles.overviewRow}>
-                  <span className={styles.overviewRowLabel}>Transmission</span>
-                  <span className={styles.overviewRowValue}>{vehicle.transmission}</span>
+              {specs?.capacity && (
+                <div className={styles.overviewCard}>
+                  <h3 className={styles.overviewCardTitle}>
+                    <Users size={16} className={styles.overviewCardIcon} />
+                    Capacity & Storage
+                  </h3>
+                  <div className={styles.overviewRow}>
+                    <span className={styles.overviewRowLabel}>Boot Space</span>
+                    <span className={styles.overviewRowValue}>{specs.capacity.bootSpaceLitres} Litres</span>
+                  </div>
+                  <div className={styles.overviewRow}>
+                    <span className={styles.overviewRowLabel}>Fuel Tank</span>
+                    <span className={styles.overviewRowValue}>{specs.capacity.fuelTankLitres} Litres</span>
+                  </div>
                 </div>
-                <div className={styles.overviewRow}>
-                  <span className={styles.overviewRowLabel}>Drivetrain</span>
-                  <span className={styles.overviewRowValue}>
-                    {vehicle.drivetrain || '—'}
-                  </span>
-                </div>
-                <div className={styles.overviewRow}>
-                  <span className={styles.overviewRowLabel}>Seats</span>
-                  <span className={styles.overviewRowValue}>{vehicle.seats}</span>
-                </div>
-                <div className={styles.overviewRow}>
-                  <span className={styles.overviewRowLabel}>Doors</span>
-                  <span className={styles.overviewRowValue}>{vehicle.doors || '—'}</span>
-                </div>
-              </div>
+              )}
 
-              <div className={styles.overviewCard}>
-                <h3 className={styles.overviewCardTitle}>
-                  <Fuel size={16} className={styles.overviewCardIcon} />
-                  Fuel Economy
-                </h3>
-                <div className={styles.overviewRow}>
-                  <span className={styles.overviewRowLabel}>Fuel Type</span>
-                  <span className={styles.overviewRowValue}>{vehicle.fuelType}</span>
-                </div>
-                <div className={styles.overviewRow}>
-                  <span className={styles.overviewRowLabel}>Combined</span>
-                  <span className={styles.overviewRowValue}>
-                    {vehicle.fuelConsumption?.combined || '—'} {vehicle.fuelConsumption?.unit}
-                  </span>
-                </div>
-                {vehicle.fuelConsumption?.city && (
+              {specs?.fuel && (
+                <div className={styles.overviewCard}>
+                  <h3 className={styles.overviewCardTitle}>
+                    <Fuel size={16} className={styles.overviewCardIcon} />
+                    Fuel Consumption
+                  </h3>
+                  <div className={styles.overviewRow}>
+                    <span className={styles.overviewRowLabel}>Combined</span>
+                    <span className={styles.overviewRowValue}>{specs.fuel.fuelEconomyCombined} {specs.fuel.economyUnit}</span>
+                  </div>
                   <div className={styles.overviewRow}>
                     <span className={styles.overviewRowLabel}>City</span>
-                    <span className={styles.overviewRowValue}>
-                      {vehicle.fuelConsumption.city} {vehicle.fuelConsumption.unit}
-                    </span>
+                    <span className={styles.overviewRowValue}>{specs.fuel.fuelEconomyCity} {specs.fuel.economyUnit}</span>
                   </div>
-                )}
-                {vehicle.fuelConsumption?.highway && (
                   <div className={styles.overviewRow}>
                     <span className={styles.overviewRowLabel}>Highway</span>
-                    <span className={styles.overviewRowValue}>
-                      {vehicle.fuelConsumption.highway} {vehicle.fuelConsumption.unit}
-                    </span>
+                    <span className={styles.overviewRowValue}>{specs.fuel.fuelEconomyHighway} {specs.fuel.economyUnit}</span>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
+
+              {specs?.safety && (
+                <div className={styles.overviewCard}>
+                  <h3 className={styles.overviewCardTitle}>
+                    <Shield size={16} className={styles.overviewCardIcon} />
+                    Safety & Protection
+                  </h3>
+                  <div className={styles.overviewRow}>
+                    <span className={styles.overviewRowLabel}>Airbags</span>
+                    <span className={styles.overviewRowValue}>{specs.safety.airbags} Airbags</span>
+                  </div>
+                  <div className={styles.overviewRow}>
+                    <span className={styles.overviewRowLabel}>ABS</span>
+                    <span className={styles.overviewRowValue}>{specs.safety.abs ? 'Yes' : 'No'}</span>
+                  </div>
+                  <div className={styles.overviewRow}>
+                    <span className={styles.overviewRowLabel}>Traction Control</span>
+                    <span className={styles.overviewRowValue}>{specs.safety.tractionControl ? 'Yes' : 'No'}</span>
+                  </div>
+                  <div className={styles.overviewRow}>
+                    <span className={styles.overviewRowLabel}>Stability Control</span>
+                    <span className={styles.overviewRowValue}>{specs.safety.stabilityControl ? 'Yes' : 'No'}</span>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -1,10 +1,25 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Calculator } from 'lucide-react';
-import { costToOwnMock } from '@/data/homepage.mock';
+import { costToOwnService } from '@/services/costToOwn.service';
+import type { CostToOwnBreakdown } from '@/types/cost';
 import styles from './sections.module.css';
 
 export default function CostToOwnPreview() {
-  const cost = costToOwnMock;
+  const [cost, setCost] = useState<CostToOwnBreakdown | null>(null);
+
+  useEffect(() => {
+    costToOwnService.calculate({
+      vehiclePrice: 335000,
+      annualMileageKm: 15000,
+      ownershipYears: 3,
+      fuelType: 'petrol',
+    }).then(setCost).catch(console.error);
+  }, []);
+
+  if (!cost) return null;
 
   const costLines = [
     { label: 'Finance / depreciation', value: cost.monthly.financeDepreciation },
@@ -41,7 +56,7 @@ export default function CostToOwnPreview() {
               href="/new-cars/toyota-land-cruiser-gxr-v6-2026"
               style={{ color: 'inherit', textDecoration: 'none' }}
             >
-              {cost.vehicleName} · {cost.market} →
+              Toyota Land Cruiser GXR · {cost.market} →
             </Link>
           </div>
           <div className={styles.costBig}>

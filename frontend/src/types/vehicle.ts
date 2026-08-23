@@ -42,13 +42,39 @@ export interface Vehicle {
   isVerified?: boolean;
   isGccSpec?: boolean;
   isBelowMarket?: boolean;
-  status: 'active' | 'inactive' | 'upcoming';
+  status?: 'active' | 'inactive' | 'upcoming';
+  colors?: VehicleColor[];
+  features?: VehicleFeature[];
+  specifications?: VehicleSpecifications;
   // Used car specific
   kilometres?: number;
   owners?: number;
   warranty?: string;
   dealerName?: string;
   dealerSlug?: string;
+}
+
+export interface VehicleColor {
+  name: string;
+  hexCode?: string;
+  type?: 'exterior' | 'interior';
+  availability?: string;
+}
+
+export interface VehicleFeature {
+  category: string;
+  name: string;
+  availability?: string;
+  value?: string;
+}
+
+export interface VehicleSpecifications {
+  performance?: { topSpeedKph?: number; acceleration0To100Kph?: number };
+  dimensions?: { lengthMm?: number; widthMm?: number; heightMm?: number; wheelbaseMm?: number };
+  capacity?: { bootSpaceLitres?: number; fuelTankLitres?: number };
+  weight?: { kerbWeightKg?: number };
+  fuel?: { fuelEconomyCombined?: number; fuelEconomyCity?: number; fuelEconomyHighway?: number; economyUnit?: string };
+  safety?: { airbags?: number; abs?: boolean; tractionControl?: boolean; stabilityControl?: boolean };
 }
 
 export interface VehicleBadge {

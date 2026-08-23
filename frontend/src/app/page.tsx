@@ -1,7 +1,6 @@
 import HeroSection from '@/components/sections/HeroSection';
-import BrowseHubs from '@/components/sections/BrowseHubs';
-import FeaturedCars from '@/components/sections/FeaturedCars';
 import BrowseByBrand from '@/components/sections/BrowseByBrand';
+import FeaturedCars from '@/components/sections/FeaturedCars';
 import ComparePreview from '@/components/sections/ComparePreview';
 import CostToOwnPreview from '@/components/sections/CostToOwnPreview';
 import AIAssistantPreview from '@/components/sections/AIAssistantPreview';
@@ -17,16 +16,13 @@ export default function HomePage() {
       {/* 02 — Hero / Top Section */}
       <HeroSection />
 
-      {/* 03 — Browse Hubs */}
-      <BrowseHubs />
+      {/* 03 — Browse by Brand / Find Cars Your Way */}
+      <BrowseByBrand />
 
       {/* 04 — Featured Cars */}
       <FeaturedCars />
 
-      {/* 05 — Browse by Brand */}
-      <BrowseByBrand />
-
-      {/* 06 — Compare */}
+      {/* 05 — Compare */}
       <ComparePreview />
 
       {/* 07 — Cost to Own */}

@@ -1,17 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
-import { reviewsMock } from '@/data/homepage.mock';
+import { reviewsService } from '@/services/reviews.service';
+import type { Review } from '@/types/review';
 import styles from './content.module.css';
 
 export default function ReviewsPage() {
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [filterBrand, setFilterBrand] = useState<string>('all');
 
+  useEffect(() => {
+    reviewsService.getAll().then(setReviews).catch(console.error);
+  }, []);
+
   const filteredReviews = filterBrand === 'all'
-    ? reviewsMock
-    : reviewsMock.filter((r) => r.vehicleName.toLowerCase().includes(filterBrand.toLowerCase()));
+    ? reviews
+    : reviews.filter((r) => r.vehicleName.toLowerCase().includes(filterBrand.toLowerCase()));
 
   return (
     <div className={styles.page}>
@@ -32,7 +38,7 @@ export default function ReviewsPage() {
         <div className={styles.statsBig}>
           <div className={styles.statsBigNumber}>4.8</div>
           <div className={styles.statsBigStars}>★★★★★</div>
-          <div className={styles.statsBigCount}>Based on 1,420+ driver reviews</div>
+          <div className={styles.statsBigCount}>Based on verified driver reviews</div>
         </div>
 
         <div className={styles.statsDistribution}>

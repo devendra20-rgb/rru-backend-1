@@ -1,10 +1,13 @@
 // Cost to Own types
 export interface CostToOwnInput {
-  variantId: string;
-  market: string;
-  annualKm: number;
-  ownershipYears: number;
+  variantId?: string;
+  vehiclePrice?: number;
+  market?: string;
+  annualKm?: number;
+  annualMileageKm?: number;
+  ownershipYears?: number;
   fuelPrice?: number;
+  fuelType?: string;
   isFinanced?: boolean;
 }
 
@@ -43,7 +46,7 @@ export interface CostToOwnBreakdown {
 
 export interface SegmentComparison {
   vehicleName: string;
-  totalCost3Year: number;
+  totalCost3Year?: number;
   costPerMonth: number;
   isCurrentVehicle?: boolean;
 }

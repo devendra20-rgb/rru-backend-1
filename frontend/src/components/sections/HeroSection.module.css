@@ -13,7 +13,6 @@
   background: #082932;
   color: var(--white);
   padding: 60px var(--content-padding) 65px;
-  overflow: hidden;
   position: relative;
   display: flex;
   align-items: center;
@@ -32,6 +31,7 @@
   justify-content: flex-end;
   opacity: 0.22;
   transition: opacity var(--transition-slow);
+  overflow: hidden;
 }
 
 .heroCarSvg {
@@ -95,6 +95,8 @@
   align-items: center;
   gap: 10px;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+  position: relative;
+  z-index: 25;
 }
 
 .heroSearchIcon {
@@ -114,69 +116,6 @@
 
 .heroSearchInput::placeholder {
   color: #8f9ea3;
-}
-
-.heroSearchDivider {
-  width: 1px;
-  height: 24px;
-  background: var(--line);
-  flex-shrink: 0;
-}
-
-.heroSearchLocationWrapper {
-  position: relative;
-}
-
-.heroSearchLocation {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 13px;
-  color: var(--text);
-  font-weight: 600;
-  flex-shrink: 0;
-  padding: 0 8px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-}
-
-.cityDropdown {
-  position: absolute;
-  top: calc(100% + 12px);
-  right: 0;
-  background: var(--white);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg);
-  z-index: 30;
-  min-width: 130px;
-  padding: 4px;
-}
-
-.cityDropdownItem {
-  width: 100%;
-  text-align: left;
-  padding: 8px 10px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text);
-  background: transparent;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background var(--transition-fast);
-}
-
-.cityDropdownItem:hover {
-  background: var(--mist);
-  color: var(--petrol);
-}
-
-.cityDropdownItemActive {
-  background: var(--mist);
-  color: var(--petrol);
-  font-weight: 800;
 }
 
 .heroSearchBtn {

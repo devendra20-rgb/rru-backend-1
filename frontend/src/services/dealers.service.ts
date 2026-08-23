@@ -59,13 +59,21 @@ const dealersMockData: Dealer[] = [
 export const dealersService = {
   getAll: async (): Promise<Dealer[]> => {
     if (USE_MOCK) return dealersMockData;
-    const res = await api.get<{ data: Dealer[] }>('/api/v1/dealers');
-    return res.data;
+    try {
+      const res = await api.get<{ data: Dealer[] }>('/api/v1/dealers');
+      return res.data || dealersMockData;
+    } catch {
+      return dealersMockData;
+    }
   },
 
   getBySlug: async (slug: string): Promise<Dealer | undefined> => {
     if (USE_MOCK) return dealersMockData.find((d) => d.slug === slug);
-    const res = await api.get<{ data: Dealer }>(`/api/v1/dealers/slug/${slug}`);
-    return res.data;
+    try {
+      const res = await api.get<{ data: Dealer }>(`/api/v1/dealers/slug/${slug}`);
+      return res.data || dealersMockData.find((d) => d.slug === slug);
+    } catch {
+      return dealersMockData.find((d) => d.slug === slug);
+    }
   },
 };

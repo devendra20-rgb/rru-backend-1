@@ -1,9 +1,20 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
-import { brandsMock } from '@/data/brands.mock';
+import { brandsService } from '@/services/brands.service';
+import type { Brand } from '@/types/brand';
+import { getBrandLogoUrl } from '@/lib/brandLogos';
 import styles from './brands.module.css';
 
 export default function BrandsPage() {
+  const [brands, setBrands] = useState<Brand[]>([]);
+
+  useEffect(() => {
+    brandsService.getAll().then(setBrands).catch(console.error);
+  }, []);
+
   return (
     <div className={styles.page}>
       {/* Breadcrumb */}
@@ -19,17 +30,21 @@ export default function BrandsPage() {
       </p>
 
       <div className={styles.brandsGrid}>
-        {brandsMock.map((brand) => (
+        {brands.map((brand) => (
           <Link
             key={brand._id}
             href={`/brands/${brand.slug}`}
             className={styles.brandCard}
           >
             <div className={styles.brandLogoPlaceholder}>
-              {brand.name.charAt(0)}
+              <img
+                src={getBrandLogoUrl(brand.slug, brand.name)}
+                alt={brand.name}
+                style={{ maxHeight: 42, maxWidth: 64, objectFit: 'contain' }}
+              />
             </div>
             <h3 className={styles.brandName}>{brand.name}</h3>
-            <span className={styles.brandCount}>{brand.modelCount} models available</span>
+            <span className={styles.brandCount}>Explore Models</span>
           </Link>
         ))}
       </div>

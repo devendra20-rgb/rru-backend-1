@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { vehiclesMock, upcomingVehiclesMock } from '@/data/vehicles.mock';
+import { vehiclesService } from '@/services/vehicles.service';
+import type { Vehicle } from '@/types/vehicle';
 import VehicleCard from '@/components/ui/VehicleCard';
 import styles from './sections.module.css';
 
@@ -11,17 +12,32 @@ type TabType = (typeof TABS)[number];
 
 export default function FeaturedCars() {
   const [activeTab, setActiveTab] = useState<TabType>('Popular');
+  const [popularCars, setPopularCars] = useState<Vehicle[]>([]);
+  const [latestCars, setLatestCars] = useState<Vehicle[]>([]);
+  const [upcomingCars, setUpcomingCars] = useState<Vehicle[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const displayedCars = useMemo(() => {
-    if (activeTab === 'Upcoming') {
-      return upcomingVehiclesMock;
-    }
-    if (activeTab === 'Latest') {
-      return vehiclesMock.filter((v) => v.status === 'active').slice(4, 8);
-    }
-    // Popular
-    return vehiclesMock.filter((v) => v.status === 'active').slice(0, 4);
-  }, [activeTab]);
+  useEffect(() => {
+    let isMounted = true;
+    Promise.all([
+      vehiclesService.getFeatured().catch(() => []),
+      vehiclesService.getAll({ limit: 12 }).catch(() => []),
+      vehiclesService.getUpcoming().catch(() => []),
+    ]).then(([featured, all, upcoming]) => {
+      if (!isMounted) return;
+      setPopularCars(featured.length > 0 ? featured : all.slice(0, 4));
+      setLatestCars(all.slice(0, 4));
+      setUpcomingCars(upcoming);
+      setLoading(false);
+    });
+    return () => { isMounted = false; };
+  }, []);
+
+  const displayedCars = activeTab === 'Upcoming' 
+    ? upcomingCars 
+    : activeTab === 'Latest' 
+    ? latestCars 
+    : popularCars.length > 0 ? popularCars : latestCars;
 
   return (
     <section className={styles.featured} id="featured-cars">
@@ -50,9 +66,19 @@ export default function FeaturedCars() {
       </div>
 
       <div className={styles.carsGrid}>
-        {displayedCars.map((vehicle) => (
-          <VehicleCard key={vehicle._id} vehicle={vehicle} />
-        ))}
+        {loading ? (
+          <div style={{ padding: '30px 0', color: 'var(--muted)', gridColumn: '1 / -1', textAlign: 'center' }}>
+            Loading vehicles...
+          </div>
+        ) : displayedCars.length > 0 ? (
+          displayedCars.map((vehicle) => (
+            <VehicleCard key={vehicle._id} vehicle={vehicle} />
+          ))
+        ) : (
+          <div style={{ padding: '30px 0', color: 'var(--muted)', gridColumn: '1 / -1', textAlign: 'center' }}>
+            No vehicles catalogued in this category yet.
+          </div>
+        )}
       </div>
     </section>
   );

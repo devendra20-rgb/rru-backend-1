@@ -4,9 +4,11 @@ import { useState, useMemo, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { ChevronRight, SlidersHorizontal, Search } from 'lucide-react';
-import { vehiclesMock } from '@/data/vehicles.mock';
+import { vehiclesService } from '@/services/vehicles.service';
+import { brandsService } from '@/services/brands.service';
+import type { Vehicle } from '@/types/vehicle';
+import type { Brand } from '@/types/brand';
 import { BODY_TYPES, FUEL_TYPES, TRANSMISSIONS } from '@/lib/constants';
-import { brandsMock } from '@/data/brands.mock';
 import VehicleCard from '@/components/ui/VehicleCard';
 import styles from './newcars.module.css';
 
@@ -14,6 +16,10 @@ type SortOption = 'popular' | 'price-low' | 'price-high' | 'cost-low' | 'newest'
 
 function NewCarsContent() {
   const searchParams = useSearchParams();
+
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedBrand, setSelectedBrand] = useState<string>('');
@@ -25,6 +31,15 @@ function NewCarsContent() {
   const [maxPrice, setMaxPrice] = useState<string>('');
   const [sortBy, setSortBy] = useState<SortOption>('popular');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+
+  useEffect(() => {
+    vehiclesService.getAll({ limit: 50 }).then((v) => {
+      setVehicles(v);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+
+    brandsService.getAll().then(setBrands).catch(console.error);
+  }, []);
 
   // Initialize filters from URL query parameters
   useEffect(() => {
@@ -87,7 +102,7 @@ function NewCarsContent() {
     maxPrice;
 
   const filteredVehicles = useMemo(() => {
-    let result = vehiclesMock.filter((v) => v.status === 'active');
+    let result = vehicles.filter((v) => v.status === 'active' || v.status === 'upcoming');
 
     // Text search query filter
     if (searchQuery.trim()) {
@@ -99,16 +114,16 @@ function NewCarsContent() {
     }
 
     if (selectedBrand) {
-      result = result.filter((v) => v.brandSlug === selectedBrand);
+      result = result.filter((v) => v.brandSlug === selectedBrand || v.brand.toLowerCase() === selectedBrand.toLowerCase());
     }
     if (selectedBodyTypes.length > 0) {
-      result = result.filter((v) => selectedBodyTypes.includes(v.bodyType));
+      result = result.filter((v) => selectedBodyTypes.map(b => b.toLowerCase()).includes(v.bodyType.toLowerCase()));
     }
     if (selectedFuelTypes.length > 0) {
-      result = result.filter((v) => selectedFuelTypes.includes(v.fuelType));
+      result = result.filter((v) => selectedFuelTypes.map(f => f.toLowerCase()).includes(v.fuelType.toLowerCase()));
     }
     if (selectedTransmission) {
-      result = result.filter((v) => v.transmission === selectedTransmission);
+      result = result.filter((v) => v.transmission.toLowerCase() === selectedTransmission.toLowerCase());
     }
     if (selectedSeats) {
       const seats = parseInt(selectedSeats);
@@ -144,7 +159,7 @@ function NewCarsContent() {
     }
 
     return result;
-  }, [searchQuery, selectedBrand, selectedBodyTypes, selectedFuelTypes, selectedTransmission, selectedSeats, minPrice, maxPrice, sortBy]);
+  }, [vehicles, searchQuery, selectedBrand, selectedBodyTypes, selectedFuelTypes, selectedTransmission, selectedSeats, minPrice, maxPrice, sortBy]);
 
   const activeFilterTags: { label: string; clear: () => void }[] = [];
 
@@ -152,7 +167,7 @@ function NewCarsContent() {
     activeFilterTags.push({ label: `"${searchQuery}"`, clear: () => setSearchQuery('') });
   }
   if (selectedBrand) {
-    const brandName = brandsMock.find((b) => b.slug === selectedBrand)?.name || selectedBrand;
+    const brandName = brands.find((b) => b.slug === selectedBrand)?.name || selectedBrand;
     activeFilterTags.push({ label: brandName, clear: () => setSelectedBrand('') });
   }
   selectedBodyTypes.forEach((bt) => {
@@ -230,7 +245,7 @@ function NewCarsContent() {
               onChange={(e) => setSelectedBrand(e.target.value)}
             >
               <option value="">All Brands</option>
-              {brandsMock.map((brand) => (
+              {brands.map((brand) => (
                 <option key={brand._id} value={brand.slug}>
                   {brand.name}
                 </option>
@@ -366,7 +381,9 @@ function NewCarsContent() {
 
           {/* Results grid */}
           <div className={styles.resultsGrid}>
-            {filteredVehicles.length > 0 ? (
+            {loading ? (
+              <div style={{ padding: 40, textAlign: 'center', color: 'var(--muted)' }}>Loading vehicles...</div>
+            ) : filteredVehicles.length > 0 ? (
               filteredVehicles.map((vehicle) => (
                 <VehicleCard key={vehicle._id} vehicle={vehicle} />
               ))

@@ -1,12 +1,29 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Car, GitCompare } from 'lucide-react';
-import { vehiclesMock } from '@/data/vehicles.mock';
+import { vehiclesService } from '@/services/vehicles.service';
+import type { Vehicle } from '@/types/vehicle';
 import { formatPrice } from '@/lib/utils';
 import styles from './sections.module.css';
 
 export default function ComparePreview() {
-  const carA = vehiclesMock[0]; // Land Cruiser
-  const carB = vehiclesMock[1]; // Patrol
+  const [carA, setCarA] = useState<Vehicle | null>(null);
+  const [carB, setCarB] = useState<Vehicle | null>(null);
+
+  useEffect(() => {
+    vehiclesService.getAll({ limit: 10 }).then((cars) => {
+      if (cars.length >= 2) {
+        setCarA(cars[0]);
+        setCarB(cars[1]);
+      } else if (cars.length === 1) {
+        setCarA(cars[0]);
+      }
+    }).catch(console.error);
+  }, []);
+
+  if (!carA || !carB) return null;
 
   const compareData = [
     { label: 'Starting Price', a: formatPrice(carA.priceFrom || 0, 'AED', true), b: formatPrice(carB.priceFrom || 0, 'AED', true) },
@@ -25,7 +42,7 @@ export default function ComparePreview() {
       <div className={styles.compareGrid}>
         <Link href={`/new-cars/${carA.slug}`} className={styles.compareCar} style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className={styles.compareImg}>
-            <Car size={32} />
+            {carA.imageUrl ? <img src={carA.imageUrl} alt={carA.model} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} /> : <Car size={32} />}
           </div>
           <h3 className={styles.compareCarName}>{carA.brand} {carA.model}</h3>
           <span style={{ fontSize: 12, color: 'var(--muted)' }}>{carA.variant}</span>
@@ -37,7 +54,7 @@ export default function ComparePreview() {
 
         <Link href={`/new-cars/${carB.slug}`} className={styles.compareCar} style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className={styles.compareImg}>
-            <Car size={32} />
+            {carB.imageUrl ? <img src={carB.imageUrl} alt={carB.model} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} /> : <Car size={32} />}
           </div>
           <h3 className={styles.compareCarName}>{carB.brand} {carB.model}</h3>
           <span style={{ fontSize: 12, color: 'var(--muted)' }}>{carB.variant}</span>
