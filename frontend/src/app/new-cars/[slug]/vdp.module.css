@@ -440,51 +440,108 @@
 }
 
 /* --- Overview Tab --- */
-.overviewGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+.sectionTitle {
+  font-size: var(--font-size-2xl);
+  font-weight: 800;
+  margin-bottom: 20px;
 }
 
-.overviewCard {
+.subSectionTitle {
+  font-size: var(--font-size-lg);
+  font-weight: 800;
+  margin-bottom: 16px;
+  color: var(--deep);
+}
+
+.specsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 35px;
+}
+
+.specBox {
   background: var(--mist);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.specBox svg {
+  color: var(--petrol);
+}
+
+.specBoxLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.specBoxValue {
+  font-size: var(--font-size-md);
+  font-weight: 800;
+  color: var(--deep);
+}
+
+.featuresSection {
+  margin-bottom: 40px;
+}
+
+.featuresGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.featureCategoryBox {
+  background: var(--white);
+  border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   padding: 20px;
 }
 
-.overviewCardTitle {
-  font-size: var(--font-size-base);
+.featureCategoryTitle {
+  font-size: var(--font-size-md);
   font-weight: 800;
-  color: var(--deep);
-  margin: 0 0 14px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.overviewCardIcon {
   color: var(--petrol);
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+  text-transform: capitalize;
 }
 
-.overviewRow {
+.featureList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
   display: flex;
-  justify-content: space-between;
-  padding: 8px 0;
-  border-bottom: 1px solid rgba(0,0,0,0.04);
+  flex-direction: column;
+  gap: 12px;
+}
+
+.featureList li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
   font-size: var(--font-size-sm);
+  color: var(--text);
+  line-height: 1.4;
 }
 
-.overviewRow:last-child {
-  border-bottom: none;
+.featureCheckIcon {
+  color: var(--green);
+  flex-shrink: 0;
+  margin-top: 3px;
 }
 
-.overviewRowLabel {
+.featureVal {
   color: var(--muted);
-}
-
-.overviewRowValue {
-  font-weight: 700;
-  color: var(--deep);
+  font-size: 12px;
 }
 
 /* --- Cost Tab --- */
@@ -639,7 +696,11 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .overviewGrid {
+  .specsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .featuresGrid {
     grid-template-columns: 1fr;
   }
 

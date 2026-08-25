@@ -82,7 +82,7 @@ export default function ArticleDetailPage() {
 
       <div className={styles.articleHeroImg}>
         {article.imageUrl ? (
-          <img src={article.imageUrl} alt={article.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <img src={article.imageUrl} alt={article.title} />
         ) : (
           <FileText size={48} />
         )}

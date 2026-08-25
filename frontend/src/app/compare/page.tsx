@@ -237,13 +237,16 @@ export default function ComparePage() {
                   </button>
                   <div className={styles.selectorCarIcon}>
                     {vehicle.imageUrl ? (
-                      <img src={vehicle.imageUrl} alt={vehicle.model} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <img src={vehicle.imageUrl} alt={vehicle.model} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                     ) : (
                       <Car size={24} />
                     )}
                   </div>
                   <div className={styles.selectorCarName}>
                     {vehicle.brand} {vehicle.model}
+                  </div>
+                  <div className={styles.selectorCarVariant}>
+                    {vehicle.variant}
                   </div>
                   <div className={styles.selectorCarPrice}>
                     {formatPrice(vehicle.priceFrom || 0)}
