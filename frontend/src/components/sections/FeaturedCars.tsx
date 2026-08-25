@@ -115,17 +115,17 @@ export default function FeaturedCars() {
           style={{ paddingBottom: '16px' }}
         >
           {loading ? (
-            <div style={{ padding: '30px 0', color: 'var(--muted)', width: '100%', textAlign: 'center' }}>
+            <div style={{ padding: '30px 0', color: 'var(--muted)', flex: '0 0 100%', textAlign: 'center' }}>
               Loading vehicles...
             </div>
           ) : displayedCars.length > 0 ? (
             displayedCars.map((vehicle) => (
-              <div key={vehicle._id} style={{ flex: '0 0 calc((100% - 3 * 18px) / 4)' }}>
+              <div key={vehicle._id} style={{ height: '100%' }}>
                 <VehicleCard vehicle={vehicle} />
               </div>
             ))
           ) : (
-            <div style={{ padding: '30px 0', color: 'var(--muted)', width: '100%', textAlign: 'center' }}>
+            <div style={{ padding: '30px 0', color: 'var(--muted)', flex: '0 0 100%', textAlign: 'center' }}>
               No vehicles catalogued in this category yet.
             </div>
           )}
