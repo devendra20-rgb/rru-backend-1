@@ -37,59 +37,208 @@
 .gallery {
   border-radius: var(--radius-xl);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--white);
+  border: 1px solid var(--line);
 }
 
-.galleryMain {
-  height: 380px;
-  background: linear-gradient(135deg, #dfe6e8, #c8d4d8);
-  display: grid;
-  place-items: center;
-  color: #8ea5ab;
-  border-radius: var(--radius-xl);
+.galleryHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--mist);
+  border-bottom: 1px solid var(--line);
+}
+
+.modeTabs {
+  display: flex;
+  gap: 8px;
+}
+
+.modeBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--line);
+  background: var(--white);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.modeBtn:hover {
+  border-color: var(--petrol);
+  color: var(--petrol);
+}
+
+.modeBtnActive {
+  background: var(--petrol);
+  color: var(--white);
+  border-color: var(--petrol);
+}
+
+.galleryBadgesHeader {
+  display: flex;
+  gap: 6px;
+}
+
+.galleryMainBox {
   position: relative;
+  min-height: 400px;
+  background: linear-gradient(135deg, #dfe6e8, #c8d4d8);
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.photoViewport {
+  position: relative;
+  width: 100%;
+  height: 400px;
+  overflow: hidden;
+  background: #e2e8ea;
+}
+
+.mainPhotoImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.mainPhotoImage:hover {
+  transform: scale(1.02);
+}
+
+.photoAnglePill {
+  position: absolute;
+  bottom: 14px;
+  right: 14px;
+  background: rgba(8, 41, 50, 0.8);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: capitalize;
+  backdrop-filter: blur(4px);
 }
 
 .galleryPlaceholder {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  height: 100%;
   gap: 10px;
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 1px;
+  color: #8ea5ab;
 }
 
-.galleryBadges {
-  position: absolute;
-  top: 14px;
-  left: 14px;
+.thumbnailRow {
+  display: flex;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--white);
+  border-top: 1px solid var(--line);
+  overflow-x: auto;
+}
+
+.thumbBtn {
+  width: 64px;
+  height: 46px;
+  border-radius: 6px;
+  border: 2px solid var(--line);
+  overflow: hidden;
+  cursor: pointer;
+  padding: 0;
+  background: #eee;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.thumbBtn img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumbBtnActive {
+  border-color: var(--petrol);
+  box-shadow: 0 0 0 2px rgba(13, 59, 73, 0.2);
+}
+
+.vdpColorBar {
+  padding: 10px 14px;
+  background: #fafbfc;
+  border-top: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.vdpColorTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.vdpColorSwatches {
   display: flex;
   gap: 6px;
+  align-items: center;
 }
 
-.galleryThumbs {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.galleryThumb {
-  height: 70px;
-  background: linear-gradient(135deg, #e4eaec, #d0d9dc);
-  border-radius: var(--radius-md);
-  display: grid;
-  place-items: center;
-  color: #b0bec1;
-  font-size: 10px;
-  cursor: pointer;
+.vdpColorBtn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
   border: 2px solid transparent;
-  transition: border-color var(--transition-fast);
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
 }
 
-.galleryThumb:hover,
-.galleryThumbActive {
+.vdpColorBtn:hover {
+  transform: scale(1.15);
   border-color: var(--petrol);
+}
+
+.vdpColorBtnActive {
+  border-color: var(--petrol);
+  box-shadow: 0 0 0 2px rgba(13, 59, 73, 0.3);
+  transform: scale(1.1);
+}
+
+.vdpColorDot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  display: inline-block;
+}
+
+.vdpColorAllLabel {
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--petrol);
+  background: var(--mist);
+  padding: 4px;
+  border-radius: 50%;
+  width: 100%;
+  text-align: center;
 }
 
 /* --- Info Panel --- */

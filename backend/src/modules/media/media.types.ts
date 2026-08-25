@@ -6,6 +6,8 @@ export interface IMedia extends Document {
   folder?: string;
   entityType?: 'variant' | 'brand' | 'model' | 'generation';
   entityId?: Types.ObjectId;
+  colorId?: Types.ObjectId;    // Optional: links image to a specific color variant
+  angleTag?: string;           // Optional: e.g. 'exterior-front', 'exterior-rear', 'interior', 'exterior-side', '360-frame'
   mediaType: 'image' | 'video';
   storageProvider: 'local' | 's3';
   storageKey: string;
@@ -25,6 +27,8 @@ export interface CreateMediaDTO {
   folder?: string;
   entityType?: 'variant' | 'brand' | 'model' | 'generation';
   entityId?: string;
+  colorId?: string;            // Optional color association
+  angleTag?: string;           // Optional angle tag
   mediaType?: 'image' | 'video';
   altText?: string;
   isPrimary?: boolean | string;
@@ -41,6 +45,8 @@ export interface UpdateMediaDTO {
 export interface MediaQuery extends PaginationQuery {
   entityType?: string;
   entityId?: string;
+  colorId?: string;
+  angleTag?: string;
   mediaType?: string;
   status?: string;
   isPrimary?: boolean | string;

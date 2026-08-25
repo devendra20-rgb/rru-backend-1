@@ -245,7 +245,7 @@ export class CarsService {
         brand: { _id: '$brand._id', name: '$brand.name', slug: '$brand.slug' },
         model: { _id: '$model._id', name: '$model.name', slug: '$model.slug' },
         generation: { _id: '$generation._id', name: '$generation.name', slug: '$generation.slug' },
-        primaryMedia: { url: '$primaryMedia.url', altText: '$primaryMedia.altText' },
+        primaryMedia: { url: '$primaryMedia.url', altText: '$primaryMedia.altText', colorId: '$primaryMedia.colorId', angleTag: '$primaryMedia.angleTag' },
         pricing: '$marketInfo.pricing',
         availabilityStatus: '$marketInfo.availabilityStatus',
       },
@@ -350,6 +350,8 @@ export class CarsService {
                 isPrimary: 1,
                 sortOrder: 1,
                 altText: 1,
+                colorId: 1,
+                angleTag: 1,
               },
             },
           ],
@@ -470,7 +472,7 @@ export class CarsService {
             { $unwind: '$colorDoc' },
             {
               $project: {
-                _id: 0,
+                _id: '$colorDoc._id',   // expose the color document ID for media matching
                 name: '$colorDoc.name',
                 hexCode: '$colorDoc.hexCode',
                 type: '$colorDoc.type',

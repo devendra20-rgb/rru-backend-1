@@ -1,4 +1,13 @@
 // Vehicle / Variant types
+export interface VehicleMedia {
+  url: string;
+  altText?: string;
+  isPrimary?: boolean;
+  sortOrder?: number;
+  mediaType?: 'image' | 'video';
+  colorId?: string;   // which color this image belongs to (null = any color)
+  angleTag?: string;  // e.g. 'exterior-front', 'interior', 'detail'
+}
 export interface Vehicle {
   _id: string;
   brand: string;
@@ -36,7 +45,8 @@ export interface Vehicle {
   currency?: string;
   costToOwnMonthly?: number;
   imageUrl?: string;
-  images?: string[];
+  images?: string[];       // flat list of URLs (backward compat)
+  mediaItems?: VehicleMedia[];  // rich media objects with colorId, angleTag
   tags?: string[];
   badges?: VehicleBadge[];
   isVerified?: boolean;
@@ -55,6 +65,7 @@ export interface Vehicle {
 }
 
 export interface VehicleColor {
+  _id?: string;    // Color document ID, used to match color-specific media
   name: string;
   hexCode?: string;
   type?: 'exterior' | 'interior';

@@ -13,9 +13,18 @@ export function normalizeVehicle(raw: any): Vehicle {
   const priceFrom = raw.pricing?.amount ?? raw.markets?.[0]?.pricing?.amount ?? raw.priceFrom ?? 0;
   const currency = raw.pricing?.currencyCode ?? raw.markets?.[0]?.pricing?.currencyCode ?? raw.currency ?? 'AED';
   const imageUrl = raw.primaryMedia?.url || raw.imageUrl || (raw.media && raw.media[0]?.url);
-  const images = raw.media && Array.isArray(raw.media) 
-    ? raw.media.map((m: any) => typeof m === 'string' ? m : m.url) 
-    : (imageUrl ? [imageUrl] : []);
+  const mediaItems = raw.media && Array.isArray(raw.media)
+    ? raw.media.map((m: any) => ({
+        url: typeof m === 'string' ? m : m.url,
+        altText: m.altText,
+        isPrimary: m.isPrimary,
+        sortOrder: m.sortOrder,
+        mediaType: m.mediaType || 'image',
+        colorId: m.colorId ? m.colorId.toString() : null,
+        angleTag: m.angleTag || null,
+      }))
+    : (imageUrl ? [{ url: imageUrl, isPrimary: true, sortOrder: 0 }] : []);
+  const images = mediaItems.map((m: any) => m.url);
 
   const fuelType = raw.fuelType 
     ? (raw.fuelType.toLowerCase() === 'plug_in_hybrid' ? 'Hybrid' : raw.fuelType.charAt(0).toUpperCase() + raw.fuelType.slice(1)) 
@@ -59,6 +68,7 @@ export function normalizeVehicle(raw: any): Vehicle {
     costToOwnMonthly: raw.costToOwnMonthly || (priceFrom ? Math.round(priceFrom * 0.014) : 3200),
     imageUrl,
     images,
+    mediaItems,
     colors: raw.colors,
     features: raw.features,
     specifications: raw.specifications,

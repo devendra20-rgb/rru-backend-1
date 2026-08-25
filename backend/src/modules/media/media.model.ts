@@ -14,6 +14,18 @@ const mediaSchema = new Schema<IMedia>(
       type: Schema.Types.ObjectId,
       // Ref is dynamic but in our queries we'll manage it
     },
+    colorId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Color',
+      default: null,
+      // Optional: links this image to a specific paint color of the variant
+    },
+    angleTag: {
+      type: String,
+      enum: ['exterior-front', 'exterior-rear', 'exterior-side', 'interior', 'detail', 'overhead', '360-frame'],
+      default: null,
+      // Optional: describes the shot angle/type for grouping
+    },
     mediaType: {
       type: String,
       required: true,
