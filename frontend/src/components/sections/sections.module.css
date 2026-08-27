@@ -260,14 +260,14 @@
 
 .carouselWrapper {
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  display: block;
   margin: 20px 0 10px;
 }
 
 .carouselArrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -279,9 +279,16 @@
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  flex-shrink: 0;
   color: #374151;
   z-index: 10;
+}
+
+.carouselArrowLeft {
+  left: -15px;
+}
+
+.carouselArrowRight {
+  right: -15px;
 }
 
 .carouselArrow:hover:not(:disabled) {

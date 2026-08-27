@@ -1,6 +1,6 @@
 .navbar {
   height: var(--nav-height);
-  padding: 0 55px;
+  padding: 0 var(--content-padding);
   display: flex;
   align-items: center;
   gap: 40px;

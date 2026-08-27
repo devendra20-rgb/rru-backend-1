@@ -80,8 +80,9 @@
 
   /* Layout */
   --max-width: 100%;
+  --content-max-width: 1600px;
   --nav-height: 64px;
-  --content-padding: max(32px, calc((100vw - 1440px) / 2 + 55px));
+  --content-padding: max(55px, calc((100vw - var(--content-max-width)) / 2));
 }
 
 /* ---------- Base Reset ---------- */

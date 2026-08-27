@@ -43,7 +43,7 @@
 }
 
 .vehicleCardInfo {
-  padding: 17px;
+  padding: 14px 16px;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -59,31 +59,31 @@
 }
 
 .vehicleCardName {
-  margin: 0 0 4px;
+  margin: 0 0 2px;
   font-size: var(--font-size-lg);
   font-weight: 800;
   color: var(--deep);
-  line-height: 1.2;
+  line-height: 1.15;
 }
 
 .vehicleCardVariant {
   font-size: var(--font-size-sm);
   color: var(--muted);
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .vehicleCardMeta {
   font-size: var(--font-size-sm);
   color: var(--muted);
-  line-height: 1.6;
+  line-height: 1.4;
   margin-bottom: auto;
 }
 
 .vehicleCardReceipt {
-  margin-top: 13px;
+  margin-top: 10px;
   border-top: 1px dashed #a9b6ba;
   border-bottom: 1px dashed #a9b6ba;
-  padding: 9px 0;
+  padding: 6px 0;
   color: var(--deep);
   font-size: 11px;
   display: flex;
@@ -104,14 +104,14 @@
 
 .vehicleCardChips {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   flex-wrap: wrap;
-  margin-top: 12px;
+  margin-top: 8px;
 }
 
 .vehicleCardChip {
-  padding: 5px 8px;
-  border-radius: 15px;
+  padding: 3px 6px;
+  border-radius: 12px;
   background: #edf3f4;
   color: var(--petrol);
   font-size: var(--font-size-xs);

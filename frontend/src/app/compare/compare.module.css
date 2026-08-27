@@ -1,9 +1,9 @@
 /* ============================================
-   COMPARE PAGE
+   COMPARE PAGE - UNIFIED REDESIGN
    ============================================ */
 .comparePage {
   padding: var(--space-3xl) var(--content-padding) var(--space-4xl);
-  max-width: 1400px;
+  max-width: var(--content-max-width, 1600px);
   width: 100%;
   margin: 0 auto;
 }
@@ -14,7 +14,7 @@
   gap: 6px;
   font-size: var(--font-size-sm);
   color: var(--muted);
-  margin-bottom: 10px;
+  margin-bottom: 24px;
 }
 
 .breadcrumb a {
@@ -27,156 +27,318 @@
   text-decoration: underline;
 }
 
+.pageHeader {
+  margin-bottom: 32px;
+}
+
 .pageTitle {
-  font-size: var(--font-size-3xl);
-  letter-spacing: -0.8px;
-  margin: 0 0 4px;
+  font-size: var(--font-size-4xl);
+  font-weight: 800;
+  letter-spacing: -1px;
+  color: var(--deep);
+  margin: 0 0 8px;
 }
 
 .pageSubtitle {
   color: var(--muted);
-  font-size: var(--font-size-base);
-  margin-bottom: 28px;
+  font-size: var(--font-size-lg);
+  margin: 0;
 }
 
-/* --- Vehicle Selector --- */
-.selectorRow {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-  margin-bottom: 28px;
-}
-
-.selectorCard {
-  border: 2px dashed var(--line);
+/* --- Options Bar --- */
+.optionsBar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 16px;
+  padding: 12px 20px;
+  background: var(--mist);
   border-radius: var(--radius-lg);
-  padding: 20px;
+}
+
+.optionsTitle {
+  font-size: var(--font-size-sm);
+  font-weight: 800;
+  color: var(--deep);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.optionsToggles {
+  display: flex;
+  gap: 24px;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+}
+
+/* --- Unified Grid Container --- */
+.unifiedContainer {
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--line);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+  margin-bottom: 40px;
+}
+
+.scrollWrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: inherit;
+}
+
+.tableGrid2 { display: grid; grid-template-columns: 200px repeat(2, minmax(280px, 1fr)); min-width: max-content; }
+.tableGrid3 { display: grid; grid-template-columns: 200px repeat(3, minmax(280px, 1fr)); min-width: max-content; }
+.tableGrid4 { display: grid; grid-template-columns: 200px repeat(4, minmax(280px, 1fr)); min-width: max-content; }
+
+/* Sticky Label Column */
+.labelColumn {
+  position: sticky;
+  left: 0;
+  background: var(--white);
+  z-index: 10;
+  border-right: 1px solid var(--line);
+}
+
+/* --- Vehicle Header Row --- */
+.headerRow {
+  display: contents; /* Let children join the grid */
+}
+
+.headerLabelCell {
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  border-bottom: 1px solid var(--line);
+}
+
+.headerCell {
+  padding: 24px;
+  border-bottom: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
-  min-height: 200px;
+}
+
+.headerCell:last-child {
+  border-right: none;
+}
+
+.removeBtn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--mist);
+  border: 1px solid var(--line);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: var(--muted);
+  z-index: 5;
+  transition: all 0.2s ease;
+}
+
+.removeBtn:hover {
+  background: #fff0f0;
+  color: #d32f2f;
+  border-color: #ffcdd2;
+}
+
+/* 16:9 Image Container */
+.imageContainer {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #f4f6f8;
+  border-radius: var(--radius-md);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 10px;
+}
+
+.imageContainer img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+.vehicleBrand {
+  font-size: var(--font-size-md);
+  font-weight: 800;
+  color: var(--deep);
+  line-height: 1.2;
+}
+
+.vehicleModel {
+  font-size: var(--font-size-xl);
+  font-weight: 800;
+  color: var(--deep);
+  line-height: 1.1;
+  margin-bottom: 4px;
+}
+
+.vehicleVariant {
+  font-size: var(--font-size-sm);
+  color: var(--muted);
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+.vehiclePrice {
+  font-size: var(--font-size-lg);
+  font-weight: 800;
+  color: var(--petrol);
+}
+
+/* Add Vehicle Slot */
+.addSlot {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  transition: all var(--transition-base);
-  position: relative;
+  height: 100%;
+  width: 100%;
+  min-height: 250px;
+  padding: 20px;
+  background: #f8fafb;
+  border-radius: var(--radius-lg);
+  border: 2px dashed var(--line);
 }
 
-.selectorCardFilled {
-  border-style: solid;
-  border-color: var(--petrol);
-  background: var(--mist);
-}
-
-.selectorCardEmpty:hover {
-  border-color: var(--petrol);
-  background: rgba(13, 59, 73, 0.02);
-}
-
-.selectorAddIcon {
-  width: 42px;
-  height: 42px;
+.addIcon {
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  background: var(--mist);
+  background: var(--white);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
   display: grid;
   place-items: center;
   color: var(--petrol);
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
-.selectorAddText {
-  font-size: var(--font-size-sm);
-  font-weight: 700;
-  color: var(--petrol);
-}
-
-.selectorSelect {
-  width: 100%;
-  padding: 9px 12px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-sm);
-  color: var(--text);
-  background: var(--white);
-  outline: none;
-  cursor: pointer;
-  margin-top: 10px;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2366777D' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  padding-right: 30px;
-}
-
-.selectorCarName {
+.addText {
   font-size: var(--font-size-md);
   font-weight: 800;
   color: var(--deep);
-  margin-top: 8px;
+  margin-bottom: 16px;
 }
 
-.selectorCarVariant {
-  font-size: 11px;
-  color: var(--muted);
-  margin-top: 2px;
-}
-
-.selectorCarPrice {
-  font-size: var(--font-size-sm);
-  color: var(--amber);
-  font-weight: 700;
-  margin-top: 4px;
-}
-
-.selectorRemoveBtn {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--white);
-  border: 1px solid var(--line);
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  font-size: 14px;
-  color: var(--muted);
-  transition: all var(--transition-fast);
-  line-height: 1;
-}
-
-.selectorRemoveBtn:hover {
-  border-color: var(--rust);
-  color: var(--rust);
-  background: #fef5f2;
-}
-
-.selectorCarIcon {
+.addSelect {
   width: 100%;
-  height: 110px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  background: linear-gradient(135deg, #dfe6e8, #c8d4d8);
-  display: grid;
-  place-items: center;
-  color: #8ea5ab;
-  margin-bottom: 8px;
-  overflow: hidden;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
 }
 
-/* --- Photo Comparison Section --- */
+/* --- Quick Comparison Summary & Detailed Rows --- */
+.dataRow {
+  display: contents;
+}
+
+.dataRowHidden {
+  display: none;
+}
+
+.rowLabelCell {
+  padding: 16px 20px;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+}
+
+.rowValueCell {
+  padding: 16px 20px;
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--deep);
+  border-bottom: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.rowValueCell:last-child {
+  border-right: none;
+}
+
+.rowValueBest {
+  color: var(--green);
+}
+
+.rowValueHighlight {
+  color: var(--rust);
+}
+
+/* Group Headers for Detailed Comparison */
+.groupHeaderRow {
+  display: contents;
+}
+
+.groupHeaderCell {
+  grid-column: 1 / -1;
+  padding: 12px 20px;
+  background: #f8fafb;
+  border-bottom: 1px solid var(--line);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--petrol);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+/* Spacer for Quick Comparison */
+.sectionSpacer {
+  grid-column: 1 / -1;
+  height: 24px;
+  background: #f8fafb;
+  border-bottom: 1px solid var(--line);
+}
+
+/* --- Visual Photo Comparison Section (Kept intact) --- */
 .imageComparisonSection {
   border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   overflow: hidden;
   background: var(--white);
-  margin-bottom: 28px;
+  margin-bottom: 40px;
 }
 
 .imageComparisonHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
+  padding: 16px 24px;
   background: var(--mist);
   border-bottom: 1px solid var(--line);
   flex-wrap: wrap;
@@ -188,6 +350,8 @@
   font-weight: 800;
   color: var(--deep);
   margin: 0;
+  display: flex;
+  align-items: center;
 }
 
 .imageComparisonTabs {
@@ -196,7 +360,7 @@
 }
 
 .imageTab {
-  padding: 7px 14px;
+  padding: 7px 16px;
   border-radius: var(--radius-full);
   border: 1px solid var(--line);
   background: var(--white);
@@ -220,26 +384,29 @@
 
 .imageGrid {
   display: grid;
-  gap: 16px;
-  padding: 20px;
+  gap: 20px;
+  padding: 24px;
   overflow-x: auto;
 }
 
 .vehicleImageCard {
   border: 1px solid var(--line);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  background: #fafbfc;
+  background: var(--white);
   display: flex;
   flex-direction: column;
-  min-width: 240px;
+  min-width: 280px;
 }
 
 .vehicleImageWrapper {
   position: relative;
-  height: 220px;
-  background: #e2e8ea;
+  height: 240px;
+  background: #f4f6f8;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .vehiclePhoto {
@@ -255,24 +422,24 @@
 
 .vehiclePhotoBadge {
   position: absolute;
-  bottom: 10px;
-  left: 10px;
-  background: rgba(8, 41, 50, 0.82);
+  bottom: 12px;
+  left: 12px;
+  background: rgba(8, 41, 50, 0.85);
   color: var(--white);
-  padding: 4px 10px;
+  padding: 4px 12px;
   border-radius: 6px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   backdrop-filter: blur(4px);
 }
 
 .photoCountBadge {
   position: absolute;
-  top: 10px;
-  right: 10px;
-  background: rgba(0, 0, 0, 0.55);
+  top: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.6);
   color: #fff;
-  padding: 3px 9px;
+  padding: 4px 10px;
   border-radius: var(--radius-full);
   font-size: 11px;
   font-weight: 700;
@@ -281,30 +448,29 @@
 
 .angleTagPill {
   position: absolute;
-  bottom: 10px;
-  right: 10px;
-  background: rgba(13, 59, 73, 0.7);
+  bottom: 12px;
+  right: 12px;
+  background: rgba(13, 59, 73, 0.8);
   color: #e0f2f4;
-  padding: 3px 9px;
+  padding: 4px 10px;
   border-radius: var(--radius-full);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   text-transform: capitalize;
   backdrop-filter: blur(4px);
-  letter-spacing: 0.3px;
 }
 
 .thumbnailRow {
   display: flex;
   gap: 8px;
-  padding: 10px 12px;
+  padding: 12px;
   background: var(--white);
   border-top: 1px solid var(--line);
 }
 
 .thumbnailBtn {
-  width: 52px;
-  height: 38px;
+  width: 56px;
+  height: 42px;
   border-radius: 6px;
   border: 2px solid var(--line);
   overflow: hidden;
@@ -326,40 +492,37 @@
 }
 
 .colorPaletteRow {
-  padding: 10px 14px;
+  padding: 12px 16px;
   background: var(--white);
   border-top: 1px solid var(--line);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  min-height: 44px;
+  gap: 12px;
 }
 
 .colorPaletteLeft {
   display: flex;
   align-items: center;
-  gap: 2px;
-  flex-shrink: 0;
+  gap: 4px;
 }
 
 .colorPaletteTitle {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--muted);
 }
 
 .colorSwatches {
   display: flex;
-  gap: 5px;
+  gap: 6px;
   flex-wrap: wrap;
   justify-content: flex-end;
 }
 
-/* Individual color swatch button */
 .colorSwatchBtn {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   border: 2px solid transparent;
   padding: 0;
@@ -369,7 +532,6 @@
   align-items: center;
   justify-content: center;
   transition: all var(--transition-fast);
-  position: relative;
 }
 
 .colorSwatchBtn:hover {
@@ -387,17 +549,15 @@
   opacity: 0.4;
 }
 
-/* The dot inside the swatch button */
 .colorDot {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  border: 1px solid rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(0, 0, 0, 0.15);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   display: inline-block;
 }
 
-/* "All" swatch */
 .colorSwatchAll {
   font-size: 9px;
   font-weight: 800;
@@ -408,163 +568,5 @@
   text-align: center;
   border-radius: 50%;
   background: var(--mist);
-  padding: 4px 2px;
-}
-
-/* --- Comparison Table --- */
-.tableContainer {
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.tableToolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 18px;
-  background: var(--mist);
-  border-bottom: 1px solid var(--line);
-  min-width: 900px;
-}
-
-.tableToolbarTitle {
-  font-size: var(--font-size-base);
-  font-weight: 800;
-  color: var(--deep);
-  margin: 0;
-}
-
-.tableToggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: var(--font-size-sm);
-  color: var(--muted);
-  cursor: pointer;
-}
-
-.tableToggleCheckbox {
-  accent-color: var(--petrol);
-  cursor: pointer;
-}
-
-.tableGroup {
-  border-bottom: 1px solid var(--line);
-  min-width: 900px;
-}
-
-.tableGroup:last-child {
-  border-bottom: none;
-}
-
-.tableGroupHeader {
-  padding: 10px 18px;
-  background: #f8fafb;
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: var(--petrol);
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.tableRow {
-  display: grid;
-  grid-template-columns: 180px repeat(var(--col-count, 2), minmax(180px, 1fr));
-  border-bottom: 1px solid #f3f5f6;
-}
-
-.tableRow:last-child {
-  border-bottom: none;
-}
-
-.tableRowLabel {
-  padding: 11px 18px;
-  font-size: var(--font-size-sm);
-  color: var(--muted);
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-}
-
-.tableRowValue {
-  padding: 11px 16px;
-  font-size: var(--font-size-sm);
-  font-weight: 700;
-  color: var(--deep);
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.tableRowBest {
-  color: var(--green);
-}
-
-.tableBestBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 2px 7px;
-  border-radius: var(--radius-full);
-  background: rgba(18, 128, 92, 0.1);
-  color: var(--green);
-  font-size: 9px;
-  font-weight: 800;
-  text-transform: uppercase;
-  margin-left: 6px;
-}
-
-/* --- Empty State --- */
-.emptyCompare {
-  text-align: center;
-  padding: 80px 24px;
-  color: var(--muted);
-}
-
-.emptyCompareIcon {
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  background: var(--mist);
-  display: grid;
-  place-items: center;
-  margin: 0 auto 18px;
-  color: var(--petrol);
-}
-
-.emptyCompareTitle {
-  font-size: var(--font-size-xl);
-  font-weight: 800;
-  color: var(--deep);
-  margin-bottom: 8px;
-}
-
-.emptyCompareDesc {
-  font-size: var(--font-size-base);
-  color: var(--muted);
-}
-
-/* --- Responsive --- */
-@media (max-width: 1024px) {
-  .selectorRow {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 768px) {
-  .selectorRow {
-    grid-template-columns: 1fr;
-  }
-
-  .tableRow {
-    grid-template-columns: 140px repeat(var(--col-count, 2), 1fr);
-    font-size: 12px;
-  }
+  padding: 6px 2px;
 }

@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import { ChevronRight, Plus, Car, ChevronDown, Camera, Palette, LayoutGrid, X } from 'lucide-react';
+import { ChevronRight, Plus, Car, ChevronDown, Camera, Palette, LayoutGrid } from 'lucide-react';
 import { vehiclesService } from '@/services/vehicles.service';
 import { formatPrice } from '@/lib/utils';
 import type { Vehicle, VehicleMedia } from '@/types/vehicle';
@@ -50,10 +50,6 @@ const compareGroups: CompareGroup[] = [
   },
 ];
 
-const quickSummaryLabels = ['Starting Price', 'Monthly Ownership', 'Engine', 'Power', 'Torque', '0-100 km/h'];
-const allRows = compareGroups.flatMap(g => g.rows);
-const quickSummaryRows = quickSummaryLabels.map(label => allRows.find(r => r.label === label)).filter(Boolean) as typeof allRows;
-
 // Angle tabs for filtering gallery
 const ANGLE_TABS = [
   { key: 'all', label: 'All Photos', icon: LayoutGrid },
@@ -67,14 +63,14 @@ const ANGLE_TABS = [
 export default function ComparePage() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [selectedSlugs, setSelectedSlugs] = useState<(string | null)[]>([null, null, null, null]);
+  // Stores fully-detailed vehicle data (with all mediaItems) for selected vehicles
   const [detailedVehicles, setDetailedVehicles] = useState<Record<string, Vehicle>>({});
-  
   const [showDiffOnly, setShowDiffOnly] = useState(false);
-  const [hideCommon, setHideCommon] = useState(false);
-  
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const [activePhotoIndices, setActivePhotoIndices] = useState<Record<string, number>>({});
+  // Per-vehicle selected color filter: vehicleId -> colorId | null
   const [selectedColorFilter, setSelectedColorFilter] = useState<Record<string, string | null>>({});
+  // Shared angle filter across all vehicles
   const [angleFilter, setAngleFilter] = useState<string>('all');
 
   useEffect(() => {
@@ -86,6 +82,7 @@ export default function ComparePage() {
     }).catch(console.error);
   }, []);
 
+  // Fetch full details (with all media) for each selected slug
   useEffect(() => {
     const filledSlugs = selectedSlugs.filter(Boolean) as string[];
     filledSlugs.forEach((slug) => {
@@ -99,6 +96,7 @@ export default function ComparePage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSlugs]);
 
+  // Use detailed vehicle data (with mediaItems) if available, else fall back to list data
   const selectedVehicles = useMemo(
     () => selectedSlugs.map((slug) => {
       if (!slug) return null;
@@ -109,24 +107,17 @@ export default function ComparePage() {
 
   const filledVehicles = selectedVehicles.filter(Boolean) as Vehicle[];
   const colCount = Math.max(filledVehicles.length, 2);
-  const gridClass = colCount === 2 ? styles.tableGrid2 : colCount === 3 ? styles.tableGrid3 : styles.tableGrid4;
 
   const handleSelect = (index: number, slug: string) => {
     const updated = [...selectedSlugs];
     updated[index] = slug || null;
-    
-    // Compact the array to push empty slots to the end
-    const compacted = updated.filter(Boolean);
-    while (compacted.length < 4) compacted.push(null);
-    setSelectedSlugs(compacted);
+    setSelectedSlugs(updated);
   };
 
   const handleRemove = (index: number) => {
     const updated = [...selectedSlugs];
     updated[index] = null;
-    const compacted = updated.filter(Boolean);
-    while (compacted.length < 4) compacted.push(null);
-    setSelectedSlugs(compacted);
+    setSelectedSlugs(updated);
   };
 
   const toggleGroup = (label: string) => {
@@ -139,9 +130,11 @@ export default function ComparePage() {
 
   const setColorFilter = (vehicleId: string, colorId: string | null) => {
     setSelectedColorFilter((prev) => ({ ...prev, [vehicleId]: colorId }));
+    // Reset photo index when filter changes
     setActivePhotoIndices((prev) => ({ ...prev, [vehicleId]: 0 }));
   };
 
+  // Get filtered media for a vehicle
   const getFilteredMedia = (vehicle: Vehicle): VehicleMedia[] => {
     const items = vehicle.mediaItems || [];
     if (!items.length) return vehicle.imageUrl ? [{ url: vehicle.imageUrl, isPrimary: true }] : [];
@@ -149,15 +142,19 @@ export default function ComparePage() {
     const colorFilter = selectedColorFilter[vehicle._id];
     let filtered = items;
 
+    // Color filter: show color-specific images OR images without colorId (shared)
     if (colorFilter) {
       filtered = items.filter((m) => !m.colorId || m.colorId === colorFilter);
     }
 
+    // Angle filter
     if (angleFilter !== 'all') {
       const angleFiltered = filtered.filter((m) => m.angleTag === angleFilter);
+      // Fall back to all if no matches
       if (angleFiltered.length > 0) filtered = angleFiltered;
     }
 
+    // Always ensure at least the primary image shows
     if (filtered.length === 0 && vehicle.imageUrl) {
       return [{ url: vehicle.imageUrl, isPrimary: true }];
     }
@@ -165,7 +162,7 @@ export default function ComparePage() {
     return filtered;
   };
 
-  const getBestIndex = (row: typeof allRows[0]): number | null => {
+  const getBestIndex = (row: CompareGroup['rows'][0]): number | null => {
     if (!row.bestFn || filledVehicles.length < 2) return null;
     const values = filledVehicles.map((v) => {
       const raw = row.getValue(v);
@@ -178,12 +175,13 @@ export default function ComparePage() {
     return values.indexOf(target);
   };
 
-  const isRowDifferent = (row: typeof allRows[0]): boolean => {
+  const isRowDifferent = (row: CompareGroup['rows'][0]): boolean => {
     if (filledVehicles.length < 2) return true;
     const values = filledVehicles.map((v) => row.getValue(v));
     return new Set(values).size > 1;
   };
 
+  // Get unique color-specific images for a vehicle (used to build the color filter palette)
   const getColorLinkedMedia = (vehicle: Vehicle): { colorId: string; colorName: string; hexCode?: string; url: string }[] => {
     const items = vehicle.mediaItems || [];
     const result: { colorId: string; colorName: string; hexCode?: string; url: string }[] = [];
@@ -192,6 +190,8 @@ export default function ComparePage() {
     for (const m of items) {
       if (!m.colorId || seen.has(m.colorId)) continue;
       seen.add(m.colorId);
+
+      // Match with vehicle.colors to get name/hexCode
       const colorInfo = vehicle.colors?.find((c: any) => c._id === m.colorId || c.id === m.colorId);
       result.push({
         colorId: m.colorId,
@@ -203,177 +203,83 @@ export default function ComparePage() {
     return result;
   };
 
-  const renderDataRow = (row: typeof allRows[0], skipHidden: boolean) => {
-    const isDiff = isRowDifferent(row);
-    if (skipHidden && hideCommon && !isDiff) {
-      return <div key={row.label} className={styles.dataRowHidden} />;
-    }
-    const bestIdx = getBestIndex(row);
-    const shouldHighlight = showDiffOnly && isDiff;
-
-    return (
-      <div key={row.label} className={styles.dataRow}>
-        <div className={`${styles.rowLabelCell} ${styles.labelColumn}`}>
-          {row.label}
-        </div>
-        {filledVehicles.map((v, i) => (
-          <div 
-            key={v._id} 
-            className={`${styles.rowValueCell} ${bestIdx === i ? styles.rowValueBest : ''} ${shouldHighlight ? styles.rowValueHighlight : ''}`}
-          >
-            {row.getValue(v)}
-          </div>
-        ))}
-        {filledVehicles.length < 4 && Array.from({ length: 4 - filledVehicles.length }).map((_, i) => (
-          colCount > filledVehicles.length + i && (
-            <div key={`empty-${i}`} className={styles.rowValueCell}>-</div>
-          )
-        ))}
-      </div>
-    );
-  };
-
   return (
     <div className={styles.comparePage}>
+      {/* Breadcrumb */}
       <div className={styles.breadcrumb}>
         <Link href="/">Home</Link>
         <ChevronRight size={12} />
         <span>Compare</span>
       </div>
 
-      <div className={styles.pageHeader}>
-        <h1 className={styles.pageTitle}>Compare cars before you buy.</h1>
-        <p className={styles.pageSubtitle}>
-          Put vehicles side by side and see the differences that actually matter.
-        </p>
-      </div>
+      <h1 className={styles.pageTitle}>Compare Cars</h1>
+      <p className={styles.pageSubtitle}>
+        Select up to 4 vehicles to compare photos, colors, specifications, and costs side by side.
+      </p>
 
-      <div className={styles.optionsBar}>
-        <span className={styles.optionsTitle}>View Options</span>
-        <div className={styles.optionsToggles}>
-          <label className={styles.checkboxLabel}>
-            <input 
-              type="checkbox" 
-              checked={hideCommon}
-              onChange={(e) => setHideCommon(e.target.checked)}
-            />
-            Hide Common Features
-          </label>
-          <label className={styles.checkboxLabel}>
-            <input 
-              type="checkbox" 
-              checked={showDiffOnly}
-              onChange={(e) => setShowDiffOnly(e.target.checked)}
-            />
-            Highlight Differences
-          </label>
-        </div>
-      </div>
-
-      {filledVehicles.length > 0 ? (
-        <div className={styles.unifiedContainer}>
-          <div className={styles.scrollWrapper}>
-            <div className={gridClass}>
-              
-              {/* VEHICLE HEADER ROW */}
-              <div className={styles.headerRow}>
-                <div className={`${styles.headerLabelCell} ${styles.labelColumn}`}>
-                  {/* Empty space above the labels, for visual alignment */}
-                </div>
-                
-                {filledVehicles.map((vehicle, index) => (
-                  <div key={vehicle._id || index} className={styles.headerCell}>
-                    <button 
-                      className={styles.removeBtn}
-                      onClick={() => handleRemove(index)}
-                      title="Remove"
-                    >
-                      <X size={14} />
-                    </button>
-                    <div className={styles.imageContainer}>
-                      {vehicle.imageUrl ? (
-                        <img src={vehicle.imageUrl} alt={vehicle.model} />
-                      ) : (
-                        <Car size={36} color="#94a3b8" />
-                      )}
-                    </div>
-                    <div className={styles.vehicleBrand}>{vehicle.brand}</div>
-                    <div className={styles.vehicleModel}>{vehicle.model}</div>
-                    <div className={styles.vehicleVariant}>{vehicle.variant}</div>
-                    <div className={styles.vehiclePrice}>{formatPrice(vehicle.priceFrom || 0)}</div>
+      {/* Vehicle Selectors */}
+      <div className={styles.selectorRow}>
+        {selectedSlugs.map((slug, index) => {
+          const vehicle = slug ? vehicles.find((v) => v.slug === slug) : null;
+          return (
+            <div
+              key={index}
+              className={`${styles.selectorCard} ${vehicle ? styles.selectorCardFilled : styles.selectorCardEmpty}`}
+            >
+              {vehicle ? (
+                <>
+                  <button
+                    className={styles.selectorRemoveBtn}
+                    onClick={() => handleRemove(index)}
+                    title="Remove"
+                  >
+                    ×
+                  </button>
+                  <div className={styles.selectorCarIcon}>
+                    {vehicle.imageUrl ? (
+                      <img src={vehicle.imageUrl} alt={vehicle.model} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                    ) : (
+                      <Car size={24} />
+                    )}
                   </div>
-                ))}
-                
-                {/* ADD VEHICLE SLOT (only if less than 4 cars, and we render up to colCount columns) */}
-                {filledVehicles.length < 4 && colCount > filledVehicles.length && (
-                  <div className={styles.headerCell}>
-                    <div className={styles.addSlot}>
-                      <div className={styles.addIcon}><Plus size={24} /></div>
-                      <div className={styles.addText}>Add Vehicle</div>
-                      <select
-                        className={styles.addSelect}
-                        value=""
-                        onChange={(e) => handleSelect(filledVehicles.length, e.target.value)}
-                      >
-                        <option value="">Select...</option>
-                        {vehicles
-                          .filter((v) => v.status === 'active' || v.status === 'upcoming')
-                          .filter((v) => !selectedSlugs.includes(v.slug))
-                          .map((v) => (
-                            <option key={v._id} value={v.slug}>
-                              {v.brand} {v.model}
-                            </option>
-                          ))}
-                      </select>
-                    </div>
+                  <div className={styles.selectorCarName}>
+                    {vehicle.brand} {vehicle.model}
                   </div>
-                )}
-              </div>
-
-              {/* QUICK COMPARISON SUMMARY */}
-              {quickSummaryRows.map(row => renderDataRow(row, true))}
-              
-              <div className={styles.sectionSpacer}></div>
-
-              {/* DETAILED COMPARISON (Grouped) */}
-              {compareGroups.map((group) => {
-                const visibleRows = showDiffOnly
-                  ? group.rows.filter((r) => isRowDifferent(r))
-                  : group.rows;
-
-                if (visibleRows.length === 0) return null;
-                const isCollapsed = collapsedGroups[group.label];
-
-                return (
-                  <div key={group.label} className={styles.groupHeaderRow}>
-                    <div 
-                      className={`${styles.groupHeaderCell} ${styles.labelColumn}`} 
-                      onClick={() => toggleGroup(group.label)}
-                    >
-                      <ChevronDown
-                        size={14}
-                        style={{
-                          transform: isCollapsed ? 'rotate(-90deg)' : 'none',
-                          transition: 'transform 200ms',
-                        }}
-                      />
-                      {group.label}
-                    </div>
-                    {!isCollapsed && visibleRows.map((row) => renderDataRow(row, true))}
+                  <div className={styles.selectorCarVariant}>
+                    {vehicle.variant}
                   </div>
-                );
-              })}
+                  <div className={styles.selectorCarPrice}>
+                    {formatPrice(vehicle.priceFrom || 0)}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className={styles.selectorAddIcon}>
+                    <Plus size={20} />
+                  </div>
+                  <div className={styles.selectorAddText}>Add Vehicle</div>
+                </>
+              )}
+              <select
+                className={styles.selectorSelect}
+                value={slug || ''}
+                onChange={(e) => handleSelect(index, e.target.value)}
+              >
+                <option value="">Select a vehicle</option>
+                {vehicles
+                  .filter((v) => v.status === 'active' || v.status === 'upcoming')
+                  .map((v) => (
+                    <option key={v._id} value={v.slug} disabled={selectedSlugs.includes(v.slug)}>
+                      {v.brand} {v.model} — {v.variant}
+                    </option>
+                  ))}
+              </select>
             </div>
-          </div>
-        </div>
-      ) : (
-        <div className={styles.emptyCompare}>
-           {/* Not explicitly styled since the unified table replaces the main view, but good fallback */}
-           Select at least one vehicle to compare.
-        </div>
-      )}
+          );
+        })}
+      </div>
 
-      {/* VISUAL PHOTO COMPARISON SECTION */}
+      {/* Visual Photo Comparison Section */}
       {filledVehicles.length >= 2 && (
         <div className={styles.imageComparisonSection}>
           <div className={styles.imageComparisonHeader}>
@@ -381,6 +287,7 @@ export default function ComparePage() {
               <Camera size={15} style={{ marginRight: 6, verticalAlign: 'middle' }} />
               Visual &amp; Design Comparison
             </h3>
+            {/* Angle Filter Tabs */}
             <div className={styles.imageComparisonTabs}>
               {ANGLE_TABS.map((tab) => (
                 <button
@@ -409,6 +316,7 @@ export default function ComparePage() {
 
               return (
                 <div key={vehicle._id} className={styles.vehicleImageCard}>
+                  {/* Main Image */}
                   <div className={styles.vehicleImageWrapper}>
                     {currentMedia ? (
                       <img
@@ -430,6 +338,7 @@ export default function ComparePage() {
                         {activeIdx + 1} / {photoCount}
                       </div>
                     )}
+                    {/* Angle tag pill */}
                     {currentMedia?.angleTag && (
                       <div className={styles.angleTagPill}>
                         {currentMedia.angleTag.replace('-', ' ')}
@@ -437,6 +346,7 @@ export default function ComparePage() {
                     )}
                   </div>
 
+                  {/* Thumbnail Strip */}
                   {filteredMedia.length > 1 && (
                     <div className={styles.thumbnailRow}>
                       {filteredMedia.slice(0, 6).map((img, imgIdx) => (
@@ -453,12 +363,14 @@ export default function ComparePage() {
                     </div>
                   )}
 
+                  {/* Color-Specific Photo Filter + Color Swatches */}
                   <div className={styles.colorPaletteRow}>
                     <div className={styles.colorPaletteLeft}>
                       <Palette size={11} style={{ marginRight: 4, verticalAlign: 'middle' }} />
                       <span className={styles.colorPaletteTitle}>Colors:</span>
                     </div>
                     <div className={styles.colorSwatches}>
+                      {/* "All" swatch */}
                       <button
                         type="button"
                         className={`${styles.colorSwatchBtn} ${!activeColorFilter ? styles.colorSwatchBtnActive : ''}`}
@@ -467,6 +379,7 @@ export default function ComparePage() {
                       >
                         <span className={styles.colorSwatchAll}>All</span>
                       </button>
+                      {/* Available colors from vehicle data */}
                       {vehicle.colors && vehicle.colors.length > 0
                         ? vehicle.colors.map((c: any, idx: number) => {
                             const isActive = activeColorFilter === c._id || activeColorFilter === c.id;
@@ -507,6 +420,82 @@ export default function ComparePage() {
               );
             })}
           </div>
+        </div>
+      )}
+
+      {/* Comparison Table */}
+      {filledVehicles.length >= 2 ? (
+        <div className={styles.tableContainer} style={{ '--col-count': colCount } as React.CSSProperties}>
+          <div className={styles.tableToolbar}>
+            <h3 className={styles.tableToolbarTitle}>Specifications &amp; Features Comparison</h3>
+            <label className={styles.tableToggle}>
+              <input
+                type="checkbox"
+                className={styles.tableToggleCheckbox}
+                checked={showDiffOnly}
+                onChange={(e) => setShowDiffOnly(e.target.checked)}
+              />
+              Show differences only
+            </label>
+          </div>
+
+          {compareGroups.map((group) => {
+            const visibleRows = showDiffOnly
+              ? group.rows.filter((r) => isRowDifferent(r))
+              : group.rows;
+
+            if (visibleRows.length === 0) return null;
+
+            const isCollapsed = collapsedGroups[group.label];
+
+            return (
+              <div key={group.label} className={styles.tableGroup}>
+                <div
+                  className={styles.tableGroupHeader}
+                  onClick={() => toggleGroup(group.label)}
+                >
+                  <span>{group.label}</span>
+                  <ChevronDown
+                    size={14}
+                    style={{
+                      transform: isCollapsed ? 'rotate(-90deg)' : 'none',
+                      transition: 'transform 200ms',
+                    }}
+                  />
+                </div>
+                {!isCollapsed &&
+                  visibleRows.map((row) => {
+                    const bestIdx = getBestIndex(row);
+                    return (
+                      <div key={row.label} className={styles.tableRow}>
+                        <div className={styles.tableRowLabel}>{row.label}</div>
+                        {filledVehicles.map((v, i) => (
+                          <div
+                            key={v._id}
+                            className={`${styles.tableRowValue} ${bestIdx === i ? styles.tableRowBest : ''}`}
+                          >
+                            {row.getValue(v)}
+                            {bestIdx === i && (
+                              <span className={styles.tableBestBadge}>Best</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })}
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className={styles.emptyCompare}>
+          <div className={styles.emptyCompareIcon}>
+            <Car size={28} />
+          </div>
+          <div className={styles.emptyCompareTitle}>Select at least 2 vehicles</div>
+          <p className={styles.emptyCompareDesc}>
+            Pick from the dropdowns above to start comparing vehicles side by side.
+          </p>
         </div>
       )}
     </div>
