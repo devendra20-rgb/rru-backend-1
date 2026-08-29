@@ -1,0 +1,157 @@
+/* ============================================
+   COMPARE FLOATING BAR
+   ============================================ */
+.floatingBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: var(--deep);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.floatingInner {
+  max-width: var(--content-max-width, 1600px);
+  margin: 0 auto;
+  padding: 12px var(--content-padding);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.floatingLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.floatingIcon {
+  color: var(--amber);
+  flex-shrink: 0;
+}
+
+.floatingLabel {
+  font-size: var(--font-size-sm);
+  font-weight: 800;
+  color: var(--white);
+  white-space: nowrap;
+}
+
+.floatingThumbs {
+  display: flex;
+  gap: 8px;
+}
+
+.floatingThumb {
+  width: 44px;
+  height: 32px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.floatingThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.floatingThumbPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 9px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.floatingThumbRemove {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #d32f2f;
+  color: var(--white);
+  border: 2px solid var(--deep);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  padding: 0;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.floatingThumb:hover .floatingThumbRemove {
+  opacity: 1;
+}
+
+.floatingRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.clearBtn {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.6);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 12px;
+  transition: color var(--transition-fast);
+}
+
+.clearBtn:hover {
+  color: var(--white);
+}
+
+.compareBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 24px;
+  background: var(--amber);
+  color: var(--white);
+  font-size: var(--font-size-sm);
+  font-weight: 800;
+  border-radius: var(--radius-full);
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+.compareBtn:hover {
+  background: var(--amber-light);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 640px) {
+  .floatingInner {
+    padding: 10px 16px;
+  }
+
+  .floatingThumbs {
+    display: none;
+  }
+}

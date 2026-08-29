@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { SITE_NAME, SITE_DESCRIPTION } from '@/lib/constants';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import { CompareProvider } from '@/hooks/useCompare';
+import CompareFloatingBar from '@/components/ui/CompareFloatingBar';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -21,11 +23,14 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning>
-        <div className="page-container" suppressHydrationWarning>
-          <Navbar />
-          <main>{children}</main>
-          <Footer />
-        </div>
+        <CompareProvider>
+          <div className="page-container" suppressHydrationWarning>
+            <Navbar />
+            <main>{children}</main>
+            <Footer />
+            <CompareFloatingBar />
+          </div>
+        </CompareProvider>
       </body>
     </html>
   );

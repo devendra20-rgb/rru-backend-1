@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import {
   ChevronRight, Car, Shield, Gauge, Fuel, Cog, Users, Info, CheckCircle2, Palette, Sparkles, Ruler, RotateCw, Camera, LayoutGrid
 } from 'lucide-react';
@@ -12,6 +12,7 @@ import type { Vehicle, VehicleMedia } from '@/types/vehicle';
 import type { CostToOwnBreakdown } from '@/types/cost';
 import { formatPrice } from '@/lib/utils';
 import Badge from '@/components/ui/Badge';
+import { useCompare } from '@/hooks/useCompare';
 import VehicleCard from '@/components/ui/VehicleCard';
 import Car360Viewer from '@/components/ui/Car360Viewer';
 import styles from './vdp.module.css';
@@ -21,7 +22,9 @@ type ViewMode = '360' | 'photos' | 'interior';
 
 export default function VehicleDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const slug = params.slug as string;
+  const { addToCompare, isInCompare } = useCompare();
 
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [allVehicles, setAllVehicles] = useState<Vehicle[]>([]);
@@ -352,9 +355,17 @@ export default function VehicleDetailPage() {
 
           {/* CTA Actions */}
           <div className={styles.vdpActions}>
-            <Link href="/compare" className="btn-primary" style={{ flex: 1, textAlign: 'center' }}>
-              Add to Compare
-            </Link>
+            <button
+              type="button"
+              className="btn-primary"
+              style={{ flex: 1, textAlign: 'center' }}
+              onClick={() => {
+                addToCompare(vehicle.slug);
+                router.push('/compare');
+              }}
+            >
+              {isInCompare(vehicle.slug) ? '✓ In Compare List' : 'Add to Compare'}
+            </button>
             <button
               type="button"
               className="btn-light"

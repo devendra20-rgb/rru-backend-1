@@ -1,7 +1,10 @@
+'use client';
+
 import Link from 'next/link';
-import { Car } from 'lucide-react';
+import { Car, GitCompare } from 'lucide-react';
 import type { Vehicle } from '@/types/vehicle';
 import { formatPrice } from '@/lib/utils';
+import { useCompare } from '@/hooks/useCompare';
 import Badge from './Badge';
 import styles from './ui.module.css';
 
@@ -10,6 +13,19 @@ interface VehicleCardProps {
 }
 
 export default function VehicleCard({ vehicle }: VehicleCardProps) {
+  const { isInCompare, addToCompare, removeFromCompare, isFull } = useCompare();
+  const inCompare = isInCompare(vehicle.slug);
+
+  const handleCompareToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (inCompare) {
+      removeFromCompare(vehicle.slug);
+    } else {
+      addToCompare(vehicle.slug);
+    }
+  };
+
   return (
     <Link href={`/new-cars/${vehicle.slug}`} className={styles.vehicleCard}>
       <div className={styles.vehicleCardImg}>
@@ -29,6 +45,16 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
             ))}
           </div>
         )}
+        {/* Compare Toggle */}
+        <button
+          type="button"
+          className={`${styles.compareToggle} ${inCompare ? styles.compareToggleActive : ''}`}
+          onClick={handleCompareToggle}
+          title={inCompare ? 'Remove from compare' : isFull ? 'Compare list full (max 4)' : 'Add to compare'}
+          disabled={!inCompare && isFull}
+        >
+          <GitCompare size={14} />
+        </button>
       </div>
       <div className={styles.vehicleCardInfo}>
         <div className={styles.vehicleCardBrand}>{vehicle.brand}</div>

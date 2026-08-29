@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Car, GitCompare } from 'lucide-react';
 import { vehiclesService } from '@/services/vehicles.service';
+import { useCompare } from '@/hooks/useCompare';
 import type { Vehicle } from '@/types/vehicle';
 import { formatPrice } from '@/lib/utils';
 import styles from './sections.module.css';
@@ -11,6 +13,8 @@ import styles from './sections.module.css';
 export default function ComparePreview() {
   const [carA, setCarA] = useState<Vehicle | null>(null);
   const [carB, setCarB] = useState<Vehicle | null>(null);
+  const { addToCompare } = useCompare();
+  const router = useRouter();
 
   useEffect(() => {
     vehiclesService.getAll({ limit: 10 }).then((cars) => {
@@ -31,6 +35,12 @@ export default function ComparePreview() {
     { label: 'Fuel', a: carA.fuelType, b: carB.fuelType },
     { label: 'Ownership / month', a: formatPrice(carA.costToOwnMonthly || 0), b: formatPrice(carB.costToOwnMonthly || 0) },
   ];
+
+  const handleBuildComparison = () => {
+    addToCompare(carA.slug);
+    addToCompare(carB.slug);
+    router.push('/compare');
+  };
 
   return (
     <section className={styles.compare} id="compare-preview">
@@ -72,9 +82,9 @@ export default function ComparePreview() {
       </div>
 
       <div className={styles.compareCta}>
-        <Link href="/compare" className="btn-primary">
+        <button type="button" className="btn-primary" onClick={handleBuildComparison}>
           <GitCompare size={16} /> Build Your Comparison
-        </Link>
+        </button>
       </div>
     </section>
   );

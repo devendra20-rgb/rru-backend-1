@@ -118,6 +118,55 @@
   font-weight: 700;
 }
 
+/* ---------- Compare Toggle on Card ---------- */
+.compareToggle {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(4px);
+  border: 1.5px solid var(--line);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: var(--muted);
+  z-index: 3;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.compareToggle:hover {
+  background: var(--white);
+  color: var(--petrol);
+  border-color: var(--petrol);
+  transform: scale(1.1);
+}
+
+.compareToggleActive {
+  background: var(--petrol);
+  border-color: var(--petrol);
+  color: var(--white);
+  box-shadow: 0 2px 8px rgba(13, 59, 73, 0.3);
+}
+
+.compareToggleActive:hover {
+  background: var(--petrol-light);
+  color: var(--white);
+  border-color: var(--petrol-light);
+}
+
+.compareToggle:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.compareToggle:disabled:hover {
+  transform: none;
+}
+
 /* ---------- Badge ---------- */
 .badge {
   padding: 4px 9px;
