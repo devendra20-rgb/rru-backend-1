@@ -3,6 +3,8 @@ import { Box, Button, Typography, CircularProgress, Alert, Paper, Select, MenuIt
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getFeatures, getVariantFeatures, createVariantFeature, updateVariantFeature } from '../../../api/features.api';
 import type { VariantFeature } from '../../../api/features.api';
+import { useToast } from '../../../components/common/GlobalToastProvider';
+import { getReadableErrorMessage } from '../../../utils/apiError';
 
 interface Step3Props {
   variantId: string;
@@ -30,7 +32,7 @@ const Step3Features: React.FC<Step3Props> = ({ variantId, onNext, onBack }) => {
   // Track modified mappings to only save changes
   const [dirtyMappings, setDirtyMappings] = useState<Set<string>>(new Set());
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   useEffect(() => {
     if (masterFeaturesData?.data && mappedFeaturesData?.data) {
@@ -93,7 +95,6 @@ const Step3Features: React.FC<Step3Props> = ({ variantId, onNext, onBack }) => {
 
   const handleSaveAndNext = async () => {
     setIsSaving(true);
-    setError(null);
     try {
       const promises = Array.from(dirtyMappings).map(featureId => saveMapping(mappings[featureId]));
       await Promise.all(promises);
@@ -101,7 +102,7 @@ const Step3Features: React.FC<Step3Props> = ({ variantId, onNext, onBack }) => {
       queryClient.invalidateQueries({ queryKey: ['variant-features', variantId] });
       onNext();
     } catch (err: any) {
-      setError(err.message || 'Failed to save feature mappings');
+      showToast(getReadableErrorMessage(err), 'error');
     } finally {
       setIsSaving(false);
     }
@@ -124,8 +125,6 @@ const Step3Features: React.FC<Step3Props> = ({ variantId, onNext, onBack }) => {
       <Typography variant="body1" sx={{ mb: 3 }}>
         Select the availability of each feature for this vehicle variant. Standard features are included in the base price, optional features cost extra, and unavailable features cannot be equipped.
       </Typography>
-
-      {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
       {Object.entries(categories).map(([category, features]) => (
         <Paper key={category} sx={{ mb: 4, overflow: 'hidden' }}>

@@ -8,6 +8,9 @@ import { theme } from './theme/theme';
 import App from './App.tsx';
 import './index.css';
 
+import { GlobalToastProvider } from './components/common/GlobalToastProvider';
+import { GlobalErrorBoundary } from './components/common/GlobalErrorBoundary';
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -23,7 +26,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <App />
+        <GlobalErrorBoundary>
+          <GlobalToastProvider>
+            <App />
+          </GlobalToastProvider>
+        </GlobalErrorBoundary>
       </ThemeProvider>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>

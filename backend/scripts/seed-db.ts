@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://pandeydevendra20devops_db_user:1Devendrapandey0@deliverly.4lvw8v3.mongodb.net/';
+const MONGODB_URI = process.env.MONGODB_URI;
 
 import { Brand } from '../src/modules/catalog/brands/brand.model';
 import { Color } from '../src/modules/catalog/colors/color.model';

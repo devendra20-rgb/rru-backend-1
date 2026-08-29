@@ -185,6 +185,12 @@ h3 {
   margin: 0 auto;
   background: var(--white);
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1;
 }
 
 .section-pad {

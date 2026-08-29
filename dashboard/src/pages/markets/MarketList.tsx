@@ -27,6 +27,8 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import { getMarkets, deleteMarket, updateMarket } from '../../api/markets.api';
+import { useToast } from '../../components/common/GlobalToastProvider';
+import { getReadableErrorMessage } from '../../utils/apiError';
 
 const MarketList: React.FC = () => {
   const navigate = useNavigate();
@@ -35,6 +37,7 @@ const MarketList: React.FC = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['markets', page, rowsPerPage],
@@ -45,8 +48,10 @@ const MarketList: React.FC = () => {
     mutationFn: (id: string) => deleteMarket(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['markets'] });
+      showToast('Market deleted successfully', 'success');
       setDeleteId(null);
-    }
+    },
+    onError: (err) => showToast(getReadableErrorMessage(err), 'error')
   });
 
   const toggleStatusMutation = useMutation({
@@ -54,7 +59,9 @@ const MarketList: React.FC = () => {
       updateMarket(id, { status }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['markets'] });
-    }
+      showToast('Market status updated', 'success');
+    },
+    onError: (err) => showToast(getReadableErrorMessage(err), 'error')
   });
 
   const handleStatusToggle = (id: string, currentStatus: string) => {
@@ -97,7 +104,7 @@ const MarketList: React.FC = () => {
 
       {isError && (
         <Alert severity="error" sx={{ mb: 3 }}>
-          {error instanceof Error ? error.message : 'Error fetching markets'}
+          {getReadableErrorMessage(error)}
         </Alert>
       )}
 

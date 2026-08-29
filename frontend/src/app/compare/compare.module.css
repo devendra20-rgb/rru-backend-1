@@ -3,9 +3,7 @@
    ============================================ */
 .comparePage {
   padding: var(--space-3xl) var(--content-padding) var(--space-4xl);
-  max-width: var(--content-max-width, 1600px);
   width: 100%;
-  margin: 0 auto;
   min-height: 70vh;
 }
 

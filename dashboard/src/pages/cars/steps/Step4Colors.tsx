@@ -3,6 +3,8 @@ import { Box, Button, Typography, CircularProgress, Alert, Paper, Select, MenuIt
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getColors, getVariantColors, createVariantColor, updateVariantColor } from '../../../api/colors.api';
 import type { VariantColor } from '../../../api/colors.api';
+import { useToast } from '../../../components/common/GlobalToastProvider';
+import { getReadableErrorMessage } from '../../../utils/apiError';
 
 interface Step4Props {
   variantId: string;
@@ -30,7 +32,7 @@ const Step4Colors: React.FC<Step4Props> = ({ variantId, onNext, onBack }) => {
   // Track modified mappings to only save changes
   const [dirtyMappings, setDirtyMappings] = useState<Set<string>>(new Set());
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   useEffect(() => {
     if (masterColorsData?.data && mappedColorsData?.data) {
@@ -91,7 +93,6 @@ const Step4Colors: React.FC<Step4Props> = ({ variantId, onNext, onBack }) => {
 
   const handleSaveAndNext = async () => {
     setIsSaving(true);
-    setError(null);
     try {
       const promises = Array.from(dirtyMappings).map(colorId => saveMapping(mappings[colorId]));
       await Promise.all(promises);
@@ -99,7 +100,7 @@ const Step4Colors: React.FC<Step4Props> = ({ variantId, onNext, onBack }) => {
       queryClient.invalidateQueries({ queryKey: ['variant-colors', variantId] });
       onNext();
     } catch (err: any) {
-      setError(err.message || 'Failed to save color mappings');
+      showToast(getReadableErrorMessage(err), 'error');
     } finally {
       setIsSaving(false);
     }
@@ -116,8 +117,6 @@ const Step4Colors: React.FC<Step4Props> = ({ variantId, onNext, onBack }) => {
       <Typography variant="body1" sx={{ mb: 3 }}>
         Select the availability of each exterior and interior color for this vehicle variant. 
       </Typography>
-
-      {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
       <Paper sx={{ mb: 4, overflow: 'hidden' }}>
         <TableContainer>

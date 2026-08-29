@@ -21,6 +21,8 @@ import {
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { getMarket, createMarket, updateMarket } from '../../api/markets.api';
+import { useToast } from '../../components/common/GlobalToastProvider';
+import { getReadableErrorMessage } from '../../utils/apiError';
 
 const MARKET_PRESETS = {
   India: { name: 'India', code: 'IN', countryCode: 'IN', currencyCode: 'INR', currencySymbol: '₹' },
@@ -46,6 +48,7 @@ const MarketForm: React.FC = () => {
   const isEditMode = !!id;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
 
   const {
     control,
@@ -91,7 +94,11 @@ const MarketForm: React.FC = () => {
     mutationFn: (data: MarketFormData) => createMarket(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['markets'] });
+      showToast('Market created successfully', 'success');
       navigate('/markets');
+    },
+    onError: (err) => {
+      showToast(getReadableErrorMessage(err), 'error');
     }
   });
 
@@ -100,7 +107,11 @@ const MarketForm: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['markets'] });
       queryClient.invalidateQueries({ queryKey: ['market', id] });
+      showToast('Market updated successfully', 'success');
       navigate('/markets');
+    },
+    onError: (err) => {
+      showToast(getReadableErrorMessage(err), 'error');
     }
   });
 
@@ -114,6 +125,10 @@ const MarketForm: React.FC = () => {
     } else {
       createMutation.mutate(submitData);
     }
+  };
+
+  const onFormError = () => {
+    showToast('Please fix the highlighted fields before saving.', 'error');
   };
 
   const isSaving = createMutation.isPending || updateMutation.isPending;
@@ -148,18 +163,12 @@ const MarketForm: React.FC = () => {
 
       {isError && (
         <Alert severity="error" sx={{ mb: 3 }}>
-          {error instanceof Error ? error.message : 'Error fetching market details'}
-        </Alert>
-      )}
-
-      {saveError && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {saveError instanceof Error ? saveError.message : 'Error saving market'}
+          {getReadableErrorMessage(error)}
         </Alert>
       )}
 
       <Paper sx={{ p: 3, maxWidth: 800 }}>
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={handleSubmit(onSubmit, onFormError)}>
           <Stack spacing={3}>
             
             <Box sx={{ display: 'flex', gap: 2 }}>

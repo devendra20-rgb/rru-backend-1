@@ -218,6 +218,9 @@ const DashboardLayout: React.FC = () => {
                 <ListItemButton component={Link} to="/cars" sx={getItemStyle('/cars')}>
                   <ListItemText primary="Cars / Vehicles" />
                 </ListItemButton>
+                <ListItemButton component={Link} to="/custom-attributes" sx={getItemStyle('/custom-attributes')}>
+                  <ListItemText primary="Custom Attributes" />
+                </ListItemButton>
               </List>
             </Collapse>
           </List>

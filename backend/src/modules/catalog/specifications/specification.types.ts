@@ -39,6 +39,12 @@ export interface ISafety {
   camera?: string;
 }
 
+export interface ICustomSpecification {
+  category: string;
+  name: string;
+  value: string;
+}
+
 export interface ISpecification extends Document {
   variantId: string | any; // Mongoose ObjectId
   performance?: IPerformance;
@@ -47,6 +53,11 @@ export interface ISpecification extends Document {
   weight?: IWeight;
   fuel?: IFuel;
   safety?: ISafety;
+  custom?: ICustomSpecification[];
+  customAttributes?: {
+    attributeId: string | any;
+    value: any;
+  }[];
   status: 'active' | 'inactive';
   createdAt: Date;
   updatedAt: Date;
@@ -60,6 +71,11 @@ export interface ISpecificationCreate {
   weight?: IWeight;
   fuel?: IFuel;
   safety?: ISafety;
+  custom?: ICustomSpecification[];
+  customAttributes?: {
+    attributeId: string;
+    value: any;
+  }[];
   status?: 'active' | 'inactive';
 }
 
@@ -70,6 +86,11 @@ export interface ISpecificationUpdate {
   weight?: IWeight;
   fuel?: IFuel;
   safety?: ISafety;
+  custom?: ICustomSpecification[];
+  customAttributes?: {
+    attributeId: string;
+    value: any;
+  }[];
   status?: 'active' | 'inactive';
 }
 

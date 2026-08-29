@@ -4,6 +4,7 @@ import { validate } from '../../middlewares/validate.middleware';
 import { authenticate, authorize, extractUser } from '../../middlewares/auth.middleware';
 import {
   createReviewSchema,
+  createAdminReviewSchema,
   updateReviewSchema,
   getReviewSchema,
   deleteReviewSchema,
@@ -41,6 +42,15 @@ router.post(
     next();
   },
   validate(createReviewSchema),
+  controller.createReview,
+);
+
+// Admin / dashboard review creation
+router.post(
+  '/reviews',
+  authenticate,
+  authorize('admin', 'editor'),
+  validate(createAdminReviewSchema),
   controller.createReview,
 );
 

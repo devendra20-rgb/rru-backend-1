@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Button, Typography, CircularProgress, Alert, Paper, IconButton } from '@mui/material';
+import { Box, Button, Typography, CircularProgress, Alert, Paper, IconButton, TextField } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import StarIcon from '@mui/icons-material/Star';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getVariantMedia, uploadMedia, deleteMedia, updateMedia } from '../../../api/media.api';
+import { useToast } from '../../../components/common/GlobalToastProvider';
+import { getReadableErrorMessage } from '../../../utils/apiError';
 
 interface Step6Props {
   variantId: string;
@@ -15,8 +17,8 @@ interface Step6Props {
 
 const Step6Media: React.FC<Step6Props> = ({ variantId, onNext, onBack }) => {
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
   const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   
   const [localList, setLocalList] = useState<any[]>([]);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
@@ -40,7 +42,6 @@ const Step6Media: React.FC<Step6Props> = ({ variantId, onNext, onBack }) => {
     if (!files || files.length === 0) return;
 
     setUploading(true);
-    setError(null);
     try {
       const uploadPromises = Array.from(files).map(file => 
         uploadMedia(file, {
@@ -50,9 +51,10 @@ const Step6Media: React.FC<Step6Props> = ({ variantId, onNext, onBack }) => {
         })
       );
       await Promise.all(uploadPromises);
+      showToast('Media uploaded successfully', 'success');
       queryClient.invalidateQueries({ queryKey: ['variant-media', variantId] });
     } catch (err: any) {
-      setError(err.message || 'Failed to upload media');
+      showToast(getReadableErrorMessage(err), 'error');
     } finally {
       setUploading(false);
       // reset file input
@@ -64,9 +66,10 @@ const Step6Media: React.FC<Step6Props> = ({ variantId, onNext, onBack }) => {
     if (!window.confirm('Are you sure you want to delete this image?')) return;
     try {
       await deleteMedia(mediaId);
+      showToast('Media deleted successfully', 'success');
       queryClient.invalidateQueries({ queryKey: ['variant-media', variantId] });
     } catch (err: any) {
-      setError(err.message || 'Failed to delete media');
+      showToast(getReadableErrorMessage(err), 'error');
     }
   };
 
@@ -80,17 +83,28 @@ const Step6Media: React.FC<Step6Props> = ({ variantId, onNext, onBack }) => {
       
       // Set new primary
       await updateMedia(mediaId, { isPrimary: true });
+      showToast('Primary image updated', 'success');
       queryClient.invalidateQueries({ queryKey: ['variant-media', variantId] });
     } catch (err: any) {
-      setError(err.message || 'Failed to set primary image');
+      showToast(getReadableErrorMessage(err), 'error');
+    }
+  };
+
+  const handleUpdateAltText = async (mediaId: string, altText: string) => {
+    try {
+      await updateMedia(mediaId, { altText });
+      showToast('Alt text saved', 'success');
+      queryClient.invalidateQueries({ queryKey: ['variant-media', variantId] });
+    } catch (err: any) {
+      showToast(getReadableErrorMessage(err), 'error');
     }
   };
 
   // HTML5 Drag and Drop handlers
   const handleDragStart = (e: React.DragEvent, index: number) => {
     const target = e.target as HTMLElement;
-    // Don't drag if clicking buttons
-    if (target.closest('button') || target.closest('svg')) {
+    // Don't drag if clicking buttons or inputs
+    if (target.closest('button') || target.closest('svg') || target.closest('input')) {
       e.preventDefault();
       return;
     }
@@ -124,10 +138,11 @@ const Step6Media: React.FC<Step6Props> = ({ variantId, onNext, onBack }) => {
       
       if (promises.length > 0) {
         await Promise.all(promises);
+        showToast('Image order updated', 'success');
         queryClient.invalidateQueries({ queryKey: ['variant-media', variantId] });
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to update image rank');
+      showToast(getReadableErrorMessage(err), 'error');
     }
   };
 
@@ -140,8 +155,6 @@ const Step6Media: React.FC<Step6Props> = ({ variantId, onNext, onBack }) => {
       <Typography variant="body1" sx={{ mb: 3 }}>
         Upload images for this vehicle variant. Drag and drop the images to reorder / rank them. Mark one image as the primary cover photo.
       </Typography>
-
-      {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
       <Paper sx={{ p: 3, mb: 4, textAlign: 'center', border: '2px dashed #ccc', bgcolor: 'grey.50' }}>
         <input
@@ -180,13 +193,33 @@ const Step6Media: React.FC<Step6Props> = ({ variantId, onNext, onBack }) => {
                 transition: 'opacity 0.2s ease, transform 0.2s ease',
               }}
             >
-              <Paper sx={{ p: 1, position: 'relative', border: draggingIndex === index ? '1px dashed #2196f3' : '1px solid #e0e0e0' }}>
+              <Paper sx={{ p: 1, position: 'relative', border: draggingIndex === index ? '1px dashed #2196f3' : '1px solid #e0e0e0', display: 'flex', flexDirection: 'column' }}>
                 <Box
                   component="img"
                   src={media.url}
                   alt={media.altText || media.originalName}
                   sx={{ width: '100%', height: 160, objectFit: 'cover', borderRadius: 1, pointerEvents: 'none' }}
                 />
+                
+                <Box sx={{ mt: 1 }}>
+                  <TextField 
+                    size="small"
+                    fullWidth
+                    label="Alt Text"
+                    defaultValue={media.altText || ''}
+                    placeholder="Describe this image"
+                    onBlur={(e) => {
+                      if (e.target.value !== (media.altText || '')) {
+                        handleUpdateAltText(media._id, e.target.value);
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      // Prevent drag start when typing
+                      e.stopPropagation();
+                    }}
+                  />
+                </Box>
+
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
                   <IconButton 
                     size="small" 

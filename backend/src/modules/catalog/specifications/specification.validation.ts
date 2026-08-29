@@ -44,6 +44,22 @@ const safetySchema = z.object({
   camera: z.string().trim().optional(),
 });
 
+const customSchema = z.array(
+  z.object({
+    category: z.string().trim().min(1, 'Category is required'),
+    name: z.string().trim().min(1, 'Name is required'),
+    value: z.string().trim().min(1, 'Value is required'),
+  })
+);
+
+const customAttributesSchema = z.array(
+  z.object({
+    attributeId: objectIdSchema,
+    value: z.any(),
+  })
+);
+
+
 export const createSpecificationSchema = z.object({
   body: z.object({
     variantId: objectIdSchema,
@@ -53,6 +69,8 @@ export const createSpecificationSchema = z.object({
     weight: weightSchema.optional(),
     fuel: fuelSchema.optional(),
     safety: safetySchema.optional(),
+    custom: customSchema.optional(),
+    customAttributes: customAttributesSchema.optional(),
     status: z.enum(['active', 'inactive']).optional(),
   }),
 });
@@ -68,6 +86,8 @@ export const updateSpecificationSchema = z.object({
     weight: weightSchema.optional(),
     fuel: fuelSchema.optional(),
     safety: safetySchema.optional(),
+    custom: customSchema.optional(),
+    customAttributes: customAttributesSchema.optional(),
     status: z.enum(['active', 'inactive']).optional(),
   }),
 });

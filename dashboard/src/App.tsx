@@ -19,6 +19,17 @@ import MarketForm from './pages/markets/MarketForm';
 import CarList from './pages/cars/CarList';
 import CarFormLayout from './pages/cars/CarFormLayout';
 import CarDetail from './pages/cars/CarDetail';
+import CustomAttributeList from './pages/custom-attributes/CustomAttributeList';
+import CustomAttributeForm from './pages/custom-attributes/CustomAttributeForm';
+
+// Content & Users & Settings Placeholders
+import ArticleList from './pages/articles/ArticleList';
+import ArticleForm from './pages/articles/ArticleForm';
+import ReviewList from './pages/reviews/ReviewList';
+import ReviewForm from './pages/reviews/ReviewForm';
+import UserList from './pages/users/UserList';
+import FileManager from './pages/file-manager/FileManager';
+import Settings from './pages/settings/Settings';
 
 function App() {
   return (
@@ -51,6 +62,11 @@ function App() {
           <Route path="/cars/:id" element={<CarDetail />} />
           <Route path="/cars/:id/edit" element={<CarFormLayout />} />
 
+          {/* Custom Attributes */}
+          <Route path="/custom-attributes" element={<CustomAttributeList />} />
+          <Route path="/custom-attributes/new" element={<CustomAttributeForm />} />
+          <Route path="/custom-attributes/:id/edit" element={<CustomAttributeForm />} />
+
           {/* Master Data: Features */}
           <Route path="/features" element={<FeatureList />} />
           <Route path="/features/new" element={<FeatureForm />} />
@@ -65,6 +81,17 @@ function App() {
           <Route path="/markets" element={<MarketList />} />
           <Route path="/markets/new" element={<MarketForm />} />
           <Route path="/markets/:id/edit" element={<MarketForm />} />
+
+          {/* Content & Management */}
+          <Route path="/articles" element={<ArticleList />} />
+          <Route path="/articles/new" element={<ArticleForm />} />
+          <Route path="/articles/:id/edit" element={<ArticleForm />} />
+          <Route path="/reviews" element={<ReviewList />} />
+          <Route path="/reviews/new" element={<ReviewForm />} />
+          <Route path="/reviews/:id/edit" element={<ReviewForm />} />
+          <Route path="/users" element={<UserList />} />
+          <Route path="/file-manager" element={<FileManager />} />
+          <Route path="/settings" element={<Settings />} />
 
           {/* Other routes will go here as they are built */}
         </Route>

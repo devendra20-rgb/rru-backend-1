@@ -3,7 +3,7 @@ dns.setServers(['8.8.8.8', '8.8.4.4']);
 const mongoose = require('mongoose');
 
 async function run() {
-  const uriBase = "mongodb+srv://pandeydevendra20devops_db_user:1Devendrapandey0@deliverly.4lvw8v3.mongodb.net/";
+  const uriBase = process.env.MONGODB_URI;
   const uriOptions = "?retryWrites=true&w=majority";
   
   try {

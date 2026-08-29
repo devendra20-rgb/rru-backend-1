@@ -16,11 +16,11 @@ class SpecificationRepository {
   }
 
   async getById(id: string) {
-    return await Specification.findById(id);
+    return await Specification.findById(id).populate('customAttributes.attributeId');
   }
 
   async getByVariantId(variantId: string) {
-    return await Specification.findOne({ variantId, status: 'active' });
+    return await Specification.findOne({ variantId, status: 'active' }).populate('customAttributes.attributeId');
   }
 
   async getAll(query: ISpecificationQuery) {
@@ -46,7 +46,7 @@ class SpecificationRepository {
     }
 
     const [data, total] = await Promise.all([
-      Specification.find(filter).sort(sort).skip(skip).limit(limit),
+      Specification.find(filter).sort(sort).skip(skip).limit(limit).populate('customAttributes.attributeId'),
       Specification.countDocuments(filter),
     ]);
 

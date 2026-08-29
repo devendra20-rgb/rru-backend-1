@@ -11,7 +11,7 @@ import { User } from '../src/modules/users/user.model';
 import { hashPassword } from '../src/utils/hash';
 
 const API = process.env.API_URL || 'http://localhost:5000/api/v1';
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://pandeydevendra20devops_db_user:1Devendrapandey0@deliverly.4lvw8v3.mongodb.net/';
+const MONGODB_URI = process.env.MONGODB_URI;
 
 const client = axios.create({ baseURL: API, timeout: 20000 });
 

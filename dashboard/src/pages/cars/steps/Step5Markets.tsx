@@ -3,6 +3,8 @@ import { Box, Button, Typography, CircularProgress, Alert, Paper, Table, TableBo
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getMarkets, getVariantMarkets, createVariantMarket, updateVariantMarket } from '../../../api/markets.api';
 import type { VariantMarket } from '../../../api/markets.api';
+import { useToast } from '../../../components/common/GlobalToastProvider';
+import { getReadableErrorMessage } from '../../../utils/apiError';
 
 interface Step5Props {
   variantId: string;
@@ -28,7 +30,7 @@ const Step5Markets: React.FC<Step5Props> = ({ variantId, onNext, onBack }) => {
   const [mappings, setMappings] = useState<Record<string, Partial<VariantMarket>>>({});
   const [dirtyMappings, setDirtyMappings] = useState<Set<string>>(new Set());
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   useEffect(() => {
     if (masterMarketsData?.data && mappedMarketsData?.data) {
@@ -109,7 +111,6 @@ const Step5Markets: React.FC<Step5Props> = ({ variantId, onNext, onBack }) => {
 
   const handleSaveAndNext = async () => {
     setIsSaving(true);
-    setError(null);
     try {
       const promises = Array.from(dirtyMappings).map(marketId => saveMapping(mappings[marketId]));
       await Promise.all(promises);
@@ -117,7 +118,7 @@ const Step5Markets: React.FC<Step5Props> = ({ variantId, onNext, onBack }) => {
       queryClient.invalidateQueries({ queryKey: ['variant-markets', variantId] });
       onNext();
     } catch (err: any) {
-      setError(err.message || 'Failed to save market mappings');
+      showToast(getReadableErrorMessage(err), 'error');
     } finally {
       setIsSaving(false);
     }
@@ -134,8 +135,6 @@ const Step5Markets: React.FC<Step5Props> = ({ variantId, onNext, onBack }) => {
       <Typography variant="body1" sx={{ mb: 3 }}>
         Select which regions this vehicle variant is available in, and set its local pricing.
       </Typography>
-
-      {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
       <Paper sx={{ mb: 4, overflow: 'hidden' }}>
         <TableContainer>

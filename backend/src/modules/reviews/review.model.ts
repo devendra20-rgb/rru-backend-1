@@ -28,11 +28,26 @@ const reviewSchema = new Schema<IReviewDocument>(
       trim: true,
       maxlength: 200,
     },
-    body: {
+    content: {
       type: String,
       trim: true,
       maxlength: 2000,
     },
+    body: {
+      type: String, // Kept for backwards compatibility
+      trim: true,
+      maxlength: 2000,
+    },
+    pros: [{
+      type: String,
+      trim: true,
+      maxlength: 200,
+    }],
+    cons: [{
+      type: String,
+      trim: true,
+      maxlength: 200,
+    }],
     status: {
       type: String,
       enum: ['approved', 'pending', 'rejected', 'inactive'],

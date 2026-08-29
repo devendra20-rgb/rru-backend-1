@@ -1,70 +1,58 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box,
   Button,
-  Typography,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TablePagination,
   IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogContentText,
   DialogActions,
-  CircularProgress,
-  Alert,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Select,
   Switch
 } from '@mui/material';
-import { type SelectChangeEvent } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import { getModels, deleteModel, updateModel } from '../../api/models.api';
 import { getBrands } from '../../api/brands.api';
+import { AdminPageHeader } from '../../components/common/AdminPageHeader';
+import { AdminTable, type AdminTableColumn } from '../../components/common/AdminTable';
+import { AdminSearchFilter } from '../../components/common/AdminSearchFilter';
+import { AsyncSelect } from '../../components/common/AsyncSelect';
+import { useToast } from '../../components/common/GlobalToastProvider';
+import { getReadableErrorMessage } from '../../utils/apiError';
 
 const ModelList: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
   
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [selectedBrand, setSelectedBrand] = useState<string>('all');
+  const page = parseInt(searchParams.get('page') || '1', 10);
+  const limit = parseInt(searchParams.get('limit') || '10', 10);
+  const search = searchParams.get('search') || '';
+  const sortBy = searchParams.get('sortBy') || 'createdAt';
+  const sortOrder = (searchParams.get('sortOrder') || 'desc') as 'asc' | 'desc';
+  const brandId = searchParams.get('brandId') || '';
+  const brandName = searchParams.get('brandName') || '';
 
-  const { data: brandsData } = useQuery({
-    queryKey: ['brands', 'all'],
-    queryFn: () => getBrands({ limit: 100 })
-  });
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ['models', page, rowsPerPage, selectedBrand],
-    queryFn: () => {
-      const params: any = { page: page + 1, limit: rowsPerPage };
-      if (selectedBrand !== 'all') {
-        params.brandId = selectedBrand;
-      }
-      return getModels(params);
-    }
+    queryKey: ['models', { page, limit, search, sortBy, sortOrder, brandId }],
+    queryFn: () => getModels({ page, limit, search, sortBy, sortOrder, brandId: brandId || undefined })
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteModel(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['models'] });
+      showToast('Model deleted successfully', 'success');
       setDeleteId(null);
-    }
+    },
+    onError: (err) => showToast(getReadableErrorMessage(err), 'error')
   });
 
   const toggleStatusMutation = useMutation({
@@ -72,26 +60,21 @@ const ModelList: React.FC = () => {
       updateModel(id, { status }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['models'] });
-    }
+      showToast('Model status updated', 'success');
+    },
+    onError: (err) => showToast(getReadableErrorMessage(err), 'error')
   });
 
-  const handleStatusToggle = (id: string, currentStatus: string) => {
-    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-    toggleStatusMutation.mutate({ id, status: newStatus });
-  };
-
-  const handleChangePage = (_event: unknown, newPage: number) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
-  const handleBrandFilterChange = (event: SelectChangeEvent) => {
-    setSelectedBrand(event.target.value);
-    setPage(0);
+  const updateParams = (newParams: Record<string, string>) => {
+    const params = new URLSearchParams(searchParams);
+    Object.entries(newParams).forEach(([key, value]) => {
+      if (value) {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+    });
+    setSearchParams(params);
   };
 
   const confirmDelete = () => {
@@ -100,115 +83,110 @@ const ModelList: React.FC = () => {
     }
   };
 
-  const models = data?.data || [];
-  const total = data?.meta?.total || 0;
+  const columns: AdminTableColumn<any>[] = [
+    { id: 'name', label: 'Model Name', sortable: true },
+    { id: 'modelCode', label: 'Code', sortable: true },
+    { id: 'brandId', label: 'Brand', render: (row) => row.brandId?.name || 'Unknown' },
+    { id: 'bodyType', label: 'Body Type' },
+    {
+      id: 'status',
+      label: 'Status',
+      sortable: true,
+      render: (row) => (
+        <Switch
+          checked={row.status === 'active'}
+          onChange={() => toggleStatusMutation.mutate({ id: row._id, status: row.status === 'active' ? 'inactive' : 'active' })}
+          disabled={toggleStatusMutation.isPending}
+          size="small"
+          color="primary"
+        />
+      )
+    },
+    {
+      id: 'actions',
+      label: 'Actions',
+      align: 'right',
+      render: (row) => (
+        <>
+          <IconButton color="primary" onClick={() => navigate(`/models/${row._id}/edit`)} size="small">
+            <EditIcon fontSize="small" />
+          </IconButton>
+          <IconButton color="error" onClick={() => setDeleteId(row._id)} size="small">
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </>
+      )
+    }
+  ];
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1">
-          Models
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => navigate('/models/new')}
-        >
-          Add Model
-        </Button>
+      <AdminPageHeader 
+        title="Models"
+        breadcrumbs={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Models' }]}
+        action={
+          <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/models/new')}>
+            Add Model
+          </Button>
+        }
+      />
+
+      <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+        <AdminSearchFilter 
+          value={search}
+          onChange={(val) => updateParams({ search: val, page: '1' })}
+          placeholder="Search models..."
+          sx={{ width: 300 }}
+        />
+        <Box sx={{ width: 250 }}>
+          <AsyncSelect<any>
+            label="Filter by Brand"
+            placeholder="Select Brand"
+            value={brandId ? { _id: brandId, name: brandName } : null}
+            onChange={(val) => {
+              updateParams({ 
+                brandId: val?._id || '', 
+                brandName: val?.name || '',
+                page: '1' 
+              });
+            }}
+            fetchOptions={async (q) => {
+              const res = await getBrands({ search: q, limit: 20 });
+              return res.data;
+            }}
+            getOptionLabel={(option) => option.name || ''}
+            isOptionEqualToValue={(option, value) => option._id === value._id}
+          />
+        </Box>
       </Box>
 
-      {/* Filters */}
-      <Paper sx={{ p: 2, mb: 3 }}>
-        <FormControl sx={{ minWidth: 200 }}>
-          <InputLabel>Filter by Brand</InputLabel>
-          <Select
-            value={selectedBrand}
-            label="Filter by Brand"
-            onChange={handleBrandFilterChange}
-          >
-            <MenuItem value="all">All Brands</MenuItem>
-            {brandsData?.data.map((brand) => (
-              <MenuItem key={brand._id} value={brand._id}>{brand.name}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Paper>
-
       {isError && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error instanceof Error ? error.message : 'Error fetching models'}
-        </Alert>
+        <Box sx={{ mb: 2, color: 'error.main' }}>{getReadableErrorMessage(error)}</Box>
       )}
 
-      <TableContainer component={Paper}>
-        {isLoading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-            <CircularProgress />
-          </Box>
-        ) : (
-          <Table sx={{ minWidth: 650 }} aria-label="models table">
-            <TableHead>
-              <TableRow>
-                <TableCell>Model Name</TableCell>
-                <TableCell>Code</TableCell>
-                <TableCell>Brand</TableCell>
-                <TableCell>Body Type</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {models.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} align="center">
-                    No models found.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                models.map((model) => (
-                  <TableRow key={model._id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                    <TableCell component="th" scope="row">
-                      {model.name}
-                    </TableCell>
-                    <TableCell>{model.modelCode}</TableCell>
-                    <TableCell>{model.brandId?.name || 'Unknown'}</TableCell>
-                    <TableCell>{model.bodyType || '-'}</TableCell>
-                    <TableCell>
-                      <Switch
-                        checked={model.status === 'active'}
-                        onChange={() => handleStatusToggle(model._id, model.status)}
-                        disabled={toggleStatusMutation.isPending}
-                        size="small"
-                        color="primary"
-                      />
-                    </TableCell>
-                    <TableCell align="right">
-                      <IconButton color="primary" onClick={() => navigate(`/models/${model._id}/edit`)}>
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton color="error" onClick={() => setDeleteId(model._id)}>
-                        <DeleteIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        )}
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
-          component="div"
-          count={total}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-      </TableContainer>
+      <AdminTable
+        columns={columns}
+        data={data?.data || []}
+        loading={isLoading}
+        total={data?.meta?.total || 0}
+        page={page}
+        rowsPerPage={limit}
+        sortBy={sortBy}
+        sortOrder={sortOrder}
+        onPageChange={(p) => updateParams({ page: p.toString() })}
+        onRowsPerPageChange={(l) => updateParams({ limit: l.toString(), page: '1' })}
+        onSortChange={(property) => {
+          const isAsc = sortBy === property && sortOrder === 'asc';
+          updateParams({ sortBy: property, sortOrder: isAsc ? 'desc' : 'asc', page: '1' });
+        }}
+        emptyMessage="No models found."
+        emptyAction={
+          <Button variant="outlined" startIcon={<AddIcon />} onClick={() => navigate('/models/new')}>
+            Create your first model
+          </Button>
+        }
+      />
 
-      {/* Delete Confirmation Dialog */}
       <Dialog open={!!deleteId} onClose={() => setDeleteId(null)}>
         <DialogTitle>Delete Model</DialogTitle>
         <DialogContent>
@@ -218,12 +196,7 @@ const ModelList: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteId(null)}>Cancel</Button>
-          <Button 
-            onClick={confirmDelete} 
-            color="error" 
-            variant="contained"
-            disabled={deleteMutation.isPending}
-          >
+          <Button onClick={confirmDelete} color="error" variant="contained" disabled={deleteMutation.isPending}>
             {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
           </Button>
         </DialogActions>

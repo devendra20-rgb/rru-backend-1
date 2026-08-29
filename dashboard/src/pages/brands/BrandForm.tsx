@@ -26,6 +26,8 @@ import CloseIcon from '@mui/icons-material/Close';
 import { getBrand, createBrand, updateBrand } from '../../api/brands.api';
 import FilePicker from '../../components/common/FilePicker';
 import type { Media } from '../../api/media.api';
+import { useToast } from '../../components/common/GlobalToastProvider';
+import { getReadableErrorMessage } from '../../utils/apiError';
 
 // Validation Schema
 const brandSchema = z.object({
@@ -61,6 +63,7 @@ const BrandForm: React.FC = () => {
   const queryClient = useQueryClient();
   const [filePickerOpen, setFilePickerOpen] = useState(false);
   const [selectedMediaUrl, setSelectedMediaUrl] = useState<string>('');
+  const { showToast } = useToast();
 
   const {
     control,
@@ -112,7 +115,11 @@ const BrandForm: React.FC = () => {
     mutationFn: (data: BrandFormData) => createBrand(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['brands'] });
+      showToast('Brand created successfully', 'success');
       navigate('/brands');
+    },
+    onError: (err) => {
+      showToast(getReadableErrorMessage(err), 'error');
     }
   });
 
@@ -121,7 +128,11 @@ const BrandForm: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['brands'] });
       queryClient.invalidateQueries({ queryKey: ['brand', id] });
+      showToast('Brand updated successfully', 'success');
       navigate('/brands');
+    },
+    onError: (err) => {
+      showToast(getReadableErrorMessage(err), 'error');
     }
   });
 
@@ -136,6 +147,10 @@ const BrandForm: React.FC = () => {
     } else {
       createMutation.mutate(submitData);
     }
+  };
+
+  const onFormError = () => {
+    showToast('Please fix the highlighted fields before saving.', 'error');
   };
 
   const isSaving = createMutation.isPending || updateMutation.isPending;
@@ -185,18 +200,14 @@ const BrandForm: React.FC = () => {
 
       {isError && (
         <Alert severity="error" sx={{ mb: 3 }}>
-          {error instanceof Error ? error.message : 'Error fetching brand details'}
+          {getReadableErrorMessage(error)}
         </Alert>
       )}
 
-      {saveError && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {saveError instanceof Error ? saveError.message : 'Error saving brand'}
-        </Alert>
-      )}
+
 
       <Paper sx={{ p: 3, maxWidth: 800 }}>
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={handleSubmit(onSubmit, onFormError)}>
           <Stack spacing={3}>
 
             <Controller

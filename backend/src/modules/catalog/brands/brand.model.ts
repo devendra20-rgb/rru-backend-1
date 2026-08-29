@@ -43,6 +43,6 @@ const brandSchema = new Schema<IBrand>(
 );
 
 // Indexes
-brandSchema.index({ name: 1 }, { collation: { locale: 'en', strength: 2 } }); // Case-insensitive index for name
+brandSchema.index({ name: 1 }, { unique: true, collation: { locale: 'en', strength: 2 } }); // Case-insensitive unique index for name
 
 export const Brand = model<IBrand>('Brand', brandSchema);

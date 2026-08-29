@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -22,6 +22,9 @@ import { getVariant, createVariant, updateVariant } from '../../../api/variants.
 import { getBrands } from '../../../api/brands.api';
 import { getModels } from '../../../api/models.api';
 import { getGenerations } from '../../../api/generations.api';
+import { AsyncSelect } from '../../../components/common/AsyncSelect';
+import { useToast } from '../../../components/common/GlobalToastProvider';
+import { getReadableErrorMessage } from '../../../utils/apiError';
 
 const basicInfoSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -57,7 +60,12 @@ interface Step1Props {
 
 const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext }) => {
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
   const isEditMode = !!variantId;
+
+  const [brandObj, setBrandObj] = useState<{ _id: string; name: string } | null>(null);
+  const [modelObj, setModelObj] = useState<{ _id: string; name: string } | null>(null);
+  const [generationObj, setGenerationObj] = useState<{ _id: string; name: string } | null>(null);
 
   const {
     control,
@@ -90,43 +98,36 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
     }
   });
 
-  const selectedBrand = watch('brandId');
-  const selectedModel = watch('modelId');
+  const selectedBrandId = watch('brandId');
+  const selectedModelId = watch('modelId');
 
-  // Fetch initial data if edit mode
   const { data, isLoading: isFetching, isError } = useQuery({
     queryKey: ['variant', variantId],
     queryFn: () => getVariant(variantId!),
     enabled: isEditMode
   });
 
-  // Fetch dropdown options
-  const { data: brandsData } = useQuery({
-    queryKey: ['brands', 'all'],
-    queryFn: () => getBrands({ limit: 100 })
-  });
-
-  const { data: modelsData } = useQuery({
-    queryKey: ['models', 'all', selectedBrand],
-    queryFn: () => getModels({ limit: 100, brandId: selectedBrand || undefined }),
-    enabled: !!selectedBrand
-  });
-
-  const { data: generationsData } = useQuery({
-    queryKey: ['generations', 'all', selectedModel],
-    queryFn: () => getGenerations({ limit: 100, modelId: selectedModel || undefined }),
-    enabled: !!selectedModel
-  });
-
   useEffect(() => {
     if (data?.data) {
       const variant = data.data as any;
+      
+      const bId = variant.model?.brandId?._id || variant.model?.brandId || '';
+      const bName = variant.model?.brandId?.name || '';
+      const mId = variant.model?._id || '';
+      const mName = variant.model?.name || '';
+      const gId = variant.generationId?._id || variant.generationId || '';
+      const gName = variant.generationId?.name || '';
+
+      setBrandObj(bId ? { _id: bId, name: bName } : null);
+      setModelObj(mId ? { _id: mId, name: mName } : null);
+      setGenerationObj(gId ? { _id: gId, name: gName } : null);
+
       reset({
         name: variant.name,
         variantCode: variant.variantCode || '',
-        brandId: variant.model?.brandId?._id || variant.model?.brandId || '',
-        modelId: variant.model?._id || '',
-        generationId: variant.generationId?._id || variant.generationId || '',
+        brandId: bId,
+        modelId: mId,
+        generationId: gId,
         modelYear: variant.modelYear,
         fuelType: variant.fuelType,
         transmissionType: variant.transmissionType,
@@ -145,8 +146,12 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
     mutationFn: (data: any) => createVariant(data),
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ['variants'] });
+      showToast('Vehicle variant created successfully', 'success');
       setVariantId(res.data._id);
       onNext();
+    },
+    onError: (err: any) => {
+      showToast(getReadableErrorMessage(err), 'error');
     }
   });
 
@@ -155,7 +160,11 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['variants'] });
       queryClient.invalidateQueries({ queryKey: ['variant', variantId] });
+      showToast('Vehicle variant updated successfully', 'success');
       onNext();
+    },
+    onError: (err: any) => {
+      showToast(getReadableErrorMessage(err), 'error');
     }
   });
 
@@ -180,7 +189,6 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
   };
 
   const isSaving = createMutation.isPending || updateMutation.isPending;
-  const saveError = createMutation.error || updateMutation.error;
 
   if (isFetching) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>;
@@ -188,80 +196,106 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
 
   return (
     <Box component="form" onSubmit={handleSubmit(onSubmit)}>
-      {isError && <Alert severity="error" sx={{ mb: 3 }}>Failed to load vehicle data.</Alert>}
-      {saveError && (
+      {isError && (
         <Alert severity="error" sx={{ mb: 3 }}>
-          {saveError instanceof Error ? saveError.message : 'Failed to save vehicle.'}
+          {getReadableErrorMessage(new Error('Failed to load vehicle data'))}
         </Alert>
       )}
 
       <Stack spacing={3}>
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <Controller
-            name="brandId"
-            control={control}
-            render={({ field }) => (
-              <FormControl fullWidth error={!!errors.brandId}>
-                <InputLabel>Brand *</InputLabel>
-                <Select
-                  {...field}
+        <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', md: 'row' } }}>
+          <Box sx={{ flex: 1 }}>
+            <Controller
+              name="brandId"
+              control={control}
+              render={({ field }) => (
+                <AsyncSelect<any>
                   label="Brand *"
-                  onChange={(e) => {
-                    field.onChange(e);
+                  placeholder="Select Brand"
+                  value={brandObj}
+                  onChange={(val) => {
+                    setBrandObj(val);
+                    field.onChange(val?._id || '');
+                    // Reset cascading fields
                     setValue('modelId', '');
+                    setModelObj(null);
                     setValue('generationId', '');
+                    setGenerationObj(null);
                   }}
-                >
-                  {brandsData?.data.map((b) => (
-                    <MenuItem key={b._id} value={b._id}>{b.name}</MenuItem>
-                  ))}
-                </Select>
-                {errors.brandId && <FormHelperText>{errors.brandId.message}</FormHelperText>}
-              </FormControl>
-            )}
-          />
+                  fetchOptions={async (q) => {
+                    const res = await getBrands({ search: q, limit: 20 });
+                    return res.data;
+                  }}
+                  getOptionLabel={(option) => option.name || ''}
+                  isOptionEqualToValue={(option, value) => option._id === value._id}
+                  error={!!errors.brandId}
+                  helperText={errors.brandId?.message}
+                />
+              )}
+            />
+          </Box>
 
-          <Controller
-            name="modelId"
-            control={control}
-            render={({ field }) => (
-              <FormControl fullWidth error={!!errors.modelId} disabled={!selectedBrand}>
-                <InputLabel>Model *</InputLabel>
-                <Select
-                  {...field}
+          <Box sx={{ flex: 1 }}>
+            <Controller
+              name="modelId"
+              control={control}
+              render={({ field }) => (
+                <AsyncSelect<any>
                   label="Model *"
-                  onChange={(e) => {
-                    field.onChange(e);
+                  placeholder="Select Model"
+                  disabled={!selectedBrandId}
+                  value={modelObj}
+                  onChange={(val) => {
+                    setModelObj(val);
+                    field.onChange(val?._id || '');
+                    // Reset cascading field
                     setValue('generationId', '');
+                    setGenerationObj(null);
                   }}
-                >
-                  {modelsData?.data.map((m) => (
-                    <MenuItem key={m._id} value={m._id}>{m.name}</MenuItem>
-                  ))}
-                </Select>
-                {errors.modelId && <FormHelperText>{errors.modelId.message}</FormHelperText>}
-              </FormControl>
-            )}
-          />
+                  fetchOptions={async (q) => {
+                    if (!selectedBrandId) return [];
+                    const res = await getModels({ search: q, brandId: selectedBrandId, limit: 20 });
+                    return res.data;
+                  }}
+                  getOptionLabel={(option) => option.name || ''}
+                  isOptionEqualToValue={(option, value) => option._id === value._id}
+                  error={!!errors.modelId}
+                  helperText={errors.modelId?.message}
+                />
+              )}
+            />
+          </Box>
 
-          <Controller
-            name="generationId"
-            control={control}
-            render={({ field }) => (
-              <FormControl fullWidth error={!!errors.generationId} disabled={!selectedModel}>
-                <InputLabel>Generation *</InputLabel>
-                <Select {...field} label="Generation *">
-                  {generationsData?.data.map((g) => (
-                    <MenuItem key={g._id} value={g._id}>{g.name}</MenuItem>
-                  ))}
-                </Select>
-                {errors.generationId && <FormHelperText>{errors.generationId.message}</FormHelperText>}
-              </FormControl>
-            )}
-          />
+          <Box sx={{ flex: 1 }}>
+            <Controller
+              name="generationId"
+              control={control}
+              render={({ field }) => (
+                <AsyncSelect<any>
+                  label="Generation *"
+                  placeholder="Select Generation"
+                  disabled={!selectedModelId}
+                  value={generationObj}
+                  onChange={(val) => {
+                    setGenerationObj(val);
+                    field.onChange(val?._id || '');
+                  }}
+                  fetchOptions={async (q) => {
+                    if (!selectedModelId) return [];
+                    const res = await getGenerations({ search: q, modelId: selectedModelId, limit: 20 });
+                    return res.data;
+                  }}
+                  getOptionLabel={(option) => option.name || ''}
+                  isOptionEqualToValue={(option, value) => option._id === value._id}
+                  error={!!errors.generationId}
+                  helperText={errors.generationId?.message}
+                />
+              )}
+            />
+          </Box>
         </Box>
 
-        <Box sx={{ display: 'flex', gap: 2 }}>
+        <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', md: 'row' } }}>
           <Controller
             name="name"
             control={control}
@@ -283,7 +317,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
             render={({ field }) => (
               <TextField
                 {...field}
-                label="Variant Code"
+                label="Variant Code *"
                 fullWidth
                 placeholder="e.g. G20-330i-MSP"
                 error={!!errors.variantCode}
@@ -293,7 +327,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
           />
         </Box>
 
-        <Box sx={{ display: 'flex', gap: 2 }}>
+        <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', md: 'row' } }}>
           <Controller
             name="modelYear"
             control={control}
@@ -328,7 +362,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
           />
         </Box>
 
-        <Box sx={{ display: 'flex', gap: 2 }}>
+        <Box sx={{ display: 'flex', gap: 2, flexDirection: 'column' }}>
           <Controller
             name="shortDescription"
             control={control}
@@ -340,7 +374,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
             name="description"
             control={control}
             render={({ field }) => (
-              <TextField {...field} label="Full Description" fullWidth multiline rows={2} value={field.value || ''} />
+              <TextField {...field} label="Full Description" fullWidth multiline rows={4} value={field.value || ''} />
             )}
           />
         </Box>
@@ -353,7 +387,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
           <Divider sx={{ mb: 2 }} />
         </Box>
 
-        <Box sx={{ display: 'flex', gap: 2 }}>
+        <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', md: 'row' } }}>
           <Controller
             name="fuelType"
             control={control}
@@ -395,7 +429,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
           />
         </Box>
 
-        <Box sx={{ display: 'flex', gap: 2 }}>
+        <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', md: 'row' } }}>
           <Controller
             name="engine.displacementCc"
             control={control}
@@ -419,7 +453,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
           />
         </Box>
 
-        <Box sx={{ display: 'flex', gap: 2 }}>
+        <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', md: 'row' } }}>
           <Controller
             name="engine.powerHp"
             control={control}
@@ -439,7 +473,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
         {/* Body Configuration */}
         <Box sx={{ mt: 2, mb: 1 }}><Alert severity="info">Body Configuration</Alert></Box>
 
-        <Box sx={{ display: 'flex', gap: 2 }}>
+        <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', md: 'row' } }}>
           <Controller
             name="doors"
             control={control}

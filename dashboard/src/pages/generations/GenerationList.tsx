@@ -1,80 +1,58 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box,
   Button,
-  Typography,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TablePagination,
   IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogContentText,
   DialogActions,
-  CircularProgress,
-  Alert,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Select,
-  Stack,
   Switch
 } from '@mui/material';
-import { type SelectChangeEvent } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import { getGenerations, deleteGeneration, updateGeneration } from '../../api/generations.api';
-import { getBrands } from '../../api/brands.api';
 import { getModels } from '../../api/models.api';
+import { AdminPageHeader } from '../../components/common/AdminPageHeader';
+import { AdminTable, type AdminTableColumn } from '../../components/common/AdminTable';
+import { AdminSearchFilter } from '../../components/common/AdminSearchFilter';
+import { AsyncSelect } from '../../components/common/AsyncSelect';
+import { useToast } from '../../components/common/GlobalToastProvider';
+import { getReadableErrorMessage } from '../../utils/apiError';
 
 const GenerationList: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
   
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const page = parseInt(searchParams.get('page') || '1', 10);
+  const limit = parseInt(searchParams.get('limit') || '10', 10);
+  const search = searchParams.get('search') || '';
+  const sortBy = searchParams.get('sortBy') || 'createdAt';
+  const sortOrder = (searchParams.get('sortOrder') || 'desc') as 'asc' | 'desc';
+  const modelId = searchParams.get('modelId') || '';
+  const modelName = searchParams.get('modelName') || '';
+
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  
-  const [selectedBrand, setSelectedBrand] = useState<string>('all');
-  const [selectedModel, setSelectedModel] = useState<string>('all');
-
-  const { data: brandsData } = useQuery({
-    queryKey: ['brands', 'all'],
-    queryFn: () => getBrands({ limit: 100 })
-  });
-
-  const { data: modelsData } = useQuery({
-    queryKey: ['models', 'all', selectedBrand],
-    queryFn: () => getModels({ limit: 100, brandId: selectedBrand === 'all' ? undefined : selectedBrand }),
-    enabled: selectedBrand !== 'all'
-  });
 
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ['generations', page, rowsPerPage, selectedModel],
-    queryFn: () => {
-      const params: any = { page: page + 1, limit: rowsPerPage };
-      if (selectedModel !== 'all') {
-        params.modelId = selectedModel;
-      }
-      return getGenerations(params);
-    }
+    queryKey: ['generations', { page, limit, search, sortBy, sortOrder, modelId }],
+    queryFn: () => getGenerations({ page, limit, search, sortBy, sortOrder, modelId: modelId || undefined })
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteGeneration(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['generations'] });
+      showToast('Generation deleted successfully', 'success');
       setDeleteId(null);
-    }
+    },
+    onError: (err) => showToast(getReadableErrorMessage(err), 'error')
   });
 
   const toggleStatusMutation = useMutation({
@@ -82,32 +60,21 @@ const GenerationList: React.FC = () => {
       updateGeneration(id, { status }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['generations'] });
-    }
+      showToast('Generation status updated', 'success');
+    },
+    onError: (err) => showToast(getReadableErrorMessage(err), 'error')
   });
 
-  const handleStatusToggle = (id: string, currentStatus: string) => {
-    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-    toggleStatusMutation.mutate({ id, status: newStatus });
-  };
-
-  const handleChangePage = (_event: unknown, newPage: number) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
-  const handleBrandFilterChange = (event: SelectChangeEvent) => {
-    setSelectedBrand(event.target.value);
-    setSelectedModel('all');
-    setPage(0);
-  };
-
-  const handleModelFilterChange = (event: SelectChangeEvent) => {
-    setSelectedModel(event.target.value);
-    setPage(0);
+  const updateParams = (newParams: Record<string, string>) => {
+    const params = new URLSearchParams(searchParams);
+    Object.entries(newParams).forEach(([key, value]) => {
+      if (value) {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+    });
+    setSearchParams(params);
   };
 
   const confirmDelete = () => {
@@ -116,133 +83,110 @@ const GenerationList: React.FC = () => {
     }
   };
 
-  const generations = data?.data || [];
-  const total = data?.meta?.total || 0;
+  const columns: AdminTableColumn<any>[] = [
+    { id: 'name', label: 'Generation Name', sortable: true },
+    { id: 'generationCode', label: 'Code', sortable: true },
+    { id: 'modelId', label: 'Model', render: (row) => row.modelId?.name || 'Unknown' },
+    { id: 'years', label: 'Years', render: (row) => row.startYear ? `${row.startYear} - ${row.endYear || 'Present'}` : '-' },
+    {
+      id: 'status',
+      label: 'Status',
+      sortable: true,
+      render: (row) => (
+        <Switch
+          checked={row.status === 'active'}
+          onChange={() => toggleStatusMutation.mutate({ id: row._id, status: row.status === 'active' ? 'inactive' : 'active' })}
+          disabled={toggleStatusMutation.isPending}
+          size="small"
+          color="primary"
+        />
+      )
+    },
+    {
+      id: 'actions',
+      label: 'Actions',
+      align: 'right',
+      render: (row) => (
+        <>
+          <IconButton color="primary" onClick={() => navigate(`/generations/${row._id}/edit`)} size="small">
+            <EditIcon fontSize="small" />
+          </IconButton>
+          <IconButton color="error" onClick={() => setDeleteId(row._id)} size="small">
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </>
+      )
+    }
+  ];
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1">
-          Generations
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => navigate('/generations/new')}
-        >
-          Add Generation
-        </Button>
+      <AdminPageHeader 
+        title="Generations"
+        breadcrumbs={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Generations' }]}
+        action={
+          <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/generations/new')}>
+            Add Generation
+          </Button>
+        }
+      />
+
+      <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+        <AdminSearchFilter 
+          value={search}
+          onChange={(val) => updateParams({ search: val, page: '1' })}
+          placeholder="Search generations..."
+          sx={{ width: 300 }}
+        />
+        <Box sx={{ width: 250 }}>
+          <AsyncSelect<any>
+            label="Filter by Model"
+            placeholder="Select Model"
+            value={modelId ? { _id: modelId, name: modelName } : null}
+            onChange={(val) => {
+              updateParams({ 
+                modelId: val?._id || '', 
+                modelName: val?.name || '',
+                page: '1' 
+              });
+            }}
+            fetchOptions={async (q) => {
+              const res = await getModels({ search: q, limit: 20 });
+              return res.data;
+            }}
+            getOptionLabel={(option) => option.name || ''}
+            isOptionEqualToValue={(option, value) => option._id === value._id}
+          />
+        </Box>
       </Box>
 
-      {/* Filters */}
-      <Paper sx={{ p: 2, mb: 3 }}>
-        <Stack direction="row" spacing={2}>
-          <FormControl sx={{ minWidth: 200 }}>
-            <InputLabel>Filter by Brand</InputLabel>
-            <Select
-              value={selectedBrand}
-              label="Filter by Brand"
-              onChange={handleBrandFilterChange}
-            >
-              <MenuItem value="all">All Brands</MenuItem>
-              {brandsData?.data.map((brand) => (
-                <MenuItem key={brand._id} value={brand._id}>{brand.name}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <FormControl sx={{ minWidth: 200 }} disabled={selectedBrand === 'all'}>
-            <InputLabel>Filter by Model</InputLabel>
-            <Select
-              value={selectedModel}
-              label="Filter by Model"
-              onChange={handleModelFilterChange}
-            >
-              <MenuItem value="all">All Models</MenuItem>
-              {modelsData?.data.map((model) => (
-                <MenuItem key={model._id} value={model._id}>{model.name}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Stack>
-      </Paper>
-
       {isError && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error instanceof Error ? error.message : 'Error fetching generations'}
-        </Alert>
+        <Box sx={{ mb: 2, color: 'error.main' }}>{getReadableErrorMessage(error)}</Box>
       )}
 
-      <TableContainer component={Paper}>
-        {isLoading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-            <CircularProgress />
-          </Box>
-        ) : (
-          <Table sx={{ minWidth: 650 }} aria-label="generations table">
-            <TableHead>
-              <TableRow>
-                <TableCell>Generation Name</TableCell>
-                <TableCell>Code</TableCell>
-                <TableCell>Model</TableCell>
-                <TableCell>Years</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {generations.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} align="center">
-                    No generations found.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                generations.map((gen) => (
-                  <TableRow key={gen._id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                    <TableCell component="th" scope="row">
-                      {gen.name}
-                    </TableCell>
-                    <TableCell>{gen.generationCode}</TableCell>
-                    <TableCell>{gen.modelId?.name || 'Unknown'}</TableCell>
-                    <TableCell>
-                      {gen.startYear ? `${gen.startYear} - ${gen.endYear || 'Present'}` : '-'}
-                    </TableCell>
-                    <TableCell>
-                      <Switch
-                        checked={gen.status === 'active'}
-                        onChange={() => handleStatusToggle(gen._id, gen.status)}
-                        disabled={toggleStatusMutation.isPending}
-                        size="small"
-                        color="primary"
-                      />
-                    </TableCell>
-                    <TableCell align="right">
-                      <IconButton color="primary" onClick={() => navigate(`/generations/${gen._id}/edit`)}>
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton color="error" onClick={() => setDeleteId(gen._id)}>
-                        <DeleteIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        )}
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
-          component="div"
-          count={total}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-      </TableContainer>
+      <AdminTable
+        columns={columns}
+        data={data?.data || []}
+        loading={isLoading}
+        total={data?.meta?.total || 0}
+        page={page}
+        rowsPerPage={limit}
+        sortBy={sortBy}
+        sortOrder={sortOrder}
+        onPageChange={(p) => updateParams({ page: p.toString() })}
+        onRowsPerPageChange={(l) => updateParams({ limit: l.toString(), page: '1' })}
+        onSortChange={(property) => {
+          const isAsc = sortBy === property && sortOrder === 'asc';
+          updateParams({ sortBy: property, sortOrder: isAsc ? 'desc' : 'asc', page: '1' });
+        }}
+        emptyMessage="No generations found."
+        emptyAction={
+          <Button variant="outlined" startIcon={<AddIcon />} onClick={() => navigate('/generations/new')}>
+            Create your first generation
+          </Button>
+        }
+      />
 
-      {/* Delete Confirmation Dialog */}
       <Dialog open={!!deleteId} onClose={() => setDeleteId(null)}>
         <DialogTitle>Delete Generation</DialogTitle>
         <DialogContent>
@@ -252,12 +196,7 @@ const GenerationList: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteId(null)}>Cancel</Button>
-          <Button 
-            onClick={confirmDelete} 
-            color="error" 
-            variant="contained"
-            disabled={deleteMutation.isPending}
-          >
+          <Button onClick={confirmDelete} color="error" variant="contained" disabled={deleteMutation.isPending}>
             {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
           </Button>
         </DialogActions>

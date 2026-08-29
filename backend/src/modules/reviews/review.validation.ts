@@ -4,10 +4,26 @@ const objectIdRegex = /^[0-9a-fA-F]{24}$/;
 
 export const createReviewSchema = z.object({
   body: z.object({
+    variantId: z.string().regex(objectIdRegex, 'Invalid variant ID format').optional(), // made optional because it comes from params
+    rating: z.number().int().min(1).max(5),
+    title: z.string().max(200).optional(),
+    content: z.string().max(2000).optional(),
+    body: z.string().max(2000).optional(),
+    pros: z.array(z.string().max(200)).optional(),
+    cons: z.array(z.string().max(200)).optional(),
+  }),
+});
+
+export const createAdminReviewSchema = z.object({
+  body: z.object({
     variantId: z.string().regex(objectIdRegex, 'Invalid variant ID format'),
     rating: z.number().int().min(1).max(5),
     title: z.string().max(200).optional(),
+    content: z.string().max(2000).optional(),
     body: z.string().max(2000).optional(),
+    pros: z.array(z.string().max(200)).optional(),
+    cons: z.array(z.string().max(200)).optional(),
+    status: z.enum(['approved', 'pending', 'rejected', 'inactive']).optional(),
   }),
 });
 
@@ -19,7 +35,10 @@ export const updateReviewSchema = z.object({
     .object({
       rating: z.number().int().min(1).max(5).optional(),
       title: z.string().max(200).optional(),
+      content: z.string().max(2000).optional(),
       body: z.string().max(2000).optional(),
+      pros: z.array(z.string().max(200)).optional(),
+      cons: z.array(z.string().max(200)).optional(),
       status: z.enum(['approved', 'pending', 'rejected', 'inactive']).optional(),
     })
     .refine((data) => Object.keys(data).length > 0, {

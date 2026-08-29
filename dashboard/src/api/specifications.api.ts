@@ -40,6 +40,12 @@ export interface Safety {
   camera?: string;
 }
 
+export interface CustomSpecification {
+  category: string;
+  name: string;
+  value: string;
+}
+
 export interface Specification {
   _id: string;
   variantId: string | any;
@@ -49,6 +55,11 @@ export interface Specification {
   weight?: Weight;
   fuel?: Fuel;
   safety?: Safety;
+  custom?: CustomSpecification[];
+  customAttributes?: {
+    attributeId: string | any;
+    value: any;
+  }[];
   status: 'active' | 'inactive';
   createdAt: string;
   updatedAt: string;

@@ -21,6 +21,8 @@ import {
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { getColor, createColor, updateColor } from '../../api/colors.api';
+import { useToast } from '../../components/common/GlobalToastProvider';
+import { getReadableErrorMessage } from '../../utils/apiError';
 
 // Validation Schema
 const hexCodeRegex = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
@@ -42,6 +44,7 @@ const ColorForm: React.FC = () => {
   const isEditMode = !!id;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
 
   const {
     control,
@@ -86,7 +89,11 @@ const ColorForm: React.FC = () => {
     mutationFn: (data: any) => createColor(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['colors'] });
+      showToast('Color created successfully', 'success');
       navigate('/colors');
+    },
+    onError: (err) => {
+      showToast(getReadableErrorMessage(err), 'error');
     }
   });
 
@@ -95,7 +102,11 @@ const ColorForm: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['colors'] });
       queryClient.invalidateQueries({ queryKey: ['color', id] });
+      showToast('Color updated successfully', 'success');
       navigate('/colors');
+    },
+    onError: (err) => {
+      showToast(getReadableErrorMessage(err), 'error');
     }
   });
 
@@ -111,6 +122,10 @@ const ColorForm: React.FC = () => {
     } else {
       await createMutation.mutateAsync(submitData);
     }
+  };
+
+  const onFormError = () => {
+    showToast('Please fix the highlighted fields before saving.', 'error');
   };
 
   const isSaving = createMutation.isPending || updateMutation.isPending;
@@ -150,18 +165,12 @@ const ColorForm: React.FC = () => {
 
       {isError && (
         <Alert severity="error" sx={{ mb: 3 }}>
-          {error instanceof Error ? error.message : 'Error fetching color details'}
-        </Alert>
-      )}
-
-      {saveError && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {saveError instanceof Error ? saveError.message : 'Error saving color'}
+          {getReadableErrorMessage(error)}
         </Alert>
       )}
 
       <Paper sx={{ p: 3, maxWidth: 800 }}>
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={handleSubmit(onSubmit, onFormError)}>
           <Stack spacing={3}>
             
             <Controller

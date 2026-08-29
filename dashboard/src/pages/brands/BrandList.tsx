@@ -1,51 +1,45 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
-import {
-  Box,
-  Button,
-  Typography,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TablePagination,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  CircularProgress,
-  Alert,
-  Switch
-} from '@mui/material';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Box, Button, IconButton, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Switch } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import { getBrands, deleteBrand, updateBrand } from '../../api/brands.api';
+import { AdminPageHeader } from '../../components/common/AdminPageHeader';
+import { AdminTable, type AdminTableColumn } from '../../components/common/AdminTable';
+import { AdminSearchFilter } from '../../components/common/AdminSearchFilter';
+import { useToast } from '../../components/common/GlobalToastProvider';
+import { getReadableErrorMessage } from '../../utils/apiError';
 
 const BrandList: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
   
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const page = parseInt(searchParams.get('page') || '1', 10);
+  const limit = parseInt(searchParams.get('limit') || '10', 10);
+  const search = searchParams.get('search') || '';
+  const sortBy = searchParams.get('sortBy') || 'createdAt';
+  const sortOrder = (searchParams.get('sortOrder') || 'desc') as 'asc' | 'desc';
+
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ['brands', page, rowsPerPage],
-    queryFn: () => getBrands({ page: page + 1, limit: rowsPerPage })
+    queryKey: ['brands', { page, limit, search, sortBy, sortOrder }],
+    queryFn: () => getBrands({ page, limit, search, sortBy, sortOrder })
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteBrand(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['brands'] });
+      showToast('Brand deleted successfully', 'success');
       setDeleteId(null);
+    },
+    onError: (err) => {
+      showToast(getReadableErrorMessage(err), 'error');
     }
   });
 
@@ -54,21 +48,44 @@ const BrandList: React.FC = () => {
       updateBrand(id, { status }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['brands'] });
+      showToast('Brand status updated', 'success');
+    },
+    onError: (err) => {
+      showToast(getReadableErrorMessage(err), 'error');
     }
   });
 
-  const handleStatusToggle = (id: string, currentStatus: string) => {
-    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-    toggleStatusMutation.mutate({ id, status: newStatus });
+  const updateParams = (newParams: Record<string, string>) => {
+    const params = new URLSearchParams(searchParams);
+    Object.entries(newParams).forEach(([key, value]) => {
+      if (value) {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+    });
+    setSearchParams(params);
   };
 
-  const handleChangePage = (_event: unknown, newPage: number) => {
-    setPage(newPage);
+  const handleSearch = (newSearch: string) => {
+    updateParams({ search: newSearch, page: '1' });
   };
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
+  const handlePageChange = (newPage: number) => {
+    updateParams({ page: newPage.toString() });
+  };
+
+  const handleRowsPerPageChange = (newLimit: number) => {
+    updateParams({ limit: newLimit.toString(), page: '1' });
+  };
+
+  const handleSortChange = (property: string) => {
+    const isAsc = sortBy === property && sortOrder === 'asc';
+    updateParams({ 
+      sortBy: property, 
+      sortOrder: isAsc ? 'desc' : 'asc',
+      page: '1'
+    });
   };
 
   const confirmDelete = () => {
@@ -77,100 +94,86 @@ const BrandList: React.FC = () => {
     }
   };
 
-  if (isLoading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (isError) {
-    return (
-      <Alert severity="error" sx={{ mt: 2 }}>
-        {error instanceof Error ? error.message : 'Error fetching brands'}
-      </Alert>
-    );
-  }
-
-  const brands = data?.data || [];
-  const total = data?.meta?.total || 0;
+  const columns: AdminTableColumn<any>[] = [
+    { id: 'name', label: 'Brand Name', sortable: true },
+    { id: 'brandCode', label: 'Code', sortable: true },
+    { id: 'slug', label: 'Slug', sortable: true },
+    {
+      id: 'status',
+      label: 'Status',
+      sortable: true,
+      render: (row) => (
+        <Switch
+          checked={row.status === 'active'}
+          onChange={() => toggleStatusMutation.mutate({ id: row._id, status: row.status === 'active' ? 'inactive' : 'active' })}
+          disabled={toggleStatusMutation.isPending}
+          size="small"
+          color="primary"
+        />
+      )
+    },
+    {
+      id: 'actions',
+      label: 'Actions',
+      align: 'right',
+      render: (row) => (
+        <>
+          <IconButton color="primary" onClick={() => navigate(`/brands/${row._id}/edit`)} size="small">
+            <EditIcon fontSize="small" />
+          </IconButton>
+          <IconButton color="error" onClick={() => setDeleteId(row._id)} size="small">
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </>
+      )
+    }
+  ];
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1">
-          Brands
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => navigate('/brands/new')}
-        >
-          Add Brand
-        </Button>
+      <AdminPageHeader 
+        title="Brands"
+        breadcrumbs={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Brands' }]}
+        action={
+          <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/brands/new')}>
+            Add Brand
+          </Button>
+        }
+      />
+
+      <Box sx={{ mb: 3, display: 'flex', gap: 2 }}>
+        <AdminSearchFilter 
+          value={search}
+          onChange={handleSearch}
+          placeholder="Search brands..."
+          sx={{ width: 300 }}
+        />
       </Box>
 
-      <TableContainer component={Paper}>
-        <Table sx={{ minWidth: 650 }} aria-label="brands table">
-          <TableHead>
-            <TableRow>
-              <TableCell>Brand Name</TableCell>
-              <TableCell>Code</TableCell>
-              <TableCell>Slug</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell align="right">Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {brands.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} align="center">
-                  No brands found.
-                </TableCell>
-              </TableRow>
-            ) : (
-              brands.map((brand) => (
-                <TableRow key={brand._id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                  <TableCell component="th" scope="row">
-                    {brand.name}
-                  </TableCell>
-                  <TableCell>{brand.brandCode}</TableCell>
-                  <TableCell>{brand.slug}</TableCell>
-                  <TableCell>
-                    <Switch
-                      checked={brand.status === 'active'}
-                      onChange={() => handleStatusToggle(brand._id, brand.status)}
-                      disabled={toggleStatusMutation.isPending}
-                      size="small"
-                      color="primary"
-                    />
-                  </TableCell>
-                  <TableCell align="right">
-                    <IconButton color="primary" onClick={() => navigate(`/brands/${brand._id}/edit`)}>
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton color="error" onClick={() => setDeleteId(brand._id)}>
-                      <DeleteIcon />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
-          component="div"
-          count={total}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-      </TableContainer>
+      {isError && (
+        <Box sx={{ mb: 2, color: 'error.main' }}>{getReadableErrorMessage(error)}</Box>
+      )}
 
-      {/* Delete Confirmation Dialog */}
+      <AdminTable
+        columns={columns}
+        data={data?.data || []}
+        loading={isLoading}
+        total={data?.meta?.total || 0}
+        page={page}
+        rowsPerPage={limit}
+        sortBy={sortBy}
+        sortOrder={sortOrder}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+        onSortChange={handleSortChange}
+        emptyMessage="No brands found."
+        emptyAction={
+          <Button variant="outlined" startIcon={<AddIcon />} onClick={() => navigate('/brands/new')}>
+            Create your first brand
+          </Button>
+        }
+      />
+
       <Dialog open={!!deleteId} onClose={() => setDeleteId(null)}>
         <DialogTitle>Delete Brand</DialogTitle>
         <DialogContent>

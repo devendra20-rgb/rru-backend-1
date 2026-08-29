@@ -29,9 +29,14 @@ export class ReviewService {
       throw new AppError('You have already reviewed this variant', 409);
     }
 
-    // Auto-approve for admins/editors, or default to pending
-    const status =
-      userExists.role === 'admin' || userExists.role === 'editor' ? 'approved' : 'pending';
+    // Respect provided status if admin, else auto-approve for admins/editors, or default to pending
+    let status = data.status;
+    if (!status) {
+      status = userExists.role === 'admin' || userExists.role === 'editor' ? 'approved' : 'pending';
+    } else if (userExists.role !== 'admin' && userExists.role !== 'editor') {
+      // Non-admins cannot force a status
+      status = 'pending';
+    }
 
     const createdReview = await this.repository.create({ ...data, status });
     return createdReview.toObject();

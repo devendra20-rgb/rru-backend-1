@@ -21,6 +21,8 @@ import {
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { getFeature, createFeature, updateFeature } from '../../api/features.api';
+import { useToast } from '../../components/common/GlobalToastProvider';
+import { getReadableErrorMessage } from '../../utils/apiError';
 
 // Validation Schema
 const featureSchema = z.object({
@@ -37,6 +39,7 @@ const FeatureForm: React.FC = () => {
   const isEditMode = !!id;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
 
   const {
     control,
@@ -75,7 +78,11 @@ const FeatureForm: React.FC = () => {
     mutationFn: (data: FeatureFormData) => createFeature(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['features'] });
+      showToast('Feature created successfully', 'success');
       navigate('/features');
+    },
+    onError: (err) => {
+      showToast(getReadableErrorMessage(err), 'error');
     }
   });
 
@@ -84,7 +91,11 @@ const FeatureForm: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['features'] });
       queryClient.invalidateQueries({ queryKey: ['feature', id] });
+      showToast('Feature updated successfully', 'success');
       navigate('/features');
+    },
+    onError: (err) => {
+      showToast(getReadableErrorMessage(err), 'error');
     }
   });
 
@@ -94,6 +105,10 @@ const FeatureForm: React.FC = () => {
     } else {
       createMutation.mutate(formData);
     }
+  };
+
+  const onFormError = () => {
+    showToast('Please fix the highlighted fields before saving.', 'error');
   };
 
   const isSaving = createMutation.isPending || updateMutation.isPending;
@@ -136,18 +151,12 @@ const FeatureForm: React.FC = () => {
 
       {isError && (
         <Alert severity="error" sx={{ mb: 3 }}>
-          {error instanceof Error ? error.message : 'Error fetching feature details'}
-        </Alert>
-      )}
-
-      {saveError && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {saveError instanceof Error ? saveError.message : 'Error saving feature'}
+          {getReadableErrorMessage(error)}
         </Alert>
       )}
 
       <Paper sx={{ p: 3, maxWidth: 800 }}>
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={handleSubmit(onSubmit, onFormError)}>
           <Stack spacing={3}>
             
             <Controller

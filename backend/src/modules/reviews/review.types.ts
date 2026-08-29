@@ -7,7 +7,10 @@ export interface IReview {
   userId: Types.ObjectId;
   rating: number; // 1 to 5
   title?: string;
-  body?: string;
+  content?: string;
+  body?: string; // Kept for backward compatibility
+  pros?: string[];
+  cons?: string[];
   status: 'approved' | 'pending' | 'rejected' | 'inactive';
   createdAt?: Date;
   updatedAt?: Date;
@@ -17,14 +20,19 @@ export interface CreateReviewInput {
   variantId: string;
   rating: number;
   title?: string;
-  body?: string;
+  content?: string;
+  pros?: string[];
+  cons?: string[];
   userId: string; // From auth
+  status?: 'approved' | 'pending' | 'rejected' | 'inactive';
 }
 
 export interface UpdateReviewInput {
   rating?: number;
   title?: string;
-  body?: string;
+  content?: string;
+  pros?: string[];
+  cons?: string[];
   status?: 'approved' | 'pending' | 'rejected' | 'inactive';
 }
 
@@ -32,4 +40,5 @@ export interface ReviewQuery extends PaginationQuery {
   variantId?: string;
   userId?: string;
   status?: 'approved' | 'pending' | 'rejected' | 'inactive';
+  search?: string;
 }

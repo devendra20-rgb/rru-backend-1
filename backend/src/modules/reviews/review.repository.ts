@@ -33,12 +33,21 @@ export class ReviewRepository {
       variantId,
       userId,
       status,
+      search,
     } = query;
 
     const filter: Record<string, any> = {};
     if (variantId) filter.variantId = new Types.ObjectId(variantId);
     if (userId) filter.userId = new Types.ObjectId(userId);
     if (status) filter.status = status;
+    
+    if (search) {
+      filter.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { content: { $regex: search, $options: 'i' } },
+        { body: { $regex: search, $options: 'i' } },
+      ];
+    }
 
     const skip = (page - 1) * limit;
 
@@ -48,6 +57,22 @@ export class ReviewRepository {
         .skip(skip)
         .limit(limit)
         .populate('userId', 'username') // Only populate username for public safety
+        .populate({
+          path: 'variantId',
+          select: 'name variantCode generationId',
+          populate: {
+            path: 'generationId',
+            select: 'name modelId',
+            populate: {
+              path: 'modelId',
+              select: 'name brandId',
+              populate: {
+                path: 'brandId',
+                select: 'name'
+              }
+            }
+          }
+        })
         .exec(),
       Review.countDocuments(filter),
     ]);

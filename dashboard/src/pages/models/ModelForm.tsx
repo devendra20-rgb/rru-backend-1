@@ -22,6 +22,8 @@ import {
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { getModel, createModel, updateModel } from '../../api/models.api';
 import { getBrands } from '../../api/brands.api';
+import { useToast } from '../../components/common/GlobalToastProvider';
+import { getReadableErrorMessage } from '../../utils/apiError';
 
 // Validation Schema
 const modelSchema = z.object({
@@ -44,6 +46,7 @@ const ModelForm: React.FC = () => {
   const isEditMode = !!id;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
 
   // Fetch Brands for dependent dropdown
   const { data: brandsData, isLoading: isLoadingBrands } = useQuery({
@@ -103,7 +106,11 @@ const ModelForm: React.FC = () => {
     mutationFn: (data: ModelFormData) => createModel(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['models'] });
+      showToast('Model created successfully', 'success');
       navigate('/models');
+    },
+    onError: (err) => {
+      showToast(getReadableErrorMessage(err), 'error');
     }
   });
 
@@ -112,7 +119,11 @@ const ModelForm: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['models'] });
       queryClient.invalidateQueries({ queryKey: ['model', id] });
+      showToast('Model updated successfully', 'success');
       navigate('/models');
+    },
+    onError: (err) => {
+      showToast(getReadableErrorMessage(err), 'error');
     }
   });
 
@@ -128,6 +139,10 @@ const ModelForm: React.FC = () => {
     } else {
       createMutation.mutate(submitData);
     }
+  };
+
+  const onFormError = () => {
+    showToast('Please fix the highlighted fields before saving.', 'error');
   };
 
   const isSaving = createMutation.isPending || updateMutation.isPending;
@@ -177,18 +192,12 @@ const ModelForm: React.FC = () => {
 
       {isError && (
         <Alert severity="error" sx={{ mb: 3 }}>
-          {error instanceof Error ? error.message : 'Error fetching model details'}
-        </Alert>
-      )}
-
-      {saveError && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {saveError instanceof Error ? saveError.message : 'Error saving model'}
+          {getReadableErrorMessage(error)}
         </Alert>
       )}
 
       <Paper sx={{ p: 3, maxWidth: 800 }}>
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={handleSubmit(onSubmit, onFormError)}>
           <Stack spacing={3}>
             
             <Controller

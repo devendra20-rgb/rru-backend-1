@@ -27,6 +27,8 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import { getColors, deleteColor, updateColor } from '../../api/colors.api';
+import { useToast } from '../../components/common/GlobalToastProvider';
+import { getReadableErrorMessage } from '../../utils/apiError';
 
 const ColorList: React.FC = () => {
   const navigate = useNavigate();
@@ -35,6 +37,7 @@ const ColorList: React.FC = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['colors', page, rowsPerPage],
@@ -45,8 +48,10 @@ const ColorList: React.FC = () => {
     mutationFn: (id: string) => deleteColor(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['colors'] });
+      showToast('Color deleted successfully', 'success');
       setDeleteId(null);
-    }
+    },
+    onError: (err) => showToast(getReadableErrorMessage(err), 'error')
   });
 
   const toggleStatusMutation = useMutation({
@@ -54,7 +59,9 @@ const ColorList: React.FC = () => {
       updateColor(id, { status }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['colors'] });
-    }
+      showToast('Color status updated', 'success');
+    },
+    onError: (err) => showToast(getReadableErrorMessage(err), 'error')
   });
 
   const handleStatusToggle = (id: string, currentStatus: string) => {
@@ -97,7 +104,7 @@ const ColorList: React.FC = () => {
 
       {isError && (
         <Alert severity="error" sx={{ mb: 3 }}>
-          {error instanceof Error ? error.message : 'Error fetching colors'}
+          {getReadableErrorMessage(error)}
         </Alert>
       )}
 

@@ -23,6 +23,8 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { getGeneration, createGeneration, updateGeneration } from '../../api/generations.api';
 import { getBrands } from '../../api/brands.api';
 import { getModels } from '../../api/models.api';
+import { useToast } from '../../components/common/GlobalToastProvider';
+import { getReadableErrorMessage } from '../../utils/apiError';
 
 // Validation Schema
 const generationSchema = z.object({
@@ -44,6 +46,7 @@ const GenerationForm: React.FC = () => {
   const isEditMode = !!id;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
 
   // Local state for dependent dropdowns
   const [selectedBrandId, setSelectedBrandId] = useState<string>('');
@@ -116,7 +119,11 @@ const GenerationForm: React.FC = () => {
     mutationFn: (data: GenerationFormData) => createGeneration(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['generations'] });
+      showToast('Generation created successfully', 'success');
       navigate('/generations');
+    },
+    onError: (err) => {
+      showToast(getReadableErrorMessage(err), 'error');
     }
   });
 
@@ -125,7 +132,11 @@ const GenerationForm: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['generations'] });
       queryClient.invalidateQueries({ queryKey: ['generation', id] });
+      showToast('Generation updated successfully', 'success');
       navigate('/generations');
+    },
+    onError: (err) => {
+      showToast(getReadableErrorMessage(err), 'error');
     }
   });
 
@@ -138,6 +149,10 @@ const GenerationForm: React.FC = () => {
     } else {
       createMutation.mutate(submitData);
     }
+  };
+
+  const onFormError = () => {
+    showToast('Please fix the highlighted fields before saving.', 'error');
   };
 
   const isSaving = createMutation.isPending || updateMutation.isPending;
@@ -191,18 +206,12 @@ const GenerationForm: React.FC = () => {
 
       {isError && (
         <Alert severity="error" sx={{ mb: 3 }}>
-          {error instanceof Error ? error.message : 'Error fetching generation details'}
-        </Alert>
-      )}
-
-      {saveError && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {saveError instanceof Error ? saveError.message : 'Error saving generation'}
+          {getReadableErrorMessage(error)}
         </Alert>
       )}
 
       <Paper sx={{ p: 3, maxWidth: 800 }}>
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={handleSubmit(onSubmit, onFormError)}>
           <Stack spacing={3}>
             
             {/* Dependent Dropdowns */}
