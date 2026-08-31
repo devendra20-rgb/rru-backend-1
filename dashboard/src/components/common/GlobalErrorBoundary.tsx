@@ -1,4 +1,4 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { Box, Typography, Button, Paper } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 
@@ -45,7 +45,7 @@ export class GlobalErrorBoundary extends Component<Props, State> {
             <Typography variant="h4" color="error" gutterBottom sx={{ fontWeight: 'bold' }}>
               Something went wrong
             </Typography>
-            <Typography variant="body1" color="text.secondary" paragraph>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
               An unexpected error occurred while loading this page.
             </Typography>
             <Button 
@@ -64,3 +64,5 @@ export class GlobalErrorBoundary extends Component<Props, State> {
     return this.props.children;
   }
 }
+
+export default GlobalErrorBoundary;
