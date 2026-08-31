@@ -22,6 +22,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getMedia, uploadMedia } from '../../api/media.api';
 import type { Media } from '../../api/media.api';
+import { resolveMediaUrl } from '../../utils/media';
 
 interface FilePickerProps {
   open: boolean;
@@ -120,7 +121,7 @@ const FilePicker: React.FC<FilePickerProps> = ({ open, onClose, onSelect, folder
                           <CardMedia
                             component="img"
                             height="120"
-                            image={item.url}
+                            image={resolveMediaUrl(item.url)}
                             alt={item.altText || item.filename}
                             sx={{ objectFit: 'cover' }}
                           />

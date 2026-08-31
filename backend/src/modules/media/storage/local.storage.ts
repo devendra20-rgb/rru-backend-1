@@ -41,6 +41,9 @@ export class LocalStorageProvider implements IStorageProvider {
   }
 
   getUrl(storageKey: string): string {
-    return `${this.baseUrl}/${storageKey}`;
+    if (process.env.MEDIA_BASE_URL) {
+      return `${process.env.MEDIA_BASE_URL.replace(/\/$/, '')}/${storageKey}`;
+    }
+    return `/uploads/media/${storageKey}`;
   }
 }

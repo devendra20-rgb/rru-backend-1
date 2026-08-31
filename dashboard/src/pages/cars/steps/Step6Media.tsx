@@ -5,7 +5,8 @@ import StarIcon from '@mui/icons-material/Star';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getVariantMedia, uploadMedia, deleteMedia, updateMedia } from '../../../api/media.api';
+import { getVariantMedia, uploadMedia, updateMedia, deleteMedia } from '../../../api/media.api';
+import { resolveMediaUrl } from '../../../utils/media';
 import { useToast } from '../../../components/common/GlobalToastProvider';
 import { getReadableErrorMessage } from '../../../utils/apiError';
 
@@ -196,7 +197,7 @@ const Step6Media: React.FC<Step6Props> = ({ variantId, onNext, onBack }) => {
               <Paper sx={{ p: 1, position: 'relative', border: draggingIndex === index ? '1px dashed #2196f3' : '1px solid #e0e0e0', display: 'flex', flexDirection: 'column' }}>
                 <Box
                   component="img"
-                  src={media.url}
+                  src={resolveMediaUrl(media.url)}
                   alt={media.altText || media.originalName}
                   sx={{ width: '100%', height: 160, objectFit: 'cover', borderRadius: 1, pointerEvents: 'none' }}
                 />

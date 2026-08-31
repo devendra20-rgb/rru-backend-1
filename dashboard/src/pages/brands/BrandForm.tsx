@@ -24,6 +24,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ImageSearchIcon from '@mui/icons-material/ImageSearch';
 import CloseIcon from '@mui/icons-material/Close';
 import { getBrand, createBrand, updateBrand } from '../../api/brands.api';
+import { resolveMediaUrl } from '../../utils/media';
 import FilePicker from '../../components/common/FilePicker';
 import type { Media } from '../../api/media.api';
 import { useToast } from '../../components/common/GlobalToastProvider';
@@ -312,7 +313,7 @@ const BrandForm: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 {selectedMediaUrl ? (
                   <Box sx={{ position: 'relative', width: 120, height: 120, border: '1px solid #e0e0e0', borderRadius: 1, overflow: 'hidden' }}>
-                    <img src={selectedMediaUrl} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                    <img src={resolveMediaUrl(selectedMediaUrl)} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                     <IconButton
                       size="small"
                       color="error"
