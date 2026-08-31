@@ -24,9 +24,11 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ImageSearchIcon from '@mui/icons-material/ImageSearch';
 import CloseIcon from '@mui/icons-material/Close';
 import { getBrand, createBrand, updateBrand } from '../../api/brands.api';
+import { resolveMediaUrl } from '../../utils/media';
 import FilePicker from '../../components/common/FilePicker';
 import type { Media } from '../../api/media.api';
-import { resolveMediaUrl, getPlaceholderImage } from '../../utils/media';
+import { useToast } from '../../components/common/GlobalToastProvider';
+import { getReadableErrorMessage } from '../../utils/apiError';
 
 // Validation Schema
 const brandSchema = z.object({
@@ -62,6 +64,7 @@ const BrandForm: React.FC = () => {
   const queryClient = useQueryClient();
   const [filePickerOpen, setFilePickerOpen] = useState(false);
   const [selectedMediaUrl, setSelectedMediaUrl] = useState<string>('');
+  const { showToast } = useToast();
 
   const {
     control,
@@ -92,10 +95,6 @@ const BrandForm: React.FC = () => {
   useEffect(() => {
     if (data?.data) {
       const brand = data.data;
-      const logoId = brand.logoMediaId && typeof brand.logoMediaId === 'object'
-        ? (brand.logoMediaId as any)._id
-        : (brand.logoMediaId || '');
-      
       reset({
         name: brand.name,
         brandCode: brand.brandCode,
@@ -103,9 +102,9 @@ const BrandForm: React.FC = () => {
         originCountryCode: brand.originCountryCode || '',
         websiteUrl: brand.websiteUrl || '',
         status: brand.status,
-        logoMediaId: logoId
+        logoMediaId: brand.logoMediaId || ''
       });
-
+      // Optionally fetch the media URL if logoMediaId exists (can be done directly or if the API returns populated logoMedia)
       if (brand.logoMediaId && typeof brand.logoMediaId === 'object') {
         setSelectedMediaUrl((brand.logoMediaId as any).url || '');
       }
@@ -117,7 +116,11 @@ const BrandForm: React.FC = () => {
     mutationFn: (data: BrandFormData) => createBrand(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['brands'] });
+      showToast('Brand created successfully', 'success');
       navigate('/brands');
+    },
+    onError: (err) => {
+      showToast(getReadableErrorMessage(err), 'error');
     }
   });
 
@@ -126,7 +129,11 @@ const BrandForm: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['brands'] });
       queryClient.invalidateQueries({ queryKey: ['brand', id] });
+      showToast('Brand updated successfully', 'success');
       navigate('/brands');
+    },
+    onError: (err) => {
+      showToast(getReadableErrorMessage(err), 'error');
     }
   });
 
@@ -143,8 +150,12 @@ const BrandForm: React.FC = () => {
     }
   };
 
+  const onFormError = () => {
+    showToast('Please fix the highlighted fields before saving.', 'error');
+  };
+
   const isSaving = createMutation.isPending || updateMutation.isPending;
-  const saveError = createMutation.error || updateMutation.error;
+  
 
   // Auto-generate slug from name
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>, onChange: (value: string) => void) => {
@@ -190,18 +201,14 @@ const BrandForm: React.FC = () => {
 
       {isError && (
         <Alert severity="error" sx={{ mb: 3 }}>
-          {error instanceof Error ? error.message : 'Error fetching brand details'}
+          {getReadableErrorMessage(error)}
         </Alert>
       )}
 
-      {saveError && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {saveError instanceof Error ? saveError.message : 'Error saving brand'}
-        </Alert>
-      )}
+
 
       <Paper sx={{ p: 3, maxWidth: 800 }}>
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={handleSubmit(onSubmit, onFormError)}>
           <Stack spacing={3}>
 
             <Controller
@@ -305,13 +312,8 @@ const BrandForm: React.FC = () => {
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 {selectedMediaUrl ? (
-                  <Box sx={{ position: 'relative', width: 120, height: 120, border: '1px solid #e0e0e0', borderRadius: 1, overflow: 'hidden', bgcolor: 'grey.50' }}>
-                    <img 
-                      src={resolveMediaUrl(selectedMediaUrl)} 
-                      alt="Logo" 
-                      onError={(e: any) => { e.target.src = getPlaceholderImage('Logo', 120, 120); }}
-                      style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
-                    />
+                  <Box sx={{ position: 'relative', width: 120, height: 120, border: '1px solid #e0e0e0', borderRadius: 1, overflow: 'hidden' }}>
+                    <img src={resolveMediaUrl(selectedMediaUrl)} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                     <IconButton
                       size="small"
                       color="error"
