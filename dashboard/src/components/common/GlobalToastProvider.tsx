@@ -11,7 +11,9 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 export const useToast = () => {
   const context = useContext(ToastContext);
   if (!context) {
-    throw new Error('useToast must be used within a GlobalToastProvider');
+    return {
+      showToast: (msg: string, sev?: AlertColor) => console.log(`[Toast ${sev || 'info'}]: ${msg}`)
+    };
   }
   return context;
 };
