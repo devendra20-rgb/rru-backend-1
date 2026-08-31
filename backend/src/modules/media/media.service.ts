@@ -1,12 +1,30 @@
+import fs from 'fs/promises';
+import { createReadStream } from 'fs';
+import path from 'path';
 import { AppError } from '../../middlewares/error.middleware';
 import { mediaRepository } from './media.repository';
 import { variantRepository } from '../catalog/variants/variant.repository';
 import { StorageFactory } from './storage/storage.factory';
-import { FileData } from './storage/storage.interface';
+import { FileData, FileStreamResult } from './storage/storage.interface';
 import { CreateMediaDTO, UpdateMediaDTO, MediaQuery } from './media.types';
 
 export class MediaService {
   private storage = StorageFactory.getProvider();
+
+  private normalizeMedia(media: any) {
+    if (!media) return media;
+    const doc = media.toObject ? media.toObject() : { ...media };
+
+    // If the URL is an AWS S3 bucket URL that isn't CloudFront and could be blocked by 403,
+    // convert it to the backend media file endpoint using storageKey
+    const cloudfront = process.env.AWS_CLOUDFRONT_URL?.trim();
+    if (doc.url && doc.storageKey) {
+      if (!cloudfront && doc.url.includes('.amazonaws.com/')) {
+        doc.url = this.storage.getUrl(doc.storageKey);
+      }
+    }
+    return doc;
+  }
 
   async uploadMedia(file: Express.Multer.File, data: CreateMediaDTO) {
     if (data.entityType === 'variant' && data.entityId) {
@@ -48,7 +66,7 @@ export class MediaService {
     }
 
     // Create DB record
-    return mediaRepository.create({
+    const created = await mediaRepository.create({
       folder: data.folder,
       entityType: data.entityType,
       entityId: data.entityId as any,
@@ -64,10 +82,16 @@ export class MediaService {
       size: file.size,
       status: 'active',
     });
+
+    return this.normalizeMedia(created);
   }
 
   async getMediaList(query: MediaQuery) {
-    return mediaRepository.findAll(query);
+    const { data, total } = await mediaRepository.findAll(query);
+    return {
+      data: data.map((item) => this.normalizeMedia(item)),
+      total,
+    };
   }
 
   async getMediaById(id: string) {
@@ -75,11 +99,12 @@ export class MediaService {
     if (!media || media.status === 'inactive') {
       throw new AppError('Media not found', 404);
     }
-    return media;
+    return this.normalizeMedia(media);
   }
 
   async getMediaByEntity(entityType: string, entityId: string) {
-    return mediaRepository.findByEntity(entityType, entityId);
+    const items = await mediaRepository.findByEntity(entityType, entityId);
+    return items.map((item) => this.normalizeMedia(item));
   }
 
   async updateMedia(id: string, data: UpdateMediaDTO) {
@@ -90,7 +115,7 @@ export class MediaService {
     }
 
     const updated = await mediaRepository.update(id, data);
-    return updated;
+    return this.normalizeMedia(updated);
   }
 
   async deleteMedia(id: string) {
@@ -111,6 +136,33 @@ export class MediaService {
     }
 
     return { message: 'Media soft-deleted successfully' };
+  }
+
+  async getMediaStream(storageKey: string): Promise<FileStreamResult | null> {
+    // 1. Try provider getStream
+    if (this.storage.getStream) {
+      try {
+        const result = await this.storage.getStream(storageKey);
+        if (result) return result;
+      } catch (err) {
+        console.error('Storage provider getStream error:', err);
+      }
+    }
+
+    // 2. Fallback to local uploads directory
+    try {
+      const uploadDir = process.env.UPLOAD_DIR || 'uploads/media';
+      const filePath = path.join(path.resolve(uploadDir), storageKey);
+      await fs.access(filePath);
+      const stat = await fs.stat(filePath);
+      return {
+        stream: createReadStream(filePath),
+        contentLength: stat.size,
+        lastModified: stat.mtime,
+      };
+    } catch {
+      return null;
+    }
   }
 }
 

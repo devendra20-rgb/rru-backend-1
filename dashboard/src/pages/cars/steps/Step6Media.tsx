@@ -6,6 +6,7 @@ import StarBorderIcon from '@mui/icons-material/StarBorder';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getVariantMedia, uploadMedia, deleteMedia, updateMedia } from '../../../api/media.api';
+import { resolveMediaUrl, getPlaceholderImage } from '../../../utils/media';
 
 interface Step6Props {
   variantId: string;
@@ -183,9 +184,19 @@ const Step6Media: React.FC<Step6Props> = ({ variantId, onNext, onBack }) => {
               <Paper sx={{ p: 1, position: 'relative', border: draggingIndex === index ? '1px dashed #2196f3' : '1px solid #e0e0e0' }}>
                 <Box
                   component="img"
-                  src={media.url}
+                  src={resolveMediaUrl(media.url)}
                   alt={media.altText || media.originalName}
-                  sx={{ width: '100%', height: 160, objectFit: 'cover', borderRadius: 1, pointerEvents: 'none' }}
+                  onError={(e: any) => {
+                    e.target.src = getPlaceholderImage(media.originalName || 'Vehicle Image', 300, 200);
+                  }}
+                  sx={{
+                    width: '100%',
+                    height: 160,
+                    objectFit: 'cover',
+                    borderRadius: 1,
+                    pointerEvents: 'none',
+                    bgcolor: 'grey.100',
+                  }}
                 />
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
                   <IconButton 

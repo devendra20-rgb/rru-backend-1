@@ -47,7 +47,8 @@ export class ReviewRepository {
         .sort({ [sortBy]: sortOrder === 'desc' ? -1 : 1 })
         .skip(skip)
         .limit(limit)
-        .populate('userId', 'username') // Only populate username for public safety
+        .populate('variantId', 'name variantCode')  // show vehicle name in dashboard
+        .populate('userId', 'username')              // only populate username for public safety
         .exec(),
       Review.countDocuments(filter),
     ]);

@@ -68,11 +68,16 @@ const CarList: React.FC = () => {
   });
 
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ['variants', page, rowsPerPage, selectedGeneration],
+    queryKey: ['variants', page, rowsPerPage, selectedBrand, selectedModel, selectedGeneration],
     queryFn: () => {
       const params: any = { page: page + 1, limit: rowsPerPage };
+      // Hierarchical filtering: most specific filter wins
       if (selectedGeneration !== 'all') {
         params.generationId = selectedGeneration;
+      } else if (selectedModel !== 'all') {
+        params.modelId = selectedModel;
+      } else if (selectedBrand !== 'all') {
+        params.brandId = selectedBrand;
       }
       return getVariants(params);
     }

@@ -26,6 +26,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { getBrand, createBrand, updateBrand } from '../../api/brands.api';
 import FilePicker from '../../components/common/FilePicker';
 import type { Media } from '../../api/media.api';
+import { resolveMediaUrl, getPlaceholderImage } from '../../utils/media';
 
 // Validation Schema
 const brandSchema = z.object({
@@ -91,6 +92,10 @@ const BrandForm: React.FC = () => {
   useEffect(() => {
     if (data?.data) {
       const brand = data.data;
+      const logoId = brand.logoMediaId && typeof brand.logoMediaId === 'object'
+        ? (brand.logoMediaId as any)._id
+        : (brand.logoMediaId || '');
+      
       reset({
         name: brand.name,
         brandCode: brand.brandCode,
@@ -98,9 +103,9 @@ const BrandForm: React.FC = () => {
         originCountryCode: brand.originCountryCode || '',
         websiteUrl: brand.websiteUrl || '',
         status: brand.status,
-        logoMediaId: brand.logoMediaId || ''
+        logoMediaId: logoId
       });
-      // Optionally fetch the media URL if logoMediaId exists (can be done directly or if the API returns populated logoMedia)
+
       if (brand.logoMediaId && typeof brand.logoMediaId === 'object') {
         setSelectedMediaUrl((brand.logoMediaId as any).url || '');
       }
@@ -300,8 +305,13 @@ const BrandForm: React.FC = () => {
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 {selectedMediaUrl ? (
-                  <Box sx={{ position: 'relative', width: 120, height: 120, border: '1px solid #e0e0e0', borderRadius: 1, overflow: 'hidden' }}>
-                    <img src={selectedMediaUrl} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                  <Box sx={{ position: 'relative', width: 120, height: 120, border: '1px solid #e0e0e0', borderRadius: 1, overflow: 'hidden', bgcolor: 'grey.50' }}>
+                    <img 
+                      src={resolveMediaUrl(selectedMediaUrl)} 
+                      alt="Logo" 
+                      onError={(e: any) => { e.target.src = getPlaceholderImage('Logo', 120, 120); }}
+                      style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+                    />
                     <IconButton
                       size="small"
                       color="error"

@@ -1,6 +1,7 @@
 import { api, USE_MOCK } from '@/lib/api';
 import { vehiclesMock, upcomingVehiclesMock } from '@/data/vehicles.mock';
 import type { Vehicle, VehicleFilters } from '@/types/vehicle';
+import { resolveMediaUrl } from '@/lib/media';
 
 export function normalizeVehicle(raw: any): Vehicle {
   if (!raw) return raw;
@@ -12,10 +13,11 @@ export function normalizeVehicle(raw: any): Vehicle {
   const variantName = raw.variant || raw.name || '';
   const priceFrom = raw.pricing?.amount ?? raw.markets?.[0]?.pricing?.amount ?? raw.priceFrom ?? 0;
   const currency = raw.pricing?.currencyCode ?? raw.markets?.[0]?.pricing?.currencyCode ?? raw.currency ?? 'AED';
-  const imageUrl = raw.primaryMedia?.url || raw.imageUrl || (raw.media && raw.media[0]?.url);
+  const rawImageUrl = raw.primaryMedia?.url || raw.imageUrl || (raw.media && raw.media[0]?.url);
+  const imageUrl = resolveMediaUrl(rawImageUrl);
   const mediaItems = raw.media && Array.isArray(raw.media)
     ? raw.media.map((m: any) => ({
-        url: typeof m === 'string' ? m : m.url,
+        url: resolveMediaUrl(typeof m === 'string' ? m : m.url),
         altText: m.altText,
         isPrimary: m.isPrimary,
         sortOrder: m.sortOrder,

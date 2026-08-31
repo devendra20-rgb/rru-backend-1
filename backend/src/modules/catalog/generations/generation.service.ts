@@ -44,7 +44,7 @@ export const generationService = {
     });
   },
 
-  async getGenerations(query: PaginationQuery & { status?: string; modelId?: string }) {
+  async getGenerations(query: PaginationQuery & { status?: string; modelId?: string; brandId?: string }) {
     const { page, limit, skip, sort } = getPaginationOptions(query);
 
     const filter: Record<string, any> = {};
@@ -55,7 +55,15 @@ export const generationService = {
       ];
     }
     if (query.status) filter.status = query.status;
-    if (query.modelId) filter.modelId = query.modelId;
+
+    // Hierarchical filtering: modelId > brandId
+    if (query.modelId) {
+      filter.modelId = query.modelId;
+    } else if (query.brandId) {
+      const models = await modelRepository.findMany({ brandId: query.brandId }, 0, 10000, { _id: 1 });
+      const modelIds = models.map((m) => m._id);
+      filter.modelId = { $in: modelIds };
+    }
 
     const [data, total] = await Promise.all([
       generationRepository.findMany(filter, skip, limit, sort),

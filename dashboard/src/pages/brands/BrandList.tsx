@@ -21,12 +21,14 @@ import {
   DialogActions,
   CircularProgress,
   Alert,
-  Switch
+  Switch,
+  Avatar
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import { getBrands, deleteBrand, updateBrand } from '../../api/brands.api';
+import { resolveMediaUrl } from '../../utils/media';
 
 const BrandList: React.FC = () => {
   const navigate = useNavigate();
@@ -115,6 +117,7 @@ const BrandList: React.FC = () => {
         <Table sx={{ minWidth: 650 }} aria-label="brands table">
           <TableHead>
             <TableRow>
+              <TableCell>Logo</TableCell>
               <TableCell>Brand Name</TableCell>
               <TableCell>Code</TableCell>
               <TableCell>Slug</TableCell>
@@ -125,14 +128,24 @@ const BrandList: React.FC = () => {
           <TableBody>
             {brands.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} align="center">
+                <TableCell colSpan={6} align="center">
                   No brands found.
                 </TableCell>
               </TableRow>
             ) : (
               brands.map((brand) => (
                 <TableRow key={brand._id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                  <TableCell component="th" scope="row">
+                  <TableCell>
+                    <Avatar 
+                      src={resolveMediaUrl(typeof brand.logoMediaId === 'object' ? (brand.logoMediaId as any)?.url : undefined) || undefined} 
+                      alt={brand.name} 
+                      variant="rounded" 
+                      sx={{ width: 40, height: 40, bgcolor: 'grey.100', objectFit: 'contain', border: '1px solid #e2e8f0', fontSize: '1rem', fontWeight: 700, color: '#0D3B49' }}
+                    >
+                      {brand.name?.charAt(0)}
+                    </Avatar>
+                  </TableCell>
+                  <TableCell component="th" scope="row" sx={{ fontWeight: 600 }}>
                     {brand.name}
                   </TableCell>
                   <TableCell>{brand.brandCode}</TableCell>

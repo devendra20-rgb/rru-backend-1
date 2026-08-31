@@ -1,5 +1,6 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
-import { IStorageProvider, FileData } from './storage.interface';
+import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { Readable } from 'stream';
+import { IStorageProvider, FileData, FileStreamResult } from './storage.interface';
 import { env } from '../../../config/env';
 import path from 'path';
 import crypto from 'crypto';
@@ -31,7 +32,7 @@ export class S3StorageProvider implements IStorageProvider {
     });
     this.bucket = bucket;
     this.region = region;
-    this.cloudfrontUrl = cloudfrontUrl;
+    this.cloudfrontUrl = cloudfrontUrl && cloudfrontUrl.trim() !== '' ? cloudfrontUrl.trim() : undefined;
   }
 
   async upload(file: FileData, prefix: string): Promise<string> {
@@ -59,11 +60,40 @@ export class S3StorageProvider implements IStorageProvider {
     await this.s3Client.send(command);
   }
 
+  async getStream(storageKey: string): Promise<FileStreamResult | null> {
+    try {
+      const command = new GetObjectCommand({
+        Bucket: this.bucket,
+        Key: storageKey,
+      });
+
+      const response = await this.s3Client.send(command);
+      if (!response.Body) {
+        return null;
+      }
+
+      return {
+        stream: response.Body as Readable,
+        contentType: response.ContentType,
+        contentLength: response.ContentLength,
+        etag: response.ETag,
+        lastModified: response.LastModified,
+      };
+    } catch (err: any) {
+      if (err.name === 'NoSuchKey' || err.$metadata?.httpStatusCode === 404) {
+        return null;
+      }
+      throw err;
+    }
+  }
+
   getUrl(storageKey: string): string {
     if (this.cloudfrontUrl) {
       const base = this.cloudfrontUrl.replace(/\/$/, '');
       return `${base}/${storageKey}`;
     }
-    return `https://${this.bucket}.s3.${this.region}.amazonaws.com/${storageKey}`;
+    const mediaBase = process.env.MEDIA_BASE_URL || `http://localhost:${env.PORT || 5000}/api/v1/media/file`;
+    const cleanBase = mediaBase.replace(/\/$/, '');
+    return `${cleanBase}/${storageKey}`;
   }
 }

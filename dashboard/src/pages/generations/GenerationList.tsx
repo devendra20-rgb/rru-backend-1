@@ -59,11 +59,14 @@ const GenerationList: React.FC = () => {
   });
 
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ['generations', page, rowsPerPage, selectedModel],
+    queryKey: ['generations', page, rowsPerPage, selectedBrand, selectedModel],
     queryFn: () => {
       const params: any = { page: page + 1, limit: rowsPerPage };
+      // Hierarchical filtering: most specific filter wins
       if (selectedModel !== 'all') {
         params.modelId = selectedModel;
+      } else if (selectedBrand !== 'all') {
+        params.brandId = selectedBrand;
       }
       return getGenerations(params);
     }

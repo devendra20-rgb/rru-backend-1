@@ -19,6 +19,9 @@ import MarketForm from './pages/markets/MarketForm';
 import CarList from './pages/cars/CarList';
 import CarFormLayout from './pages/cars/CarFormLayout';
 import CarDetail from './pages/cars/CarDetail';
+import ArticleList from './pages/articles/ArticleList';
+import ArticleForm from './pages/articles/ArticleForm';
+import ReviewList from './pages/reviews/ReviewList';
 
 function App() {
   return (
@@ -65,6 +68,15 @@ function App() {
           <Route path="/markets" element={<MarketList />} />
           <Route path="/markets/new" element={<MarketForm />} />
           <Route path="/markets/:id/edit" element={<MarketForm />} />
+
+          {/* Content & Editorial: Articles */}
+          <Route path="/articles" element={<ArticleList />} />
+          <Route path="/articles/new" element={<ArticleForm />} />
+          <Route path="/articles/:id" element={<ArticleForm />} />
+          <Route path="/articles/:id/edit" element={<ArticleForm />} />
+
+          {/* Content & Editorial: Reviews Moderation */}
+          <Route path="/reviews" element={<ReviewList />} />
 
           {/* Other routes will go here as they are built */}
         </Route>

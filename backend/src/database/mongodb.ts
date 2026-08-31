@@ -7,6 +7,15 @@ import { logger } from '../utils/logger';
 
 export const connectDB = async () => {
   try {
+    // Safety guard: prevent tests from wiping the production database
+    if (process.env.NODE_ENV === 'test' && env.MONGODB_URI && !env.MONGODB_URI.includes('_test')) {
+      throw new Error(
+        '🚫 TEST SAFETY: Tests are connecting to what looks like a NON-test database!\n' +
+        'Ensure .env.test sets MONGODB_URI to a database ending in "_test" (e.g. rideroundup_test).\n' +
+        `Current URI: ${env.MONGODB_URI.replace(/:\/\/[^@]+@/, '://***@')}`
+      );
+    }
+
     const conn = await mongoose.connect(env.MONGODB_URI);
     logger.info(`MongoDB Connected: ${conn.connection.host}`);
     return conn;

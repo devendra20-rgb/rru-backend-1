@@ -183,8 +183,24 @@ async function seed() {
   ];
   const brands = await Brand.insertMany(brandsData);
   const brandMap: Record<string, any> = {};
-  brands.forEach(b => { brandMap[b.slug] = b; });
-  console.log(`  ${brands.length} brands seeded`);
+  for (const b of brands) {
+    brandMap[b.slug] = b;
+    const mediaDoc = await Media.create({
+      folder: 'brands',
+      entityType: 'brand',
+      entityId: b._id,
+      mediaType: 'image',
+      storageProvider: 'local',
+      storageKey: `brands/${b.slug}-logo.png`,
+      url: `https://raw.githubusercontent.com/filippoferri/car-logos/master/logos/${b.slug}.png`,
+      originalName: `${b.slug}-logo.png`,
+      mimeType: 'image/png',
+      size: 1024,
+      status: 'active',
+    });
+    await Brand.updateOne({ _id: b._id }, { $set: { logoMediaId: mediaDoc._id } });
+  }
+  console.log(`  ${brands.length} brands seeded with logoMediaId`);
 
   // ===================== 5. VEHICLES =====================
   console.log('Seeding Vehicles...');

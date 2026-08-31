@@ -56,7 +56,7 @@ export const brandRepository = {
   },
 
   async update(id: string | Types.ObjectId, data: Partial<IBrand>) {
-    return Brand.findByIdAndUpdate(id, data, { new: true, runValidators: true }).lean();
+    return Brand.findByIdAndUpdate(id, data, { new: true, runValidators: true }).populate('logoMediaId').lean();
   },
 
   async updateStatus(id: string | Types.ObjectId, status: 'active' | 'inactive') {

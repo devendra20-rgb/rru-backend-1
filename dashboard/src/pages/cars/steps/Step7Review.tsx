@@ -7,6 +7,7 @@ import { getVariantFeatures } from '../../../api/features.api';
 import { getVariantColors } from '../../../api/colors.api';
 import { getVariantMarkets } from '../../../api/markets.api';
 import { getVariantMedia } from '../../../api/media.api';
+import { resolveMediaUrl, getPlaceholderImage } from '../../../utils/media';
 import { useNavigate } from 'react-router-dom';
 
 interface Step7Props {
@@ -46,13 +47,6 @@ const Step7Review: React.FC<Step7Props> = ({ variantId, onBack }) => {
   const colors = getArray(colorsData?.data, ['variantColors', 'colors']);
   const markets = getArray(marketsData?.data, ['variantMarkets', 'markets']);
   const mediaList = getArray(mediaData?.data, ['media']);
-
-  const resolveMediaUrl = (url?: string) => {
-    if (!url) return '';
-    if (url.startsWith('http')) return url;
-    const baseUrl = import.meta.env.VITE_API_URL?.replace(/\/api\/v1\/?$/, '') || 'http://localhost:5000';
-    return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
-  };
 
   const activeFeatures = features.filter((f: any) => f.availability !== 'unavailable');
   const activeColors = colors.filter((c: any) => c.availability !== 'unavailable');
@@ -200,12 +194,13 @@ const Step7Review: React.FC<Step7Props> = ({ variantId, onBack }) => {
                   component="img" 
                   src={resolveMediaUrl(m.url)} 
                   alt={m.altText || 'Media'}
-                  onError={(e: any) => { e.target.src = 'https://placehold.co/120x80?text=Error'; }}
+                  onError={(e: any) => { e.target.src = getPlaceholderImage(m.altText || 'Media', 120, 80); }}
                   sx={{ 
                     height: 80, 
                     borderRadius: 1, 
                     border: m.isPrimary ? '2px solid #1976d2' : '1px solid #ddd',
-                    objectFit: 'cover'
+                    objectFit: 'cover',
+                    bgcolor: 'grey.100'
                   }} 
                 />
                 {m.isPrimary && (

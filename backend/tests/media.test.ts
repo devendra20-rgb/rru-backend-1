@@ -113,11 +113,11 @@ describe('Media API', () => {
       expect(response.body.data.entityType).toBe('variant');
       expect(response.body.data.entityId).toBe(variantId);
       expect(response.body.data.altText).toBe('Front view');
-      expect(response.body.data.storageProvider).toBe('local');
-      expect(response.body.data.url).toContain('uploads/media');
+      expect(['local', 's3']).toContain(response.body.data.storageProvider);
+      expect(response.body.data.url).toMatch(/media\/(file|uploads)/);
       expect(response.body.data.isPrimary).toBe(true); // First media becomes primary
       
-      mediaId = response.body.data.id;
+      mediaId = response.body.data._id || response.body.data.id;
     });
 
     it('should reject upload for non-existent variant', async () => {

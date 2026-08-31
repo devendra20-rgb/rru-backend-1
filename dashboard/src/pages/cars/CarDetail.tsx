@@ -11,6 +11,7 @@ import { getVariantFeatures } from '../../api/features.api';
 import { getVariantColors } from '../../api/colors.api';
 import { getVariantMarkets } from '../../api/markets.api';
 import { getVariantMedia } from '../../api/media.api';
+import { resolveMediaUrl, getPlaceholderImage } from '../../utils/media';
 
 const CarDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -44,13 +45,6 @@ const CarDetail: React.FC = () => {
   const colors = getArray(colorsData?.data, ['variantColors', 'colors']);
   const markets = getArray(marketsData?.data, ['variantMarkets', 'markets']);
   const mediaList = getArray(mediaData?.data, ['media']);
-
-  const resolveMediaUrl = (url?: string) => {
-    if (!url) return '';
-    if (url.startsWith('http')) return url;
-    const baseUrl = import.meta.env.VITE_API_URL?.replace(/\/api\/v1\/?$/, '') || 'http://localhost:5000';
-    return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
-  };
 
   if (!variant) {
     return <Typography>Variant not found</Typography>;
@@ -98,8 +92,8 @@ const CarDetail: React.FC = () => {
                 component="img" 
                 src={resolveMediaUrl(primaryImage.url)} 
                 alt={variant.name} 
-                onError={(e: any) => { e.target.src = 'https://placehold.co/400x250?text=Image+Error'; }}
-                sx={{ width: '100%', height: 'auto', borderRadius: 1, maxHeight: 250, objectFit: 'cover' }}
+                onError={(e: any) => { e.target.src = getPlaceholderImage(variant.name || 'Vehicle', 400, 250); }}
+                sx={{ width: '100%', height: 'auto', borderRadius: 1, maxHeight: 250, objectFit: 'cover', bgcolor: 'grey.100' }}
               />
             ) : (
               <Box sx={{ width: '100%', height: 200, bgcolor: 'grey.200', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 1 }}>

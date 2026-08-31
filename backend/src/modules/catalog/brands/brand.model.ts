@@ -30,6 +30,7 @@ const brandSchema = new Schema<IBrand>(
     },
     logoMediaId: {
       type: Schema.Types.ObjectId,
+      ref: 'Media',
     },
     status: {
       type: String,

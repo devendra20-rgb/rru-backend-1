@@ -30,6 +30,13 @@ const upload = multer({
 });
 
 // Public routes
+mediaRoutes.get('/file/:key', (req, res, next) => {
+  mediaController.serveMediaFile(req, res).catch(next);
+});
+mediaRoutes.get('/file/:folder/:key', (req, res, next) => {
+  req.params.key = `${req.params.folder}/${req.params.key}`;
+  mediaController.serveMediaFile(req, res).catch(next);
+});
 mediaRoutes.get('/', validate(mediaQuerySchema as any), mediaController.getMediaList);
 mediaRoutes.get('/:id', mediaController.getMediaById);
 

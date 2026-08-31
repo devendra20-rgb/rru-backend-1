@@ -1,9 +1,69 @@
 import { Request, Response } from 'express';
+import path from 'path';
 import { mediaService } from './media.service';
 import { sendSuccess } from '../../utils/response';
 import { AppError } from '../../middlewares/error.middleware';
 
 export class MediaController {
+  async serveMediaFile(req: Request, res: Response) {
+    const key = (req.params.key || req.params[0]) as string;
+    if (!key) {
+      throw new AppError('File key is required', 400);
+    }
+
+    const result = await mediaService.getMediaStream(key);
+    if (!result) {
+      throw new AppError('File not found', 404);
+    }
+
+    if (result.contentType) {
+      res.setHeader('Content-Type', result.contentType);
+    } else {
+      const ext = path.extname(key).toLowerCase();
+      const mimeTypes: Record<string, string> = {
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png',
+        '.webp': 'image/webp',
+        '.svg': 'image/svg+xml',
+        '.gif': 'image/gif',
+        '.mp4': 'video/mp4',
+        '.webm': 'video/webm',
+      };
+      if (mimeTypes[ext]) {
+        res.setHeader('Content-Type', mimeTypes[ext]);
+      }
+    }
+
+    if (result.contentLength) {
+      res.setHeader('Content-Length', result.contentLength);
+    }
+    if (result.etag) {
+      res.setHeader('ETag', result.etag);
+    }
+    if (result.lastModified) {
+      res.setHeader('Last-Modified', result.lastModified.toUTCString());
+    }
+
+    // Set cache header
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+
+    // Handle 304 Not Modified
+    if (
+      (req.headers['if-none-match'] && req.headers['if-none-match'] === result.etag) ||
+      (req.headers['if-modified-since'] && result.lastModified && new Date(req.headers['if-modified-since']) >= result.lastModified)
+    ) {
+      return res.status(304).end();
+    }
+
+    if (req.method === 'HEAD') {
+      return res.status(200).end();
+    }
+
+    (result.stream as any).pipe(res);
+  }
+
   async uploadMedia(req: Request, res: Response) {
     if (!req.file) {
       throw new AppError('No file uploaded', 400);

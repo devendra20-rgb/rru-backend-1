@@ -44,7 +44,7 @@ const DashboardLayout: React.FC = () => {
   // Collapsible states
   const [openCatalog, setOpenCatalog] = useState(true);
   const [openVehicleData, setOpenVehicleData] = useState(true);
-  const [openContent, setOpenContent] = useState(false);
+  const [openContent, setOpenContent] = useState(true);
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;

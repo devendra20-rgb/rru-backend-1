@@ -22,6 +22,7 @@ import { specificationRoutes } from './modules/catalog/specifications/specificat
 import { featureRouter, variantFeatureRouter } from './modules/catalog/features/feature.routes';
 import { colorRouter, variantColorRouter } from './modules/catalog/colors/color.routes';
 import mediaRoutes from './modules/media/media.routes';
+import { mediaController } from './modules/media/media.controller';
 import userRoutes from './modules/users/user.routes';
 import authRoutes from './modules/auth/auth.routes';
 import carsRoutes from './modules/catalog/cars/cars.routes';
@@ -63,7 +64,14 @@ app.use('/api', limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Static Files (Media Uploads)
+// Static Files & Media Streaming
+app.get('/uploads/media/:key', (req, res, next) => {
+  mediaController.serveMediaFile(req, res).catch(next);
+});
+app.get('/uploads/media/:folder/:key', (req, res, next) => {
+  req.params.key = `${req.params.folder}/${req.params.key}`;
+  mediaController.serveMediaFile(req, res).catch(next);
+});
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Logging
