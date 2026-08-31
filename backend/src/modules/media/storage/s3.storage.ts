@@ -92,8 +92,9 @@ export class S3StorageProvider implements IStorageProvider {
       const base = this.cloudfrontUrl.replace(/\/$/, '');
       return `${base}/${storageKey}`;
     }
-    const mediaBase = process.env.MEDIA_BASE_URL || `http://localhost:${env.PORT || 5000}/api/v1/media/file`;
-    const cleanBase = mediaBase.replace(/\/$/, '');
-    return `${cleanBase}/${storageKey}`;
+    if (process.env.MEDIA_BASE_URL) {
+      return `${process.env.MEDIA_BASE_URL.replace(/\/$/, '')}/${storageKey}`;
+    }
+    return `/api/v1/media/file/${storageKey}`;
   }
 }
