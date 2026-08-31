@@ -33,6 +33,7 @@
 ## Phase 11: Colors
 - Exterior and interior color options.
 
+
 ## Phase 12: Media + AWS S3
 - Image uploads to S3, linking media to catalog entities.
 
