@@ -82,17 +82,17 @@ export function AsyncSelect<T>({
       options={options}
       loading={loading}
       value={value}
-      onChange={(event, newValue) => {
+      onChange={(_, newValue) => {
         onChange(newValue);
       }}
       inputValue={inputValue}
-      onInputChange={(event, newInputValue) => {
+      onInputChange={(_, newInputValue) => {
         setInputValue(newInputValue);
       }}
       disabled={disabled}
       noOptionsText={noOptionsText}
       renderInput={(params) => {
-        const { InputProps, ...restParams } = params;
+        const { InputProps, InputLabelProps, inputProps, ...restParams } = params as any;
         return (
           <TextField
             {...restParams}
@@ -100,15 +100,19 @@ export function AsyncSelect<T>({
             placeholder={placeholder}
             error={error}
             helperText={helperText}
-            size="medium" // Keeping consistency with forms usually using medium
-            InputProps={{
-              ...InputProps,
-              endAdornment: (
-                <React.Fragment>
-                  {loading ? <CircularProgress color="inherit" size={20} /> : null}
-                  {InputProps?.endAdornment}
-                </React.Fragment>
-              ),
+            size="medium"
+            slotProps={{
+              inputLabel: InputLabelProps,
+              htmlInput: inputProps,
+              input: {
+                ...InputProps,
+                endAdornment: (
+                  <React.Fragment>
+                    {loading ? <CircularProgress color="inherit" size={20} /> : null}
+                    {InputProps?.endAdornment}
+                  </React.Fragment>
+                ),
+              }
             }}
           />
         );

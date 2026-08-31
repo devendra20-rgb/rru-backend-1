@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Button, Typography, CircularProgress, Alert, Paper, Select, MenuItem, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import { Box, Button, Typography, CircularProgress, Paper, Select, MenuItem, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getFeatures, getVariantFeatures, createVariantFeature, updateVariantFeature } from '../../../api/features.api';
 import type { VariantFeature } from '../../../api/features.api';

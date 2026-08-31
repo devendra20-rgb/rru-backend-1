@@ -11,12 +11,10 @@ import {
   Typography,
   Stack,
   CircularProgress,
-  Alert,
   Divider,
   IconButton
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import AddIcon from '@mui/icons-material/Add';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getVariantSpecifications, createVariantSpecification, updateSpecification } from '../../../api/specifications.api';
 import { customAttributesApi } from '../../../api/custom-attributes.api';
@@ -104,7 +102,7 @@ const Step2Specifications: React.FC<Step2Props> = ({ variantId, onNext, onBack }
     }
   });
 
-  const { fields: customFields, append: appendCustom, remove: removeCustom } = useFieldArray({
+  const { fields: customFields, remove: removeCustom } = useFieldArray({
     control,
     name: 'custom'
   });

@@ -11,8 +11,7 @@ import {
   TableSortLabel,
   Box,
   Skeleton,
-  Typography,
-  Button
+  Typography
 } from '@mui/material';
 
 export interface AdminTableColumn<T> {
@@ -147,7 +146,7 @@ export function AdminTable<T extends { id?: string | number; _id?: string }>({
         count={total}
         rowsPerPage={rowsPerPage}
         page={page - 1} // MUI uses 0-based indexing for page
-        onPageChange={(e, newPage) => onPageChange(newPage + 1)} // Convert back to 1-based indexing
+        onPageChange={(_, newPage) => onPageChange(newPage + 1)} // Convert back to 1-based indexing
         onRowsPerPageChange={(e) => {
           onRowsPerPageChange(parseInt(e.target.value, 10));
           onPageChange(1); // Reset to first page

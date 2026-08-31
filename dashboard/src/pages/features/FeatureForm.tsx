@@ -112,7 +112,7 @@ const FeatureForm: React.FC = () => {
   };
 
   const isSaving = createMutation.isPending || updateMutation.isPending;
-  const saveError = createMutation.error || updateMutation.error;
+  
 
   if (isFetching) {
     return (

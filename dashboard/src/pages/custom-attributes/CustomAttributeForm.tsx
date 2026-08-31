@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Box, Button, TextField, Grid, FormControl, InputLabel, Select, MenuItem, Switch, FormControlLabel, FormHelperText, Typography, IconButton } from '@mui/material';
-import { useForm, Controller, useFieldArray } from 'react-hook-form';
+import { Box, Button, TextField, FormControl, InputLabel, Select, MenuItem, Switch, FormControlLabel, Typography, IconButton } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import type { CustomAttributeType } from '../../api/custom-attributes.api';

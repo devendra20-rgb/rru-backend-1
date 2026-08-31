@@ -156,7 +156,7 @@ const GenerationForm: React.FC = () => {
   };
 
   const isSaving = createMutation.isPending || updateMutation.isPending;
-  const saveError = createMutation.error || updateMutation.error;
+  
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>, onChange: (value: string) => void) => {
     const value = e.target.value;
