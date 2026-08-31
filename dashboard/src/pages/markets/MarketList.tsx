@@ -21,11 +21,15 @@ import {
   DialogActions,
   CircularProgress,
   Alert,
-  Switch
+  Switch,
+  TextField,
+  InputAdornment,
+  Stack
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
+import SearchIcon from '@mui/icons-material/Search';
 import { getMarkets, deleteMarket, updateMarket } from '../../api/markets.api';
 
 const MarketList: React.FC = () => {
@@ -34,11 +38,16 @@ const MarketList: React.FC = () => {
   
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [search, setSearch] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ['markets', page, rowsPerPage],
-    queryFn: () => getMarkets({ page: page + 1, limit: rowsPerPage })
+    queryKey: ['markets', page, rowsPerPage, search],
+    queryFn: () => {
+      const params: any = { page: page + 1, limit: rowsPerPage };
+      if (search) params.search = search;
+      return getMarkets(params);
+    }
   });
 
   const deleteMutation = useMutation({
@@ -94,6 +103,28 @@ const MarketList: React.FC = () => {
           Add Market
         </Button>
       </Box>
+
+      {/* Filter toolbar */}
+      <Paper sx={{ p: 2, mb: 3 }}>
+        <Stack direction="row" spacing={2}>
+          <TextField
+            size="small"
+            placeholder="Search markets..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" color="action" />
+                  </InputAdornment>
+                ),
+              }
+            }}
+            sx={{ minWidth: 260 }}
+          />
+        </Stack>
+      </Paper>
 
       {isError && (
         <Alert severity="error" sx={{ mb: 3 }}>

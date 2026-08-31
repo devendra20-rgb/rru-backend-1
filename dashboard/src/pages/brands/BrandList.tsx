@@ -22,11 +22,15 @@ import {
   CircularProgress,
   Alert,
   Switch,
-  Avatar
+  Avatar,
+  TextField,
+  InputAdornment,
+  Stack
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
+import SearchIcon from '@mui/icons-material/Search';
 import { getBrands, deleteBrand, updateBrand } from '../../api/brands.api';
 import { resolveMediaUrl } from '../../utils/media';
 
@@ -36,11 +40,16 @@ const BrandList: React.FC = () => {
   
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [search, setSearch] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ['brands', page, rowsPerPage],
-    queryFn: () => getBrands({ page: page + 1, limit: rowsPerPage })
+    queryKey: ['brands', page, rowsPerPage, search],
+    queryFn: () => {
+      const params: any = { page: page + 1, limit: rowsPerPage };
+      if (search) params.search = search;
+      return getBrands(params);
+    }
   });
 
   const deleteMutation = useMutation({
@@ -112,6 +121,28 @@ const BrandList: React.FC = () => {
           Add Brand
         </Button>
       </Box>
+
+      {/* Filter toolbar */}
+      <Paper sx={{ p: 2, mb: 3 }}>
+        <Stack direction="row" spacing={2}>
+          <TextField
+            size="small"
+            placeholder="Search brands..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" color="action" />
+                  </InputAdornment>
+                ),
+              }
+            }}
+            sx={{ minWidth: 260 }}
+          />
+        </Stack>
+      </Paper>
 
       <TableContainer component={Paper}>
         <Table sx={{ minWidth: 650 }} aria-label="brands table">

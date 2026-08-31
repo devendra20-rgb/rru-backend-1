@@ -26,12 +26,15 @@ import {
   InputLabel,
   Select,
   Stack,
-  Switch
+  Switch,
+  TextField,
+  InputAdornment
 } from '@mui/material';
 import { type SelectChangeEvent } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
+import SearchIcon from '@mui/icons-material/Search';
 import { getGenerations, deleteGeneration, updateGeneration } from '../../api/generations.api';
 import { getBrands } from '../../api/brands.api';
 import { getModels } from '../../api/models.api';
@@ -42,6 +45,7 @@ const GenerationList: React.FC = () => {
   
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [search, setSearch] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
   
   const [selectedBrand, setSelectedBrand] = useState<string>('all');
@@ -59,7 +63,7 @@ const GenerationList: React.FC = () => {
   });
 
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ['generations', page, rowsPerPage, selectedBrand, selectedModel],
+    queryKey: ['generations', page, rowsPerPage, selectedBrand, selectedModel, search],
     queryFn: () => {
       const params: any = { page: page + 1, limit: rowsPerPage };
       // Hierarchical filtering: most specific filter wins
@@ -67,6 +71,9 @@ const GenerationList: React.FC = () => {
         params.modelId = selectedModel;
       } else if (selectedBrand !== 'all') {
         params.brandId = selectedBrand;
+      }
+      if (search) {
+        params.search = search;
       }
       return getGenerations(params);
     }
@@ -140,7 +147,24 @@ const GenerationList: React.FC = () => {
       {/* Filters */}
       <Paper sx={{ p: 2, mb: 3 }}>
         <Stack direction="row" spacing={2}>
-          <FormControl sx={{ minWidth: 200 }}>
+          <TextField
+            size="small"
+            placeholder="Search generations..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" color="action" />
+                  </InputAdornment>
+                ),
+              }
+            }}
+            sx={{ minWidth: 260 }}
+          />
+
+          <FormControl sx={{ minWidth: 200 }} size="small">
             <InputLabel>Filter by Brand</InputLabel>
             <Select
               value={selectedBrand}
@@ -154,7 +178,7 @@ const GenerationList: React.FC = () => {
             </Select>
           </FormControl>
 
-          <FormControl sx={{ minWidth: 200 }} disabled={selectedBrand === 'all'}>
+          <FormControl sx={{ minWidth: 200 }} size="small" disabled={selectedBrand === 'all'}>
             <InputLabel>Filter by Model</InputLabel>
             <Select
               value={selectedModel}

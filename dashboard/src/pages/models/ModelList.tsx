@@ -25,12 +25,16 @@ import {
   FormControl,
   InputLabel,
   Select,
-  Switch
+  Switch,
+  TextField,
+  InputAdornment,
+  Stack
 } from '@mui/material';
 import { type SelectChangeEvent } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
+import SearchIcon from '@mui/icons-material/Search';
 import { getModels, deleteModel, updateModel } from '../../api/models.api';
 import { getBrands } from '../../api/brands.api';
 
@@ -40,6 +44,7 @@ const ModelList: React.FC = () => {
   
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [search, setSearch] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [selectedBrand, setSelectedBrand] = useState<string>('all');
 
@@ -49,11 +54,14 @@ const ModelList: React.FC = () => {
   });
 
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ['models', page, rowsPerPage, selectedBrand],
+    queryKey: ['models', page, rowsPerPage, selectedBrand, search],
     queryFn: () => {
       const params: any = { page: page + 1, limit: rowsPerPage };
       if (selectedBrand !== 'all') {
         params.brandId = selectedBrand;
+      }
+      if (search) {
+        params.search = search;
       }
       return getModels(params);
     }
@@ -120,19 +128,38 @@ const ModelList: React.FC = () => {
 
       {/* Filters */}
       <Paper sx={{ p: 2, mb: 3 }}>
-        <FormControl sx={{ minWidth: 200 }}>
-          <InputLabel>Filter by Brand</InputLabel>
-          <Select
-            value={selectedBrand}
-            label="Filter by Brand"
-            onChange={handleBrandFilterChange}
-          >
-            <MenuItem value="all">All Brands</MenuItem>
-            {brandsData?.data.map((brand) => (
-              <MenuItem key={brand._id} value={brand._id}>{brand.name}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <Stack direction="row" spacing={2}>
+          <TextField
+            size="small"
+            placeholder="Search models..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" color="action" />
+                  </InputAdornment>
+                ),
+              }
+            }}
+            sx={{ minWidth: 260 }}
+          />
+
+          <FormControl sx={{ minWidth: 200 }} size="small">
+            <InputLabel>Filter by Brand</InputLabel>
+            <Select
+              value={selectedBrand}
+              label="Filter by Brand"
+              onChange={handleBrandFilterChange}
+            >
+              <MenuItem value="all">All Brands</MenuItem>
+              {brandsData?.data.map((brand) => (
+                <MenuItem key={brand._id} value={brand._id}>{brand.name}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Stack>
       </Paper>
 
       {isError && (
