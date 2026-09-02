@@ -22,6 +22,7 @@ import CarDetail from './pages/cars/CarDetail';
 import ArticleList from './pages/articles/ArticleList';
 import ArticleForm from './pages/articles/ArticleForm';
 import ReviewList from './pages/reviews/ReviewList';
+import CustomAttributeList from './pages/custom-attributes/CustomAttributeList';
 
 function App() {
   return (
@@ -68,6 +69,9 @@ function App() {
           <Route path="/markets" element={<MarketList />} />
           <Route path="/markets/new" element={<MarketForm />} />
           <Route path="/markets/:id/edit" element={<MarketForm />} />
+
+          {/* Master Data: Custom Attributes */}
+          <Route path="/custom-attributes" element={<CustomAttributeList />} />
 
           {/* Content & Editorial: Articles */}
           <Route path="/articles" element={<ArticleList />} />

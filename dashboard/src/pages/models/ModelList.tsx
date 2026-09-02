@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -37,6 +37,7 @@ import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
 import { getModels, deleteModel, updateModel } from '../../api/models.api';
 import { getBrands } from '../../api/brands.api';
+import { useDebounce } from '../../hooks/useDebounce';
 
 const ModelList: React.FC = () => {
   const navigate = useNavigate();
@@ -45,6 +46,7 @@ const ModelList: React.FC = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 500);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [selectedBrand, setSelectedBrand] = useState<string>('all');
 
@@ -54,17 +56,18 @@ const ModelList: React.FC = () => {
   });
 
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ['models', page, rowsPerPage, selectedBrand, search],
+    queryKey: ['models', page, rowsPerPage, selectedBrand, debouncedSearch],
     queryFn: () => {
       const params: any = { page: page + 1, limit: rowsPerPage };
       if (selectedBrand !== 'all') {
         params.brandId = selectedBrand;
       }
-      if (search) {
-        params.search = search;
+      if (debouncedSearch) {
+        params.search = debouncedSearch;
       }
       return getModels(params);
-    }
+    },
+    placeholderData: keepPreviousData
   });
 
   const deleteMutation = useMutation({

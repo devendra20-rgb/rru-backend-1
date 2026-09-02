@@ -30,6 +30,7 @@ import costToOwnRoutes from './modules/catalog/cost-to-own/cost-to-own.routes';
 import reviewRoutes from './modules/reviews/review.routes';
 import articleRoutes from './modules/articles/article.routes';
 import dashboardRoutes from './modules/dashboard/dashboard.routes';
+import customAttributeRoutes from './modules/catalog/custom-attributes/custom-attribute.routes';
 
 const app = express();
 
@@ -106,6 +107,7 @@ v1Router.use('/features', featureRouter);
 v1Router.use('/variant-features', variantFeatureRouter);
 v1Router.use('/colors', colorRouter);
 v1Router.use('/variant-colors', variantColorRouter);
+v1Router.use('/custom-attributes', customAttributeRoutes);
 v1Router.use('/media', mediaRoutes);
 v1Router.use('/users', userRoutes);
 v1Router.use('/auth', authRoutes);

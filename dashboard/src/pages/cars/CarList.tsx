@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -40,6 +40,7 @@ import { getVariants, deleteVariant, updateVariant } from '../../api/variants.ap
 import { getBrands } from '../../api/brands.api';
 import { getModels } from '../../api/models.api';
 import { getGenerations } from '../../api/generations.api';
+import { useDebounce } from '../../hooks/useDebounce';
 
 const CarList: React.FC = () => {
   const navigate = useNavigate();
@@ -48,6 +49,7 @@ const CarList: React.FC = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 500);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   
   const [selectedBrand, setSelectedBrand] = useState<string>('all');
@@ -72,7 +74,7 @@ const CarList: React.FC = () => {
   });
 
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ['variants', page, rowsPerPage, selectedBrand, selectedModel, selectedGeneration, search],
+    queryKey: ['variants', page, rowsPerPage, selectedBrand, selectedModel, selectedGeneration, debouncedSearch],
     queryFn: () => {
       const params: any = { page: page + 1, limit: rowsPerPage };
       // Hierarchical filtering: most specific filter wins
@@ -83,11 +85,12 @@ const CarList: React.FC = () => {
       } else if (selectedBrand !== 'all') {
         params.brandId = selectedBrand;
       }
-      if (search) {
-        params.search = search;
+      if (debouncedSearch) {
+        params.search = debouncedSearch;
       }
       return getVariants(params);
-    }
+    },
+    placeholderData: keepPreviousData
   });
 
   const deleteMutation = useMutation({

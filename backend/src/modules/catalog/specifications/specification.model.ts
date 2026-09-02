@@ -42,6 +42,10 @@ const specificationSchema = new Schema<ISpecification>(
       parkingSensors: { type: String, trim: true },
       camera: { type: String, trim: true },
     },
+    customAttributes: {
+      type: Schema.Types.Mixed,
+      default: {},
+    },
     status: {
       type: String,
       enum: ['active', 'inactive'],

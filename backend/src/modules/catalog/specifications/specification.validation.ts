@@ -53,6 +53,7 @@ export const createSpecificationSchema = z.object({
     weight: weightSchema.optional(),
     fuel: fuelSchema.optional(),
     safety: safetySchema.optional(),
+    customAttributes: z.record(z.string(), z.any()).optional(),
     status: z.enum(['active', 'inactive']).optional(),
   }),
 });
@@ -68,6 +69,7 @@ export const updateSpecificationSchema = z.object({
     weight: weightSchema.optional(),
     fuel: fuelSchema.optional(),
     safety: safetySchema.optional(),
+    customAttributes: z.record(z.string(), z.any()).optional(),
     status: z.enum(['active', 'inactive']).optional(),
   }),
 });

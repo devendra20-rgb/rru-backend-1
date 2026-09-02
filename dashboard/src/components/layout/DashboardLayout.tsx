@@ -30,6 +30,7 @@ import FolderIcon from '@mui/icons-material/Folder';
 import CategoryIcon from '@mui/icons-material/Category';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
+import TuneIcon from '@mui/icons-material/Tune';
 import ArticleIcon from '@mui/icons-material/Article';
 import MemoryIcon from '@mui/icons-material/Memory';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -249,6 +250,10 @@ const DashboardLayout: React.FC = () => {
                 <ListItemButton component={Link} to="/markets" sx={getItemStyle('/markets')}>
                   <ListItemIcon sx={{ minWidth: 28 }}><PublicIcon sx={{ fontSize: 16 }} /></ListItemIcon>
                   <ListItemText primary="Markets" />
+                </ListItemButton>
+                <ListItemButton component={Link} to="/custom-attributes" sx={getItemStyle('/custom-attributes')}>
+                  <ListItemIcon sx={{ minWidth: 28 }}><TuneIcon sx={{ fontSize: 16 }} /></ListItemIcon>
+                  <ListItemText primary="Custom Attributes" />
                 </ListItemButton>
               </List>
             </Collapse>

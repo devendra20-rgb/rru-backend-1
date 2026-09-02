@@ -47,6 +47,7 @@ export interface ISpecification extends Document {
   weight?: IWeight;
   fuel?: IFuel;
   safety?: ISafety;
+  customAttributes?: Record<string, any>;
   status: 'active' | 'inactive';
   createdAt: Date;
   updatedAt: Date;
@@ -60,6 +61,7 @@ export interface ISpecificationCreate {
   weight?: IWeight;
   fuel?: IFuel;
   safety?: ISafety;
+  customAttributes?: Record<string, any>;
   status?: 'active' | 'inactive';
 }
 
@@ -70,6 +72,7 @@ export interface ISpecificationUpdate {
   weight?: IWeight;
   fuel?: IFuel;
   safety?: ISafety;
+  customAttributes?: Record<string, any>;
   status?: 'active' | 'inactive';
 }
 

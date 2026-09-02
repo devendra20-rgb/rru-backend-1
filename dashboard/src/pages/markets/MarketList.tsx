@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -31,6 +31,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
 import { getMarkets, deleteMarket, updateMarket } from '../../api/markets.api';
+import { useDebounce } from '../../hooks/useDebounce';
 
 const MarketList: React.FC = () => {
   const navigate = useNavigate();
@@ -39,15 +40,17 @@ const MarketList: React.FC = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 500);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ['markets', page, rowsPerPage, search],
+    queryKey: ['markets', page, rowsPerPage, debouncedSearch],
     queryFn: () => {
       const params: any = { page: page + 1, limit: rowsPerPage };
-      if (search) params.search = search;
+      if (debouncedSearch) params.search = debouncedSearch;
       return getMarkets(params);
-    }
+    },
+    placeholderData: keepPreviousData
   });
 
   const deleteMutation = useMutation({

@@ -12,10 +12,17 @@ import {
   Stack,
   CircularProgress,
   Alert,
-  Divider
+  Divider,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  InputAdornment
 } from '@mui/material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getVariantSpecifications, createVariantSpecification, updateSpecification } from '../../../api/specifications.api';
+import type { CustomAttribute } from '../../../api/custom-attributes.api';
+import { getCustomAttributes } from '../../../api/custom-attributes.api';
 
 const specSchema = z.object({
   performance: z.object({
@@ -51,6 +58,7 @@ const specSchema = z.object({
     parkingSensors: z.string().optional().nullable(),
     camera: z.string().optional().nullable(),
   }).optional(),
+  customAttributes: z.record(z.string(), z.any()).optional(),
 });
 
 type SpecData = z.infer<typeof specSchema>;
@@ -87,6 +95,13 @@ const Step2Specifications: React.FC<Step2Props> = ({ variantId, onNext, onBack }
     retry: 1
   });
 
+  const { data: customAttrsData, isLoading: isLoadingAttrs } = useQuery({
+    queryKey: ['custom-attributes', 'active', 'variant'],
+    queryFn: () => getCustomAttributes({ status: 'active', appliesTo: 'variant', limit: 100 }),
+  });
+
+  const activeCustomAttributes: CustomAttribute[] = customAttrsData?.data || [];
+
   useEffect(() => {
     const spec = Array.isArray(data?.data) ? data.data[0] : data?.data;
     if (spec) {
@@ -104,7 +119,8 @@ const Step2Specifications: React.FC<Step2Props> = ({ variantId, onNext, onBack }
           stabilityControl: spec.safety?.stabilityControl || false,
           parkingSensors: spec.safety?.parkingSensors,
           camera: spec.safety?.camera,
-        }
+        },
+        customAttributes: spec.customAttributes || {},
       });
     }
   }, [data, reset]);
@@ -139,7 +155,7 @@ const Step2Specifications: React.FC<Step2Props> = ({ variantId, onNext, onBack }
   const isSaving = createMutation.isPending || updateMutation.isPending;
   const saveError = createMutation.error || updateMutation.error;
 
-  if (isLoading) {
+  if (isLoading || isLoadingAttrs) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>;
   }
 
@@ -347,6 +363,100 @@ const Step2Specifications: React.FC<Step2Props> = ({ variantId, onNext, onBack }
             </Box>
           </Box>
         </Box>
+
+        {/* Custom Attributes Section */}
+        {activeCustomAttributes.length > 0 && (
+          <Box>
+            <Typography variant="h6" gutterBottom>Additional Specifications</Typography>
+            <Divider sx={{ mb: 2 }} />
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+              {activeCustomAttributes.map((attr) => (
+                <Box key={attr.key}>
+                  <Controller
+                    name={`customAttributes.${attr.key}`}
+                    control={control}
+                    render={({ field }) => {
+                      if (attr.type === 'boolean') {
+                        return (
+                          <FormControlLabel
+                            control={
+                              <Checkbox
+                                checked={!!field.value}
+                                onChange={(e) => field.onChange(e.target.checked)}
+                              />
+                            }
+                            label={attr.name}
+                          />
+                        );
+                      }
+                      
+                      if (attr.type === 'select') {
+                        return (
+                          <FormControl fullWidth>
+                            <InputLabel>{attr.name}</InputLabel>
+                            <Select
+                              {...field}
+                              label={attr.name}
+                              value={field.value || ''}
+                            >
+                              <MenuItem value=""><em>None</em></MenuItem>
+                              {attr.options?.map(opt => (
+                                <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        );
+                      }
+
+                      if (attr.type === 'multi-select') {
+                        const valArray = Array.isArray(field.value) ? field.value : [];
+                        return (
+                          <FormControl fullWidth>
+                            <InputLabel>{attr.name}</InputLabel>
+                            <Select
+                              {...field}
+                              multiple
+                              label={attr.name}
+                              value={valArray}
+                              onChange={(e) => field.onChange(e.target.value)}
+                            >
+                              {attr.options?.map(opt => (
+                                <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        );
+                      }
+
+                      return (
+                        <TextField
+                          {...field}
+                          label={attr.name}
+                          type={attr.type === 'number' ? 'number' : 'text'}
+                          fullWidth
+                          value={field.value ?? ''}
+                          onChange={(e) => {
+                            if (attr.type === 'number') {
+                              field.onChange(e.target.value ? Number(e.target.value) : null);
+                            } else {
+                              field.onChange(e.target.value);
+                            }
+                          }}
+                          slotProps={attr.unit ? {
+                            input: {
+                              endAdornment: <InputAdornment position="end">{attr.unit}</InputAdornment>,
+                            }
+                          } : undefined}
+                          helperText={attr.description}
+                        />
+                      );
+                    }}
+                  />
+                </Box>
+              ))}
+            </Box>
+          </Box>
+        )}
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
           <Button onClick={onBack} variant="outlined" disabled={isSaving}>
