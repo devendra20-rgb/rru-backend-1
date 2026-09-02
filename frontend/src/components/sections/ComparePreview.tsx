@@ -9,7 +9,8 @@ import { useCompare } from '@/hooks/useCompare';
 import type { Vehicle } from '@/types/vehicle';
 import { formatPrice, resolveMediaUrl } from '@/lib/utils';
 import styles from './sections.module.css';
-
+//
+//
 export default function ComparePreview() {
   const [carA, setCarA] = useState<Vehicle | null>(null);
   const [carB, setCarB] = useState<Vehicle | null>(null);
