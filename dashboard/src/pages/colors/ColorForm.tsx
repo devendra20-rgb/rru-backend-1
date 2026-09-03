@@ -37,7 +37,12 @@ const colorSchema = z.object({
 
 type ColorFormData = z.infer<typeof colorSchema>;
 
-const ColorForm: React.FC = () => {
+export interface ColorFormProps {
+  onSuccess?: (createdId: string) => void;
+  onCancel?: () => void;
+}
+
+const ColorForm: React.FC<ColorFormProps> = ({ onSuccess, onCancel }) => {
   const { id } = useParams<{ id: string }>();
   const isEditMode = !!id;
   const navigate = useNavigate();
@@ -84,18 +89,20 @@ const ColorForm: React.FC = () => {
 
   const createMutation = useMutation({
     mutationFn: (data: any) => createColor(data),
-    onSuccess: () => {
+    onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ['colors'] });
-      navigate('/colors');
+      if (onSuccess) onSuccess(res.data._id);
+      else navigate('/colors');
     }
   });
 
   const updateMutation = useMutation({
     mutationFn: (data: any) => updateColor(id!, data),
-    onSuccess: () => {
+    onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ['colors'] });
       queryClient.invalidateQueries({ queryKey: ['color', id] });
-      navigate('/colors');
+      if (onSuccess) onSuccess(res.data._id);
+      else navigate('/colors');
     }
   });
 
@@ -138,7 +145,7 @@ const ColorForm: React.FC = () => {
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
         <Button 
           startIcon={<ArrowBackIcon />} 
-          onClick={() => navigate('/colors')}
+          onClick={() => onCancel ? onCancel() : navigate('/colors')}
           sx={{ mr: 2 }}
         >
           Back
@@ -282,7 +289,7 @@ const ColorForm: React.FC = () => {
             />
 
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
-              <Button variant="outlined" onClick={() => navigate('/colors')} disabled={isSaving}>
+              <Button variant="outlined" onClick={() => onCancel ? onCancel() : navigate('/colors')} disabled={isSaving}>
                 Cancel
               </Button>
               <Button type="submit" variant="contained" disabled={isSaving}>

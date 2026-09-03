@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -15,8 +15,15 @@ import {
   Alert,
   Stack,
   Typography,
-  Divider
+  Divider,
+  IconButton,
+  Autocomplete
 } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import QuickAddModal from '../../../components/common/QuickAddModal';
+import BrandForm from '../../brands/BrandForm';
+import ModelForm from '../../models/ModelForm';
+import GenerationForm from '../../generations/GenerationForm';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getVariant, createVariant, updateVariant } from '../../../api/variants.api';
 import { getBrands } from '../../../api/brands.api';
@@ -58,6 +65,11 @@ interface Step1Props {
 const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext }) => {
   const queryClient = useQueryClient();
   const isEditMode = !!variantId;
+
+  // Modals state
+  const [brandModalOpen, setBrandModalOpen] = useState(false);
+  const [modelModalOpen, setModelModalOpen] = useState(false);
+  const [generationModalOpen, setGenerationModalOpen] = useState(false);
 
   const {
     control,
@@ -200,69 +212,112 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
 
       <Stack spacing={3}>
         <Box sx={{ display: 'flex', gap: 2 }}>
-          <Controller
-            name="brandId"
-            control={control}
-            render={({ field }) => (
-              <FormControl fullWidth error={!!errors.brandId}>
-                <InputLabel>Brand *</InputLabel>
-                <Select
-                  {...field}
-                  label="Brand *"
-                  onChange={(e) => {
-                    field.onChange(e);
-                    setValue('modelId', '');
-                    setValue('generationId', '');
-                  }}
-                >
-                  {brandsData?.data.map((b) => (
-                    <MenuItem key={b._id} value={b._id}>{b.name}</MenuItem>
-                  ))}
-                </Select>
-                {errors.brandId && <FormHelperText>{errors.brandId.message}</FormHelperText>}
-              </FormControl>
-            )}
-          />
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start', flex: 1 }}>
+            <Controller
+              name="brandId"
+              control={control}
+              render={({ field }) => {
+                const selectedOption = brandsData?.data?.find((b: any) => b._id === field.value) || null;
+                return (
+                  <Autocomplete
+                    options={brandsData?.data || []}
+                    getOptionLabel={(option: any) => option.name || ''}
+                    value={selectedOption}
+                    onChange={(_, newValue) => {
+                      field.onChange(newValue ? newValue._id : '');
+                      setValue('modelId', '');
+                      setValue('generationId', '');
+                    }}
+                    renderInput={(params) => (
+                      <TextField 
+                        {...params} 
+                        label="Brand *" 
+                        error={!!errors.brandId} 
+                        helperText={errors.brandId?.message} 
+                      />
+                    )}
+                    sx={{ '& .MuiAutocomplete-listbox': { maxHeight: 250 } }}
+                    fullWidth
+                    isOptionEqualToValue={(option: any, value: any) => option._id === value._id}
+                  />
+                );
+              }}
+            />
+            <IconButton color="primary" sx={{ mt: 1 }} onClick={() => setBrandModalOpen(true)}>
+              <AddIcon />
+            </IconButton>
+          </Box>
 
-          <Controller
-            name="modelId"
-            control={control}
-            render={({ field }) => (
-              <FormControl fullWidth error={!!errors.modelId} disabled={!selectedBrand}>
-                <InputLabel>Model *</InputLabel>
-                <Select
-                  {...field}
-                  label="Model *"
-                  onChange={(e) => {
-                    field.onChange(e);
-                    setValue('generationId', '');
-                  }}
-                >
-                  {modelsData?.data.map((m) => (
-                    <MenuItem key={m._id} value={m._id}>{m.name}</MenuItem>
-                  ))}
-                </Select>
-                {errors.modelId && <FormHelperText>{errors.modelId.message}</FormHelperText>}
-              </FormControl>
-            )}
-          />
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start', flex: 1 }}>
+            <Controller
+              name="modelId"
+              control={control}
+              render={({ field }) => {
+                const selectedOption = modelsData?.data?.find((m: any) => m._id === field.value) || null;
+                return (
+                  <Autocomplete
+                    options={modelsData?.data || []}
+                    getOptionLabel={(option: any) => option.name || ''}
+                    value={selectedOption}
+                    onChange={(_, newValue) => {
+                      field.onChange(newValue ? newValue._id : '');
+                      setValue('generationId', '');
+                    }}
+                    disabled={!selectedBrand}
+                    renderInput={(params) => (
+                      <TextField 
+                        {...params} 
+                        label="Model *" 
+                        error={!!errors.modelId} 
+                        helperText={errors.modelId?.message} 
+                      />
+                    )}
+                    sx={{ '& .MuiAutocomplete-listbox': { maxHeight: 250 } }}
+                    fullWidth
+                    isOptionEqualToValue={(option: any, value: any) => option._id === value._id}
+                  />
+                );
+              }}
+            />
+            <IconButton color="primary" sx={{ mt: 1 }} disabled={!selectedBrand} onClick={() => setModelModalOpen(true)}>
+              <AddIcon />
+            </IconButton>
+          </Box>
 
-          <Controller
-            name="generationId"
-            control={control}
-            render={({ field }) => (
-              <FormControl fullWidth error={!!errors.generationId} disabled={!selectedModel}>
-                <InputLabel>Generation (Optional)</InputLabel>
-                <Select {...field} label="Generation (Optional)">
-                  <MenuItem value="">None / No Generation</MenuItem>
-                  {generationsData?.data.map((g) => (
-                    <MenuItem key={g._id} value={g._id}>{g.name}</MenuItem>
-                  ))}
-                </Select>
-                {errors.generationId && <FormHelperText>{errors.generationId.message}</FormHelperText>}
-              </FormControl>
-            )}
-          />
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start', flex: 1 }}>
+            <Controller
+              name="generationId"
+              control={control}
+              render={({ field }) => {
+                const selectedOption = generationsData?.data?.find((g: any) => g._id === field.value) || null;
+                return (
+                  <Autocomplete
+                    options={generationsData?.data || []}
+                    getOptionLabel={(option: any) => option.name || ''}
+                    value={selectedOption}
+                    onChange={(_, newValue) => {
+                      field.onChange(newValue ? newValue._id : '');
+                    }}
+                    disabled={!selectedModel}
+                    renderInput={(params) => (
+                      <TextField 
+                        {...params} 
+                        label="Generation (Optional)" 
+                        error={!!errors.generationId} 
+                        helperText={errors.generationId?.message} 
+                      />
+                    )}
+                    sx={{ '& .MuiAutocomplete-listbox': { maxHeight: 250 } }}
+                    fullWidth
+                    isOptionEqualToValue={(option: any, value: any) => option._id === value._id}
+                  />
+                );
+              }}
+            />
+            <IconButton color="primary" sx={{ mt: 1 }} disabled={!selectedModel} onClick={() => setGenerationModalOpen(true)}>
+              <AddIcon />
+            </IconButton>
+          </Box>
         </Box>
 
         <Box sx={{ display: 'flex', gap: 2 }}>
@@ -467,6 +522,41 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
           </Button>
         </Box>
       </Stack>
+
+      <QuickAddModal open={brandModalOpen} onClose={() => setBrandModalOpen(false)} title="Quick Add Brand">
+        <BrandForm 
+          onSuccess={(id) => {
+            setValue('brandId', id, { shouldValidate: true });
+            setValue('modelId', '');
+            setValue('generationId', '');
+            setBrandModalOpen(false);
+          }}
+          onCancel={() => setBrandModalOpen(false)}
+        />
+      </QuickAddModal>
+
+      <QuickAddModal open={modelModalOpen} onClose={() => setModelModalOpen(false)} title="Quick Add Model">
+        <ModelForm
+          initialData={{ brandId: selectedBrand || undefined }}
+          onSuccess={(id) => {
+            setValue('modelId', id, { shouldValidate: true });
+            setValue('generationId', '');
+            setModelModalOpen(false);
+          }}
+          onCancel={() => setModelModalOpen(false)}
+        />
+      </QuickAddModal>
+
+      <QuickAddModal open={generationModalOpen} onClose={() => setGenerationModalOpen(false)} title="Quick Add Generation">
+        <GenerationForm
+          initialData={{ brandId: selectedBrand || undefined, modelId: selectedModel || undefined }}
+          onSuccess={(id) => {
+            setValue('generationId', id, { shouldValidate: true });
+            setGenerationModalOpen(false);
+          }}
+          onCancel={() => setGenerationModalOpen(false)}
+        />
+      </QuickAddModal>
     </Box>
   );
 };

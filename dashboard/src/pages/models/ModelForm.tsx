@@ -39,7 +39,15 @@ const modelSchema = z.object({
 
 type ModelFormData = z.infer<typeof modelSchema>;
 
-const ModelForm: React.FC = () => {
+export interface ModelFormProps {
+  onSuccess?: (createdId: string) => void;
+  onCancel?: () => void;
+  initialData?: {
+    brandId?: string;
+  };
+}
+
+const ModelForm: React.FC<ModelFormProps> = ({ onSuccess, onCancel, initialData }) => {
   const { id } = useParams<{ id: string }>();
   const isEditMode = !!id;
   const navigate = useNavigate();
@@ -60,7 +68,7 @@ const ModelForm: React.FC = () => {
   } = useForm<ModelFormData>({
     resolver: zodResolver(modelSchema) as any,
     defaultValues: {
-      brandId: '',
+      brandId: initialData?.brandId || '',
       name: '',
       modelCode: '',
       slug: '',
@@ -101,18 +109,20 @@ const ModelForm: React.FC = () => {
   // Mutations
   const createMutation = useMutation({
     mutationFn: (data: ModelFormData) => createModel(data),
-    onSuccess: () => {
+    onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ['models'] });
-      navigate('/models');
+      if (onSuccess) onSuccess(res.data._id);
+      else navigate('/models');
     }
   });
 
   const updateMutation = useMutation({
     mutationFn: (data: ModelFormData) => updateModel(id!, data),
-    onSuccess: () => {
+    onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ['models'] });
       queryClient.invalidateQueries({ queryKey: ['model', id] });
-      navigate('/models');
+      if (onSuccess) onSuccess(res.data._id);
+      else navigate('/models');
     }
   });
 
@@ -165,7 +175,7 @@ const ModelForm: React.FC = () => {
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
         <Button 
           startIcon={<ArrowBackIcon />} 
-          onClick={() => navigate('/models')}
+          onClick={() => onCancel ? onCancel() : navigate('/models')}
           sx={{ mr: 2 }}
         >
           Back
@@ -360,7 +370,7 @@ const ModelForm: React.FC = () => {
             />
 
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
-              <Button variant="outlined" onClick={() => navigate('/models')} disabled={isSaving}>
+              <Button variant="outlined" onClick={() => onCancel ? onCancel() : navigate('/models')} disabled={isSaving}>
                 Cancel
               </Button>
               <Button type="submit" variant="contained" disabled={isSaving}>

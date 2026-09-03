@@ -3,6 +3,9 @@ import { Box, Button, Typography, CircularProgress, Alert, Paper, Select, MenuIt
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getFeatures, getVariantFeatures, createVariantFeature, updateVariantFeature } from '../../../api/features.api';
 import type { VariantFeature } from '../../../api/features.api';
+import AddIcon from '@mui/icons-material/Add';
+import QuickAddModal from '../../../components/common/QuickAddModal';
+import FeatureForm from '../../features/FeatureForm';
 
 interface Step3Props {
   variantId: string;
@@ -32,6 +35,7 @@ const Step3Features: React.FC<Step3Props> = ({ variantId, onNext, onBack }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [featureModalOpen, setFeatureModalOpen] = useState(false);
 
   useEffect(() => {
     if (masterFeaturesData?.data && mappedFeaturesData?.data) {
@@ -149,14 +153,23 @@ const Step3Features: React.FC<Step3Props> = ({ variantId, onNext, onBack }) => {
 
       {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
-      <Box sx={{ mb: 3, maxWidth: { xs: '100%', sm: '33.3333%' } }}>
-        <TextField
-          fullWidth
-          size="small"
-          placeholder="Search features..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
+      <Box sx={{ mb: 3, display: 'flex', gap: 2, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+        <Box sx={{ flex: 1, minWidth: 200, maxWidth: { xs: '100%', sm: '33.3333%' } }}>
+          <TextField
+            fullWidth
+            size="small"
+            placeholder="Search features..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </Box>
+        <Button 
+          variant="outlined" 
+          startIcon={<AddIcon />}
+          onClick={() => setFeatureModalOpen(true)}
+        >
+          Add New Feature
+        </Button>
       </Box>
 
       {Object.entries(categories).map(([category, features]) => (
@@ -235,6 +248,18 @@ const Step3Features: React.FC<Step3Props> = ({ variantId, onNext, onBack }) => {
           {isSaving ? 'Saving...' : 'Save & Continue'}
         </Button>
       </Box>
+
+      <QuickAddModal open={featureModalOpen} onClose={() => setFeatureModalOpen(false)} title="Quick Add Feature">
+        <FeatureForm 
+          onSuccess={() => {
+            setFeatureModalOpen(false);
+            // The newly created feature will automatically appear in the list 
+            // once the react-query invalidation in FeatureForm finishes.
+            // We can explicitly add it to mappings if needed, but it's optional.
+          }}
+          onCancel={() => setFeatureModalOpen(false)}
+        />
+      </QuickAddModal>
     </Box>
   );
 };

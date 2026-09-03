@@ -39,14 +39,23 @@ const generationSchema = z.object({
 
 type GenerationFormData = z.infer<typeof generationSchema>;
 
-const GenerationForm: React.FC = () => {
+export interface GenerationFormProps {
+  onSuccess?: (createdId: string) => void;
+  onCancel?: () => void;
+  initialData?: {
+    brandId?: string;
+    modelId?: string;
+  };
+}
+
+const GenerationForm: React.FC<GenerationFormProps> = ({ onSuccess, onCancel, initialData }) => {
   const { id } = useParams<{ id: string }>();
   const isEditMode = !!id;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   // Local state for dependent dropdowns
-  const [selectedBrandId, setSelectedBrandId] = useState<string>('');
+  const [selectedBrandId, setSelectedBrandId] = useState<string>(initialData?.brandId || '');
 
   const { data: brandsData, isLoading: isLoadingBrands } = useQuery({
     queryKey: ['brands', 'all'],
@@ -68,7 +77,7 @@ const GenerationForm: React.FC = () => {
   } = useForm<GenerationFormData>({
     resolver: zodResolver(generationSchema) as any,
     defaultValues: {
-      modelId: '',
+      modelId: initialData?.modelId || '',
       name: '',
       generationCode: '',
       slug: '',
@@ -114,18 +123,20 @@ const GenerationForm: React.FC = () => {
   // Mutations
   const createMutation = useMutation({
     mutationFn: (data: GenerationFormData) => createGeneration(data),
-    onSuccess: () => {
+    onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ['generations'] });
-      navigate('/generations');
+      if (onSuccess) onSuccess(res.data._id);
+      else navigate('/generations');
     }
   });
 
   const updateMutation = useMutation({
     mutationFn: (data: GenerationFormData) => updateGeneration(id!, data),
-    onSuccess: () => {
+    onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ['generations'] });
       queryClient.invalidateQueries({ queryKey: ['generation', id] });
-      navigate('/generations');
+      if (onSuccess) onSuccess(res.data._id);
+      else navigate('/generations');
     }
   });
 
@@ -179,7 +190,7 @@ const GenerationForm: React.FC = () => {
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
         <Button 
           startIcon={<ArrowBackIcon />} 
-          onClick={() => navigate('/generations')}
+          onClick={() => onCancel ? onCancel() : navigate('/generations')}
           sx={{ mr: 2 }}
         >
           Back
@@ -370,7 +381,7 @@ const GenerationForm: React.FC = () => {
             />
 
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
-              <Button variant="outlined" onClick={() => navigate('/generations')} disabled={isSaving}>
+              <Button variant="outlined" onClick={() => onCancel ? onCancel() : navigate('/generations')} disabled={isSaving}>
                 Cancel
               </Button>
               <Button type="submit" variant="contained" disabled={isSaving}>

@@ -32,7 +32,12 @@ const featureSchema = z.object({
 
 type FeatureFormData = z.infer<typeof featureSchema>;
 
-const FeatureForm: React.FC = () => {
+export interface FeatureFormProps {
+  onSuccess?: (createdId: string) => void;
+  onCancel?: () => void;
+}
+
+const FeatureForm: React.FC<FeatureFormProps> = ({ onSuccess, onCancel }) => {
   const { id } = useParams<{ id: string }>();
   const isEditMode = !!id;
   const navigate = useNavigate();
@@ -73,18 +78,20 @@ const FeatureForm: React.FC = () => {
 
   const createMutation = useMutation({
     mutationFn: (data: FeatureFormData) => createFeature(data),
-    onSuccess: () => {
+    onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ['features'] });
-      navigate('/features');
+      if (onSuccess) onSuccess(res.data._id);
+      else navigate('/features');
     }
   });
 
   const updateMutation = useMutation({
     mutationFn: (data: FeatureFormData) => updateFeature(id!, data),
-    onSuccess: () => {
+    onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ['features'] });
       queryClient.invalidateQueries({ queryKey: ['feature', id] });
-      navigate('/features');
+      if (onSuccess) onSuccess(res.data._id);
+      else navigate('/features');
     }
   });
 
@@ -124,7 +131,7 @@ const FeatureForm: React.FC = () => {
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
         <Button 
           startIcon={<ArrowBackIcon />} 
-          onClick={() => navigate('/features')}
+          onClick={() => onCancel ? onCancel() : navigate('/features')}
           sx={{ mr: 2 }}
         >
           Back
@@ -215,7 +222,7 @@ const FeatureForm: React.FC = () => {
             />
 
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
-              <Button variant="outlined" onClick={() => navigate('/features')} disabled={isSaving}>
+              <Button variant="outlined" onClick={() => onCancel ? onCancel() : navigate('/features')} disabled={isSaving}>
                 Cancel
               </Button>
               <Button type="submit" variant="contained" disabled={isSaving}>

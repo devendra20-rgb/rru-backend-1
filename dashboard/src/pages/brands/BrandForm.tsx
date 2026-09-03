@@ -57,7 +57,12 @@ const COUNTRIES = [
   { code: 'SE', name: 'Sweden' },
 ];
 
-const BrandForm: React.FC = () => {
+export interface BrandFormProps {
+  onSuccess?: (createdId: string) => void;
+  onCancel?: () => void;
+}
+
+const BrandForm: React.FC<BrandFormProps> = ({ onSuccess, onCancel }) => {
   const { id } = useParams<{ id: string }>();
   const isEditMode = !!id;
   const navigate = useNavigate();
@@ -114,10 +119,14 @@ const BrandForm: React.FC = () => {
   // Mutations
   const createMutation = useMutation({
     mutationFn: (data: BrandFormData) => createBrand(data),
-    onSuccess: () => {
+    onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ['brands'] });
       showToast('Brand created successfully', 'success');
-      navigate('/brands');
+      if (onSuccess) {
+        onSuccess(res.data._id);
+      } else {
+        navigate('/brands');
+      }
     },
     onError: (err) => {
       showToast(getReadableErrorMessage(err), 'error');
@@ -126,11 +135,15 @@ const BrandForm: React.FC = () => {
 
   const updateMutation = useMutation({
     mutationFn: (data: BrandFormData) => updateBrand(id!, data),
-    onSuccess: () => {
+    onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ['brands'] });
       queryClient.invalidateQueries({ queryKey: ['brand', id] });
       showToast('Brand updated successfully', 'success');
-      navigate('/brands');
+      if (onSuccess) {
+        onSuccess(res.data._id);
+      } else {
+        navigate('/brands');
+      }
     },
     onError: (err) => {
       showToast(getReadableErrorMessage(err), 'error');
@@ -189,7 +202,7 @@ const BrandForm: React.FC = () => {
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
         <Button
           startIcon={<ArrowBackIcon />}
-          onClick={() => navigate('/brands')}
+          onClick={() => onCancel ? onCancel() : navigate('/brands')}
           sx={{ mr: 2 }}
         >
           Back
@@ -343,7 +356,7 @@ const BrandForm: React.FC = () => {
             </Box>
 
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
-              <Button variant="outlined" onClick={() => navigate('/brands')} disabled={isSaving}>
+              <Button variant="outlined" onClick={() => onCancel ? onCancel() : navigate('/brands')} disabled={isSaving}>
                 Cancel
               </Button>
               <Button type="submit" variant="contained" disabled={isSaving}>

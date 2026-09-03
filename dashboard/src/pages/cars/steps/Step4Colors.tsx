@@ -3,6 +3,9 @@ import { Box, Button, Typography, CircularProgress, Alert, Paper, Select, MenuIt
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getColors, getVariantColors, createVariantColor, updateVariantColor } from '../../../api/colors.api';
 import type { VariantColor } from '../../../api/colors.api';
+import AddIcon from '@mui/icons-material/Add';
+import QuickAddModal from '../../../components/common/QuickAddModal';
+import ColorForm from '../../colors/ColorForm';
 
 interface Step4Props {
   variantId: string;
@@ -32,6 +35,7 @@ const Step4Colors: React.FC<Step4Props> = ({ variantId, onNext, onBack }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [colorModalOpen, setColorModalOpen] = useState(false);
 
   useEffect(() => {
     if (masterColorsData?.data && mappedColorsData?.data) {
@@ -123,14 +127,23 @@ const Step4Colors: React.FC<Step4Props> = ({ variantId, onNext, onBack }) => {
 
       {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
-       <Box sx={{ mb: 3, maxWidth: { xs: '100%', sm: '33.3333%' } }}>
-        <TextField
-          fullWidth
-          size="small"
-          placeholder="Search colors..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
+       <Box sx={{ mb: 3, display: 'flex', gap: 2, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+        <Box sx={{ flex: 1, minWidth: 200, maxWidth: { xs: '100%', sm: '33.3333%' } }}>
+          <TextField
+            fullWidth
+            size="small"
+            placeholder="Search colors..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </Box>
+        <Button 
+          variant="outlined" 
+          startIcon={<AddIcon />}
+          onClick={() => setColorModalOpen(true)}
+        >
+          Add New Color
+        </Button>
       </Box>
 
       <Paper sx={{ mb: 4, overflow: 'hidden' }}>
@@ -201,6 +214,16 @@ const Step4Colors: React.FC<Step4Props> = ({ variantId, onNext, onBack }) => {
           {isSaving ? 'Saving...' : 'Save & Continue'}
         </Button>
       </Box>
+
+      <QuickAddModal open={colorModalOpen} onClose={() => setColorModalOpen(false)} title="Quick Add Color">
+        <ColorForm 
+          onSuccess={() => {
+            setColorModalOpen(false);
+            // Color list refreshes via react-query and appears dynamically
+          }}
+          onCancel={() => setColorModalOpen(false)}
+        />
+      </QuickAddModal>
     </Box>
   );
 };
