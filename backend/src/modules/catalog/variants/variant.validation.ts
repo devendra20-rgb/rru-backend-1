@@ -3,8 +3,9 @@ import { PaginationQuerySchema } from '../../../utils/pagination';
 
 export const CreateVariantSchema = z.object({
   body: z.object({
-    generationId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid ObjectId'),
-    variantCode: z.string().min(1, 'Variant code is required'),
+    modelId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid ObjectId'),
+    generationId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid ObjectId').optional().nullable().or(z.literal('')),
+    variantCode: z.string().optional(),
     name: z.string().min(1, 'Name is required'),
     slug: z.string().optional(),
     description: z.string().optional(),
@@ -40,11 +41,9 @@ export const UpdateVariantSchema = z.object({
     id: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid ObjectId'),
   }),
   body: z.object({
-    generationId: z
-      .string()
-      .regex(/^[0-9a-fA-F]{24}$/, 'Invalid ObjectId')
-      .optional(),
-    variantCode: z.string().min(1).optional(),
+    modelId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid ObjectId').optional(),
+    generationId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid ObjectId').optional().nullable().or(z.literal('')),
+    variantCode: z.string().optional(),
     name: z.string().min(1).optional(),
     slug: z.string().optional(),
     description: z.string().optional(),

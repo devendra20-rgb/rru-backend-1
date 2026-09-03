@@ -31,6 +31,7 @@ const Step3Features: React.FC<Step3Props> = ({ variantId, onNext, onBack }) => {
   const [dirtyMappings, setDirtyMappings] = useState<Set<string>>(new Set());
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (masterFeaturesData?.data && mappedFeaturesData?.data) {
@@ -76,6 +77,22 @@ const Step3Features: React.FC<Step3Props> = ({ variantId, onNext, onBack }) => {
     });
   };
 
+  const handleBulkAvailability = (featuresToUpdate: any[], availability: 'standard' | 'unavailable') => {
+    setMappings(prev => {
+      const next = { ...prev };
+      featuresToUpdate.forEach(f => {
+        next[f._id] = { ...next[f._id], availability };
+      });
+      return next;
+    });
+    
+    setDirtyMappings(prev => {
+      const next = new Set(prev);
+      featuresToUpdate.forEach(f => next.add(f._id));
+      return next;
+    });
+  };
+
   const saveMapping = async (mapping: Partial<VariantFeature>) => {
     if (mapping._id) {
       // It exists, update it
@@ -114,7 +131,12 @@ const Step3Features: React.FC<Step3Props> = ({ variantId, onNext, onBack }) => {
   // Group features by category
   const categories: Record<string, any[]> = {};
   const masterFeaturesList = masterFeaturesData?.data?.features || [];
-  masterFeaturesList.forEach((f: any) => {
+  
+  const filteredFeatures = masterFeaturesList.filter((f: any) => 
+    f.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  filteredFeatures.forEach((f: any) => {
     if (!categories[f.category]) categories[f.category] = [];
     categories[f.category].push(f);
   });
@@ -127,12 +149,30 @@ const Step3Features: React.FC<Step3Props> = ({ variantId, onNext, onBack }) => {
 
       {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
+      <Box sx={{ mb: 3, maxWidth: { xs: '100%', sm: '33.3333%' } }}>
+        <TextField
+          fullWidth
+          size="small"
+          placeholder="Search features..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </Box>
+
       {Object.entries(categories).map(([category, features]) => (
         <Paper key={category} sx={{ mb: 4, overflow: 'hidden' }}>
-          <Box sx={{ bgcolor: 'grey.200', px: 3, py: 1.5 }}>
+          <Box sx={{ bgcolor: 'grey.200', px: 3, py: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
             <Typography variant="h6" sx={{ textTransform: 'capitalize' }}>
               {category}
             </Typography>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button size="small" variant="outlined" color="primary" onClick={() => handleBulkAvailability(features, 'standard')}>
+                Available All
+              </Button>
+              <Button size="small" variant="outlined" color="inherit" onClick={() => handleBulkAvailability(features, 'unavailable')}>
+                Unavailable All
+              </Button>
+            </Box>
           </Box>
           <TableContainer>
             <Table size="small">
@@ -164,7 +204,7 @@ const Step3Features: React.FC<Step3Props> = ({ variantId, onNext, onBack }) => {
                           onChange={(e) => handleMappingChange(feature._id, 'availability', e.target.value)}
                         >
                           <MenuItem value="unavailable">Unavailable</MenuItem>
-                          <MenuItem value="standard">Standard</MenuItem>
+                          <MenuItem value="standard">Available</MenuItem>
                           <MenuItem value="optional">Optional</MenuItem>
                         </Select>
                       </TableCell>

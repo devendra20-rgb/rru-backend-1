@@ -39,6 +39,7 @@ const specificationSchema = new Schema<ISpecification>(
       abs: { type: Boolean },
       tractionControl: { type: Boolean },
       stabilityControl: { type: Boolean },
+      adas: { type: Boolean },
       parkingSensors: { type: String, trim: true },
       camera: { type: String, trim: true },
     },

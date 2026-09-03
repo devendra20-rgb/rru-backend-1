@@ -25,12 +25,14 @@ export const variantRepository = {
     return !!(await Variant.exists(query));
   },
 
-  async existsByNameAndGeneration(
+  async existsByNameAndModelOrGeneration(
     name: string,
-    generationId: string | Types.ObjectId,
+    modelId: string | Types.ObjectId,
+    generationId: string | Types.ObjectId | null,
     excludeId?: string | Types.ObjectId,
   ) {
     const query: Record<string, any> = {
+      modelId,
       generationId,
       name: { $regex: new RegExp(`^${name}$`, 'i') },
     };

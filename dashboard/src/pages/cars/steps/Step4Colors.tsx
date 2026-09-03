@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Button, Typography, CircularProgress, Alert, Paper, Select, MenuItem, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import { Box, Button, Typography, CircularProgress, Alert, Paper, Select, MenuItem, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField } from '@mui/material';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getColors, getVariantColors, createVariantColor, updateVariantColor } from '../../../api/colors.api';
 import type { VariantColor } from '../../../api/colors.api';
@@ -31,6 +31,7 @@ const Step4Colors: React.FC<Step4Props> = ({ variantId, onNext, onBack }) => {
   const [dirtyMappings, setDirtyMappings] = useState<Set<string>>(new Set());
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (masterColorsData?.data && mappedColorsData?.data) {
@@ -110,6 +111,9 @@ const Step4Colors: React.FC<Step4Props> = ({ variantId, onNext, onBack }) => {
   }
 
   const colors = masterColorsData?.data?.colors || [];
+  const filteredColors = colors.filter((color: any) => 
+    color.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <Box>
@@ -118,6 +122,16 @@ const Step4Colors: React.FC<Step4Props> = ({ variantId, onNext, onBack }) => {
       </Typography>
 
       {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
+
+       <Box sx={{ mb: 3, maxWidth: { xs: '100%', sm: '33.3333%' } }}>
+        <TextField
+          fullWidth
+          size="small"
+          placeholder="Search colors..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </Box>
 
       <Paper sx={{ mb: 4, overflow: 'hidden' }}>
         <TableContainer>
@@ -131,7 +145,7 @@ const Step4Colors: React.FC<Step4Props> = ({ variantId, onNext, onBack }) => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {colors.map((color: any) => {
+              {filteredColors.map((color: any) => {
                 const mapping = mappings[color._id] || {};
                 return (
                   <TableRow key={color._id}>
@@ -167,7 +181,7 @@ const Step4Colors: React.FC<Step4Props> = ({ variantId, onNext, onBack }) => {
                         onChange={(e) => handleMappingChange(color._id, 'availability', e.target.value)}
                       >
                         <MenuItem value="unavailable">Unavailable</MenuItem>
-                        <MenuItem value="standard">Standard</MenuItem>
+                        <MenuItem value="standard">Available</MenuItem>
                         <MenuItem value="optional">Optional</MenuItem>
                       </Select>
                     </TableCell>

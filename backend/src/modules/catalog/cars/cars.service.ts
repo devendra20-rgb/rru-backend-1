@@ -67,17 +67,29 @@ export class CarsService {
       variantMatch.$or = [
         { name: regex },
         { variantCode: regex },
+        { modelId: { $in: modelIds } },
         { generationId: { $in: resolvedGenerationIdsFromSearch } },
       ];
     }
 
     // 2. Pre-filter by brandId / modelId / generationId
     if (brandId || modelId || generationId) {
-      const validGenerationIds = await this.getGenerationIds(brandId, modelId, generationId);
-      if (validGenerationIds.length === 0) {
-        return { data: [], total: 0 }; // Quick exit if hierarchy gives 0 results
+      if (generationId) {
+        variantMatch.generationId = new Types.ObjectId(generationId);
+      } else {
+        let modelIdsToSearch: Types.ObjectId[] = [];
+        if (modelId) {
+          modelIdsToSearch = [new Types.ObjectId(modelId)];
+        } else if (brandId) {
+          const models = await VehicleModel.find({ brandId, status: 'active' }).select('_id').lean();
+          modelIdsToSearch = models.map((m) => m._id);
+        }
+        
+        if (modelIdsToSearch.length === 0) {
+          return { data: [], total: 0 }; // Quick exit if hierarchy gives 0 results
+        }
+        variantMatch.modelId = { $in: modelIdsToSearch };
       }
-      variantMatch.generationId = { $in: validGenerationIds };
     }
 
     // 3. Pre-filter by market / pricing / featured
@@ -144,11 +156,11 @@ export class CarsService {
           as: 'generation',
         },
       },
-      { $unwind: '$generation' },
+      { $unwind: { path: '$generation', preserveNullAndEmptyArrays: true } },
       {
         $lookup: {
           from: 'models',
-          localField: 'generation.modelId',
+          localField: 'modelId',
           foreignField: '_id',
           as: 'model',
         },
@@ -304,11 +316,11 @@ export class CarsService {
           as: 'generation',
         },
       },
-      { $unwind: '$generation' },
+      { $unwind: { path: '$generation', preserveNullAndEmptyArrays: true } },
       {
         $lookup: {
           from: 'models',
-          localField: 'generation.modelId',
+          localField: 'modelId',
           foreignField: '_id',
           as: 'model',
         },
@@ -537,34 +549,5 @@ export class CarsService {
     ];
   }
 
-  // Helper to pre-resolve generationIds for optimal querying
-  private async getGenerationIds(
-    brandId?: string,
-    modelId?: string,
-    generationId?: string,
-  ): Promise<Types.ObjectId[]> {
-    if (generationId) {
-      return [new Types.ObjectId(generationId)];
-    }
-
-    let modelIdsToSearch: Types.ObjectId[] = [];
-    if (modelId) {
-      modelIdsToSearch = [new Types.ObjectId(modelId)];
-    } else if (brandId) {
-      const models = await VehicleModel.find({ brandId, status: 'active' }).select('_id').lean();
-      modelIdsToSearch = models.map((m) => m._id);
-    }
-
-    if (modelIdsToSearch.length === 0 && (modelId || brandId)) {
-      return [];
-    }
-
-    const generations = await Generation.find({
-      modelId: { $in: modelIdsToSearch },
-      status: 'active',
-    })
-      .select('_id')
-      .lean();
-    return generations.map((g) => g._id);
-  }
+  // Helper removed as we directly filter by modelId now
 }

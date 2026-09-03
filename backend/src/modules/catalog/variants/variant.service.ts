@@ -3,6 +3,7 @@ import { IVariant } from './variant.types';
 import { generationRepository } from '../generations/generation.repository';
 import { modelRepository } from '../models/model.repository';
 import { AppError } from '../../../middlewares/error.middleware';
+import { Types } from 'mongoose';
 import { generateSlug } from '../../../utils/slug';
 import {
   getPaginationOptions,
@@ -11,26 +12,71 @@ import {
 } from '../../../utils/pagination';
 
 export const variantService = {
+  async generateUniqueVariantCode(modelId: string, name: string, modelYear?: number) {
+    let baseModelName = 'MDL';
+    if (modelId) {
+      const model = await modelRepository.findById(modelId);
+      if (model) {
+        baseModelName = model.name.split(' ')[0].toUpperCase();
+      }
+    }
+    
+    const trim = name.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().substring(0, 10);
+    const yearPart = modelYear ? modelYear.toString().slice(-2) : new Date().getFullYear().toString().slice(-2);
+    
+    const baseCode = `${baseModelName}-${trim}-${yearPart}`;
+    
+    let isUnique = false;
+    let suffix = 0;
+    let finalCode = baseCode;
+    
+    while (!isUnique) {
+      const exists = await variantRepository.existsByVariantCode(finalCode);
+      if (!exists) {
+        isUnique = true;
+      } else {
+        suffix++;
+        finalCode = `${baseCode}-${suffix}`;
+      }
+    }
+    
+    return finalCode;
+  },
+
   async createVariant(data: Partial<IVariant>) {
-    const generationId = data.generationId?.toString();
-    const variantCode = data.variantCode?.toUpperCase().trim();
+    let generationId = data.generationId?.toString() || null;
+    let modelId = data.modelId?.toString();
+    let variantCode = data.variantCode?.toUpperCase().trim();
     const name = data.name?.trim();
     const slug = data.slug ? generateSlug(data.slug) : generateSlug(name || '');
 
-    if (!generationId || !variantCode || !name) {
-      throw new AppError('generationId, variantCode, and name are required', 400);
+    if (!modelId && generationId) {
+      const generationExists = await generationRepository.findById(generationId);
+      if (!generationExists) {
+        throw new AppError('Referenced Generation does not exist', 404);
+      }
+      modelId = generationExists.modelId.toString();
+    } else if (generationId && modelId) {
+      const generationExists = await generationRepository.findById(generationId);
+      if (!generationExists) {
+        throw new AppError('Referenced Generation does not exist', 404);
+      }
     }
 
-    const generationExists = await generationRepository.findById(generationId);
-    if (!generationExists) {
-      throw new AppError('Referenced Generation does not exist', 404);
+    if (!modelId || !name) {
+      throw new AppError('modelId and name are required', 400);
     }
 
-    if (await variantRepository.existsByVariantCode(variantCode)) {
-      throw new AppError(`Variant code '${variantCode}' already exists`, 409);
+    if (!variantCode) {
+      variantCode = await this.generateUniqueVariantCode(modelId, name, data.modelYear);
+    } else {
+      if (await variantRepository.existsByVariantCode(variantCode)) {
+        throw new AppError(`Variant code '${variantCode}' already exists`, 409);
+      }
     }
-    if (await variantRepository.existsByNameAndGeneration(name, generationId)) {
-      throw new AppError(`Variant name '${name}' already exists for this generation`, 409);
+
+    if (await variantRepository.existsByNameAndModelOrGeneration(name, modelId, generationId)) {
+      throw new AppError(`Variant name '${name}' already exists for this model/generation`, 409);
     }
     if (await variantRepository.existsBySlug(slug)) {
       throw new AppError(`Variant slug '${slug}' already exists`, 409);
@@ -38,6 +84,8 @@ export const variantService = {
 
     return variantRepository.create({
       ...data,
+      modelId: new Types.ObjectId(modelId) as any,
+      generationId: generationId ? new Types.ObjectId(generationId) as any : null,
       variantCode,
       name,
       slug,
@@ -183,12 +231,18 @@ export const variantService = {
         throw new AppError('Referenced Generation does not exist', 404);
       }
     }
-
-    const currentGenerationId = data.generationId
+    
+    const currentGenerationId = data.generationId === null ? null : (data.generationId
       ? data.generationId.toString()
       : ((variant.generationId as any)?._id
         ? (variant.generationId as any)._id.toString()
-        : (variant.generationId as any)?.toString());
+        : (variant.generationId as any)?.toString() || null));
+        
+    const currentModelId = data.modelId 
+      ? data.modelId.toString()
+      : ((variant.modelId as any)?._id
+        ? (variant.modelId as any)._id.toString()
+        : (variant.modelId as any)?.toString());
 
     if (data.variantCode) {
       updateData.variantCode = data.variantCode.toUpperCase().trim();
@@ -200,10 +254,10 @@ export const variantService = {
     if (data.name) {
       updateData.name = data.name.trim();
       if (
-        await variantRepository.existsByNameAndGeneration(updateData.name, currentGenerationId, id)
+        await variantRepository.existsByNameAndModelOrGeneration(updateData.name, currentModelId, currentGenerationId, id)
       ) {
         throw new AppError(
-          `Variant name '${updateData.name}' already exists for this generation`,
+          `Variant name '${updateData.name}' already exists for this model/generation`,
           409,
         );
       }

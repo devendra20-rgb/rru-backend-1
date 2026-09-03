@@ -72,6 +72,7 @@ describe('Variants API', () => {
         .post('/api/v1/variants')
         .set('Authorization', `Bearer ${MOCK_TOKEN}`) // Mock auth if needed
         .send({
+          modelId,
           generationId,
           variantCode: 'TEST_VAR',
           name: 'Test Variant',
@@ -91,6 +92,7 @@ describe('Variants API', () => {
         .post('/api/v1/variants')
         .set('Authorization', `Bearer ${MOCK_TOKEN}`)
         .send({
+          modelId,
           generationId,
           variantCode: 'TEST_VAR',
           name: 'Another Variant',
@@ -106,12 +108,53 @@ describe('Variants API', () => {
         .post('/api/v1/variants')
         .set('Authorization', `Bearer ${MOCK_TOKEN}`)
         .send({
+          modelId,
           generationId: fakeId,
           variantCode: 'TEST_VAR_2',
           name: 'Test Variant 2',
         });
 
       expect(res.status).toBe(404);
+    });
+
+    it('should create a variant without generationId and auto-generate variantCode', async () => {
+      const res = await request(app)
+        .post('/api/v1/variants')
+        .set('Authorization', `Bearer ${MOCK_TOKEN}`)
+        .send({
+          modelId,
+          name: 'No Gen Variant',
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.variantCode).toBeDefined();
+      expect(res.body.data.variantCode).toContain('TEST-NOGENVARI-');
+    });
+
+    it('should generate unique variantCode on collision', async () => {
+      const res1 = await request(app)
+        .post('/api/v1/variants')
+        .set('Authorization', `Bearer ${MOCK_TOKEN}`)
+        .send({
+          modelId,
+          name: 'Collision Variant',
+        });
+      
+      expect(res1.status).toBe(201);
+      
+      const res2 = await request(app)
+        .post('/api/v1/variants')
+        .set('Authorization', `Bearer ${MOCK_TOKEN}`)
+        .send({
+          modelId,
+          generationId, // Different generation, same name, should trigger code collision if same code generated
+          name: 'Collision Variant',
+        });
+        
+      expect(res2.status).toBe(201);
+      expect(res2.body.data.variantCode).not.toBe(res1.body.data.variantCode);
+      expect(res2.body.data.variantCode.endsWith('-1')).toBe(true);
     });
   });
 

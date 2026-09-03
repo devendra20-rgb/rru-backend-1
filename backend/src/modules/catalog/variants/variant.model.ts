@@ -3,10 +3,16 @@ import { IVariant } from './variant.types';
 
 const variantSchema = new Schema<IVariant>(
   {
+    modelId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Model',
+      required: true,
+    },
     generationId: {
       type: Schema.Types.ObjectId,
       ref: 'Generation',
-      required: true,
+      required: false,
+      default: null,
     },
     variantCode: {
       type: String,
@@ -72,9 +78,10 @@ const variantSchema = new Schema<IVariant>(
 );
 
 // Indexes
+variantSchema.index({ modelId: 1 });
 variantSchema.index({ generationId: 1 });
 variantSchema.index(
-  { generationId: 1, name: 1 },
+  { modelId: 1, generationId: 1, name: 1 },
   { unique: true, collation: { locale: 'en', strength: 2 } },
 );
 variantSchema.index({ fuelType: 1 });

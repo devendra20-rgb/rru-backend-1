@@ -35,6 +35,7 @@ export interface ISafety {
   abs?: boolean;
   tractionControl?: boolean;
   stabilityControl?: boolean;
+  adas?: boolean;
   parkingSensors?: string;
   camera?: string;
 }

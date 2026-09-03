@@ -17,7 +17,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  InputAdornment
+  InputAdornment,
+  Autocomplete
 } from '@mui/material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getVariantSpecifications, createVariantSpecification, updateSpecification } from '../../../api/specifications.api';
@@ -55,6 +56,7 @@ const specSchema = z.object({
     abs: z.boolean().optional(),
     tractionControl: z.boolean().optional(),
     stabilityControl: z.boolean().optional(),
+    adas: z.boolean().optional(),
     parkingSensors: z.string().optional().nullable(),
     camera: z.string().optional().nullable(),
   }).optional(),
@@ -85,7 +87,7 @@ const Step2Specifications: React.FC<Step2Props> = ({ variantId, onNext, onBack }
       capacity: {},
       weight: {},
       fuel: {},
-      safety: { abs: false, tractionControl: false, stabilityControl: false }
+      safety: { abs: false, tractionControl: false, stabilityControl: false, adas: false }
     }
   });
 
@@ -117,6 +119,7 @@ const Step2Specifications: React.FC<Step2Props> = ({ variantId, onNext, onBack }
           abs: spec.safety?.abs || false,
           tractionControl: spec.safety?.tractionControl || false,
           stabilityControl: spec.safety?.stabilityControl || false,
+          adas: spec.safety?.adas || false,
           parkingSensors: spec.safety?.parkingSensors,
           camera: spec.safety?.camera,
         },
@@ -145,6 +148,7 @@ const Step2Specifications: React.FC<Step2Props> = ({ variantId, onNext, onBack }
   const onSubmit = (formData: SpecData) => {
     // clean up nulls
     const cleanData = JSON.parse(JSON.stringify(formData));
+    
     if (specId) {
       updateMutation.mutate(cleanData);
     } else {
@@ -312,7 +316,7 @@ const Step2Specifications: React.FC<Step2Props> = ({ variantId, onNext, onBack }
                 name="safety.airbags"
                 control={control}
                 render={({ field }) => (
-                  <TextField {...field} label="Number of Airbags" type="number" fullWidth value={field.value || ''} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)} />
+                  <TextField {...field} label="Number of Airbags" type="number" fullWidth value={field.value ?? ''} onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))} />
                 )}
               />
             </Box>
@@ -321,7 +325,17 @@ const Step2Specifications: React.FC<Step2Props> = ({ variantId, onNext, onBack }
                 name="safety.parkingSensors"
                 control={control}
                 render={({ field }) => (
-                  <TextField {...field} label="Parking Sensors" placeholder="e.g. Front & Rear" fullWidth value={field.value || ''} />
+                  <Autocomplete
+                    {...field}
+                    freeSolo
+                    options={['Front', 'Rear', 'Front + Rear', '360° / Surround Parking Sensors', 'Not Available']}
+                    value={field.value || ''}
+                    onChange={(_, value) => field.onChange(value)}
+                    onInputChange={(_, value) => field.onChange(value)}
+                    renderInput={(params) => (
+                      <TextField {...params} label="Parking Sensors" placeholder="e.g. Front & Rear" fullWidth />
+                    )}
+                  />
                 )}
               />
             </Box>
@@ -330,7 +344,17 @@ const Step2Specifications: React.FC<Step2Props> = ({ variantId, onNext, onBack }
                 name="safety.camera"
                 control={control}
                 render={({ field }) => (
-                  <TextField {...field} label="Camera" placeholder="e.g. 360 View" fullWidth value={field.value || ''} />
+                  <Autocomplete
+                    {...field}
+                    freeSolo
+                    options={['Front Camera', 'Rear Camera', 'Front + Rear Camera', '360° / Surround View Camera', 'Multiple Cameras', 'Dash Camera', 'Not Available']}
+                    value={field.value || ''}
+                    onChange={(_, value) => field.onChange(value)}
+                    onInputChange={(_, value) => field.onChange(value)}
+                    renderInput={(params) => (
+                      <TextField {...params} label="Camera" placeholder="e.g. 360 View" fullWidth />
+                    )}
+                  />
                 )}
               />
             </Box>
@@ -358,6 +382,15 @@ const Step2Specifications: React.FC<Step2Props> = ({ variantId, onNext, onBack }
                 control={control}
                 render={({ field }) => (
                   <FormControlLabel control={<Checkbox checked={!!field.value} onChange={(e) => field.onChange(e.target.checked)} />} label="Stability Control" />
+                )}
+              />
+            </Box>
+            <Box>
+              <Controller
+                name="safety.adas"
+                control={control}
+                render={({ field }) => (
+                  <FormControlLabel control={<Checkbox checked={!!field.value} onChange={(e) => field.onChange(e.target.checked)} />} label="ADAS" />
                 )}
               />
             </Box>

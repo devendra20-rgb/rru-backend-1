@@ -40,6 +40,7 @@ const safetySchema = z.object({
   abs: z.boolean().optional(),
   tractionControl: z.boolean().optional(),
   stabilityControl: z.boolean().optional(),
+  adas: z.boolean().optional(),
   parkingSensors: z.string().trim().optional(),
   camera: z.string().trim().optional(),
 });

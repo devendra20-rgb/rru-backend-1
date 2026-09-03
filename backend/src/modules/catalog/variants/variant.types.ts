@@ -16,7 +16,8 @@ export interface IEngine {
 }
 
 export interface IVariant extends Document {
-  generationId: Types.ObjectId;
+  modelId: Types.ObjectId;
+  generationId?: Types.ObjectId | null;
   variantCode: string;
   name: string;
   slug: string;
