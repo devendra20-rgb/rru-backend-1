@@ -248,6 +248,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
             </IconButton>
           </Box>
 
+
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start', flex: 1 }}>
             <Controller
               name="modelId"
