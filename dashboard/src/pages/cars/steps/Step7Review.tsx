@@ -130,7 +130,10 @@ const Step7Review: React.FC<Step7Props> = ({ variantId, onBack }) => {
                   <Box key={f._id} sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Typography variant="body2" color="text.secondary">{f.featureId?.name || 'Unknown Feature'}</Typography>
                     <Typography variant="body2" sx={{ textTransform: 'capitalize' }}>
-                      {f.value ? `${f.value} (${f.availability})` : f.availability}
+                      {(() => {
+                        const avail = f.availability === 'optional' ? 'Not Applicable' : f.availability;
+                        return f.value ? `${f.value} (${avail})` : avail;
+                      })()}
                     </Typography>
                   </Box>
                 ))}

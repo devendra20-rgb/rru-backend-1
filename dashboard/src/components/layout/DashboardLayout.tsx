@@ -195,7 +195,7 @@ const DashboardLayout: React.FC = () => {
 
           <List
             subheader={
-              <ListSubheader sx={{ bgcolor: 'transparent', fontSize: '0.72rem', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase', color: '#66777D', px: 2.5, py: 0.5, lineHeight: '24px' }}>
+              <ListSubheader disableSticky sx={{ position: 'static', bgcolor: '#FFFFFF', fontSize: '0.72rem', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase', color: '#66777D', px: 2.5, py: 0.5, lineHeight: '24px' }}>
                 Catalog
               </ListSubheader>
             }
@@ -227,7 +227,7 @@ const DashboardLayout: React.FC = () => {
 
           <List
             subheader={
-              <ListSubheader sx={{ bgcolor: 'transparent', fontSize: '0.72rem', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase', color: '#66777D', px: 2.5, py: 0.5, lineHeight: '24px' }}>
+              <ListSubheader disableSticky sx={{ position: 'static', bgcolor: '#FFFFFF', fontSize: '0.72rem', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase', color: '#66777D', px: 2.5, py: 0.5, lineHeight: '24px' }}>
                 Vehicle Data
               </ListSubheader>
             }
@@ -263,7 +263,7 @@ const DashboardLayout: React.FC = () => {
 
           <List
             subheader={
-              <ListSubheader sx={{ bgcolor: 'transparent', fontSize: '0.72rem', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase', color: '#66777D', px: 2.5, py: 0.5, lineHeight: '24px' }}>
+              <ListSubheader disableSticky sx={{ position: 'static', bgcolor: '#FFFFFF', fontSize: '0.72rem', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase', color: '#66777D', px: 2.5, py: 0.5, lineHeight: '24px' }}>
                 Content & Editorial
               </ListSubheader>
             }

@@ -55,8 +55,17 @@ interface Props {
   error?: string | null;
 }
 
+const slugifyKey = (text: string) => {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+};
+
 const CustomAttributeFormDialog: React.FC<Props> = ({ open, onClose, onSubmit, initialData, isSaving, error }) => {
   const [optionInput, setOptionInput] = useState('');
+  const [isKeyCustomized, setIsKeyCustomized] = useState(false);
   
   const { control, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -79,6 +88,7 @@ const CustomAttributeFormDialog: React.FC<Props> = ({ open, onClose, onSubmit, i
 
   useEffect(() => {
     if (open) {
+      setIsKeyCustomized(!!initialData);
       if (initialData) {
         reset({
           name: initialData.name,
@@ -132,7 +142,19 @@ const CustomAttributeFormDialog: React.FC<Props> = ({ open, onClose, onSubmit, i
               name="name"
               control={control}
               render={({ field }) => (
-                <TextField {...field} label="Name (e.g. Battery Capacity)" fullWidth error={!!errors.name} helperText={errors.name?.message} />
+                <TextField 
+                  {...field} 
+                  label="Name (e.g. Battery Capacity)" 
+                  fullWidth 
+                  error={!!errors.name} 
+                  helperText={errors.name?.message} 
+                  onChange={(e) => {
+                    field.onChange(e);
+                    if (!initialData && !isKeyCustomized) {
+                      setValue('key', slugifyKey(e.target.value), { shouldValidate: true });
+                    }
+                  }}
+                />
               )}
             />
             
@@ -140,7 +162,18 @@ const CustomAttributeFormDialog: React.FC<Props> = ({ open, onClose, onSubmit, i
               name="key"
               control={control}
               render={({ field }) => (
-                <TextField {...field} label="Key (e.g. battery_capacity)" fullWidth disabled={!!initialData} error={!!errors.key} helperText={errors.key?.message || (initialData ? "Key cannot be changed after creation" : "")} />
+                <TextField 
+                  {...field} 
+                  label="Key (e.g. battery_capacity)" 
+                  fullWidth 
+                  disabled={!!initialData} 
+                  error={!!errors.key} 
+                  helperText={errors.key?.message || (initialData ? "Key cannot be changed after creation" : "Auto-generated from Name")} 
+                  onChange={(e) => {
+                    setIsKeyCustomized(true);
+                    field.onChange(e);
+                  }}
+                />
               )}
             />
             

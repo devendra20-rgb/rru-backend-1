@@ -16,10 +16,14 @@ export const validate =
       next();
     } catch (error) {
       if (error instanceof ZodError) {
-        const errors = error.issues.map((e) => ({
-          field: e.path.join('.'),
-          message: e.message,
-        }));
+        const errors = error.issues.map((e) => {
+          const rawPath = e.path.join('.');
+          const cleanField = rawPath.replace(/^(body|query|params)\./, '');
+          return {
+            field: cleanField,
+            message: e.message,
+          };
+        });
         sendError(res, 400, 'Validation failed', errors);
       } else {
         next(error);

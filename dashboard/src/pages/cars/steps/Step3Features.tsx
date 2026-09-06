@@ -218,7 +218,7 @@ const Step3Features: React.FC<Step3Props> = ({ variantId, onNext, onBack }) => {
                         >
                           <MenuItem value="unavailable">Unavailable</MenuItem>
                           <MenuItem value="standard">Available</MenuItem>
-                          <MenuItem value="optional">Optional</MenuItem>
+                          <MenuItem value="optional">Not Applicable</MenuItem>
                         </Select>
                       </TableCell>
                       <TableCell>
