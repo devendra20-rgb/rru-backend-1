@@ -67,7 +67,7 @@ const CustomAttributeFormDialog: React.FC<Props> = ({ open, onClose, onSubmit, i
   const [optionInput, setOptionInput] = useState('');
   const [isKeyCustomized, setIsKeyCustomized] = useState(false);
   
-  const { control, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<FormData>({
+  const { control, handleSubmit, reset, watch, setValue, clearErrors, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
@@ -117,8 +117,9 @@ const CustomAttributeFormDialog: React.FC<Props> = ({ open, onClose, onSubmit, i
         });
       }
       setOptionInput('');
+      clearErrors();
     }
-  }, [open, initialData, reset]);
+  }, [open, initialData, reset, clearErrors]);
 
   const handleAddOption = () => {
     if (optionInput.trim() && !currentOptions.includes(optionInput.trim())) {
@@ -151,7 +152,11 @@ const CustomAttributeFormDialog: React.FC<Props> = ({ open, onClose, onSubmit, i
                   onChange={(e) => {
                     field.onChange(e);
                     if (!initialData && !isKeyCustomized) {
-                      setValue('key', slugifyKey(e.target.value), { shouldValidate: true });
+                      const generatedKey = slugifyKey(e.target.value);
+                      setValue('key', generatedKey, { shouldValidate: false });
+                      if (!generatedKey) {
+                        clearErrors('key');
+                      }
                     }
                   }}
                 />
