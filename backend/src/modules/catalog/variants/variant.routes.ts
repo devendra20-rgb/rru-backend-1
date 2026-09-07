@@ -14,6 +14,8 @@ import {
   VariantIdParamSchema,
   VariantSlugParamSchema,
   VariantListQuerySchema,
+  VariantTemplateQuerySchema,
+  PopulateVariantFromSourceSchema,
 } from './variant.validation';
 
 const router = Router({ mergeParams: true });
@@ -36,6 +38,12 @@ router.get(
   validate(z.object({ params: VariantSlugParamSchema }) as any),
   variantController.getVariantBySlug,
 );
+// Template lookup must be registered before /:id
+router.get(
+  '/template',
+  validate(z.object({ query: VariantTemplateQuerySchema }) as any),
+  variantController.getVariantTemplate,
+);
 router.get(
   '/:id',
   validate(z.object({ params: VariantIdParamSchema }) as any),
@@ -50,6 +58,12 @@ router.post(
   authorize('admin', 'editor'),
   validate(CreateVariantSchema as any),
   variantController.createVariant,
+);
+router.post(
+  '/:id/populate-from',
+  authorize('admin', 'editor'),
+  validate(PopulateVariantFromSourceSchema as any),
+  variantController.populateVariantFromSource,
 );
 router.patch(
   '/:id',

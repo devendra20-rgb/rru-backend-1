@@ -45,7 +45,8 @@ const CarFormLayout: React.FC = () => {
           <Step1BasicInfo 
             variantId={variantId} 
             setVariantId={setVariantId} 
-            onNext={handleNext} 
+            onNext={handleNext}
+            isNewVehicle={!isEditMode}
           />
         );
       case 1:

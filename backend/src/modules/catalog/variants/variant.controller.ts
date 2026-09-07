@@ -1,11 +1,41 @@
 import { Request, Response, NextFunction } from 'express';
 import { variantService } from './variant.service';
+import { variantPopulateService } from './variant-populate.service';
 import { sendSuccess } from '../../../utils/response';
 
 export const createVariant = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const variant = await variantService.createVariant(req.body);
     sendSuccess(res, 201, 'Variant created successfully', variant);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getVariantTemplate = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await variantPopulateService.findTemplate({
+      modelId: req.query.modelId as string,
+      generationId: (req.query.generationId as string) || null,
+      excludeVariantId: req.query.excludeVariantId as string | undefined,
+    });
+    sendSuccess(res, 200, result.message, result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const populateVariantFromSource = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const result = await variantPopulateService.populateFromSource(
+      req.params.id as string,
+      req.body.sourceVariantId,
+    );
+    sendSuccess(res, 200, 'Variant populated from existing vehicle successfully', result);
   } catch (error) {
     next(error);
   }

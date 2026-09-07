@@ -51,3 +51,43 @@ export const deleteVariant = async (id: string): Promise<SingleResponse<null>> =
   const response = await api.delete(`/variants/${id}`);
   return response.data;
 };
+
+export interface VariantTemplateResult {
+  found: boolean;
+  message: string;
+  sourceVariantId: string | null;
+  sourceVariant: {
+    modelId?: string;
+    generationId?: string | null;
+    modelYear?: number;
+    fuelType?: string;
+    transmissionType?: string;
+    drivetrain?: string;
+    engine?: Variant['engine'];
+    seatingCapacity?: number;
+    doors?: number;
+    description?: string;
+    shortDescription?: string;
+    _sourceName?: string;
+    _completenessScore?: number;
+  } | null;
+}
+
+export const getVariantTemplate = async (params: {
+  modelId: string;
+  generationId?: string;
+  excludeVariantId?: string;
+}): Promise<SingleResponse<VariantTemplateResult>> => {
+  const response = await api.get('/variants/template', { params });
+  return response.data;
+};
+
+export const populateVariantFromSource = async (
+  targetVariantId: string,
+  sourceVariantId: string,
+): Promise<SingleResponse<{ targetVariantId: string; sourceVariantId: string; summary: any }>> => {
+  const response = await api.post(`/variants/${targetVariantId}/populate-from`, {
+    sourceVariantId,
+  });
+  return response.data;
+};

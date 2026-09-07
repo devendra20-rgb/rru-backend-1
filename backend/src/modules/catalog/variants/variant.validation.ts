@@ -104,3 +104,26 @@ export const VariantListQuerySchema = PaginationQuerySchema.extend({
   drivetrain: z.enum(['fwd', 'rwd', 'awd', '4wd', 'other']).optional(),
   modelYear: z.preprocess((val) => (val ? Number(val) : undefined), z.number().int().optional()),
 });
+
+export const VariantTemplateQuerySchema = z.object({
+  modelId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid ObjectId'),
+  generationId: z
+    .string()
+    .regex(/^[0-9a-fA-F]{24}$/, 'Invalid ObjectId')
+    .optional()
+    .or(z.literal('')),
+  excludeVariantId: z
+    .string()
+    .regex(/^[0-9a-fA-F]{24}$/, 'Invalid ObjectId')
+    .optional()
+    .or(z.literal('')),
+});
+
+export const PopulateVariantFromSourceSchema = z.object({
+  params: z.object({
+    id: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid ObjectId'),
+  }),
+  body: z.object({
+    sourceVariantId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid ObjectId'),
+  }),
+});

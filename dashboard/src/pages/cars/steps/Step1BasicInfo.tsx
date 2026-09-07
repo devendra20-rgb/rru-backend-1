@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -17,7 +17,9 @@ import {
   Typography,
   Divider,
   IconButton,
-  Autocomplete
+  Autocomplete,
+  FormControlLabel,
+  Switch,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import QuickAddModal from '../../../components/common/QuickAddModal';
@@ -25,7 +27,13 @@ import BrandForm from '../../brands/BrandForm';
 import ModelForm from '../../models/ModelForm';
 import GenerationForm from '../../generations/GenerationForm';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getVariant, createVariant, updateVariant } from '../../../api/variants.api';
+import {
+  getVariant,
+  createVariant,
+  updateVariant,
+  getVariantTemplate,
+  populateVariantFromSource,
+} from '../../../api/variants.api';
 import { getBrands } from '../../../api/brands.api';
 import { getModels } from '../../../api/models.api';
 import { getGenerations } from '../../../api/generations.api';
@@ -60,9 +68,24 @@ interface Step1Props {
   variantId: string | null;
   setVariantId: (id: string) => void;
   onNext: () => void;
+  /** True when route is /cars/new (create flow), even after draft variantId is assigned */
+  isNewVehicle?: boolean;
 }
 
-const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext }) => {
+const emptyEngine = {
+  displacementCc: undefined as number | undefined,
+  cylinders: undefined as number | undefined,
+  aspiration: undefined as string | undefined,
+  powerHp: undefined as number | undefined,
+  torqueNm: undefined as number | undefined,
+};
+
+const Step1BasicInfo: React.FC<Step1Props> = ({
+  variantId,
+  setVariantId,
+  onNext,
+  isNewVehicle = false,
+}) => {
   const queryClient = useQueryClient();
   const isEditMode = !!variantId;
 
@@ -70,6 +93,15 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
   const [brandModalOpen, setBrandModalOpen] = useState(false);
   const [modelModalOpen, setModelModalOpen] = useState(false);
   const [generationModalOpen, setGenerationModalOpen] = useState(false);
+
+  // Auto-populate
+  const [autoPopulate, setAutoPopulate] = useState(false);
+  const [sourceVariantId, setSourceVariantId] = useState<string | null>(null);
+  const [autoPopulateMessage, setAutoPopulateMessage] = useState<string | null>(null);
+  const [autoPopulateSeverity, setAutoPopulateSeverity] = useState<'info' | 'success' | 'warning'>('info');
+  const [isLookingUpTemplate, setIsLookingUpTemplate] = useState(false);
+  const lastTemplateKeyRef = useRef<string>('');
+  const pendingPopulateRef = useRef<string | null>(null);
 
   const {
     control,
@@ -89,13 +121,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
       fuelType: undefined,
       transmissionType: undefined,
       drivetrain: undefined,
-      engine: {
-        displacementCc: undefined,
-        cylinders: undefined,
-        aspiration: undefined,
-        powerHp: undefined,
-        torqueNm: undefined,
-      },
+      engine: { ...emptyEngine },
       description: '',
       shortDescription: '',
       status: 'draft'
@@ -104,6 +130,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
 
   const selectedBrand = watch('brandId');
   const selectedModel = watch('modelId');
+  const selectedGeneration = watch('generationId');
 
   // Fetch initial data if edit mode
   const { data, isLoading: isFetching, isError } = useQuery({
@@ -137,7 +164,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
         name: variant.name,
         variantCode: variant.variantCode || '',
         brandId: variant.model?.brandId?._id || variant.model?.brandId || '',
-        modelId: variant.model?._id || '',
+        modelId: variant.model?._id || variant.modelId?._id || variant.modelId || '',
         generationId: variant.generationId?._id || variant.generationId || '',
         modelYear: variant.modelYear,
         fuelType: variant.fuelType,
@@ -153,20 +180,170 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
     }
   }, [data, reset]);
 
+  const clearTemplateDerivedFields = () => {
+    setValue('modelYear', undefined);
+    setValue('fuelType', undefined);
+    setValue('transmissionType', undefined);
+    setValue('drivetrain', undefined);
+    setValue('engine', { ...emptyEngine });
+    setValue('seatingCapacity', undefined);
+    setValue('doors', undefined);
+    setValue('description', '');
+    setValue('shortDescription', '');
+  };
+
+  const applyTemplateToForm = (
+    source: NonNullable<Awaited<ReturnType<typeof getVariantTemplate>>['data']>['sourceVariant'],
+  ) => {
+    if (!source) return;
+    // Keep current name / status / variantCode — do not overwrite unique fields
+    if (source.modelYear !== undefined) setValue('modelYear', source.modelYear);
+    if (source.fuelType) setValue('fuelType', source.fuelType as any);
+    if (source.transmissionType) setValue('transmissionType', source.transmissionType as any);
+    if (source.drivetrain) setValue('drivetrain', source.drivetrain as any);
+    if (source.engine) {
+      setValue('engine', {
+        displacementCc: source.engine.displacementCc,
+        cylinders: source.engine.cylinders,
+        aspiration: source.engine.aspiration,
+        powerHp: source.engine.powerHp,
+        torqueNm: source.engine.torqueNm,
+      });
+    }
+    if (source.seatingCapacity !== undefined) setValue('seatingCapacity', source.seatingCapacity);
+    if (source.doors !== undefined) setValue('doors', source.doors);
+    if (source.description !== undefined) setValue('description', source.description || '');
+    if (source.shortDescription !== undefined) setValue('shortDescription', source.shortDescription || '');
+  };
+
+  // Lookup template when switch is ON and Brand + Model (+ optional Generation) are selected
+  useEffect(() => {
+    if (!autoPopulate || !isNewVehicle) {
+      return;
+    }
+
+    if (!selectedBrand || !selectedModel) {
+      setSourceVariantId(null);
+      setAutoPopulateMessage(null);
+      lastTemplateKeyRef.current = '';
+      return;
+    }
+
+    const templateKey = `${selectedModel}:${selectedGeneration || ''}`;
+    if (lastTemplateKeyRef.current === templateKey) {
+      return;
+    }
+    lastTemplateKeyRef.current = templateKey;
+
+    let cancelled = false;
+
+    const run = async () => {
+      setIsLookingUpTemplate(true);
+      setAutoPopulateMessage(null);
+      setSourceVariantId(null);
+      // Clear previously auto-filled fields so stale data from another combo cannot linger
+      clearTemplateDerivedFields();
+
+      try {
+        const res = await getVariantTemplate({
+          modelId: selectedModel,
+          generationId: selectedGeneration || undefined,
+          excludeVariantId: variantId || undefined,
+        });
+        if (cancelled) return;
+
+        const result = res.data;
+        if (result?.found && result.sourceVariant && result.sourceVariantId) {
+          applyTemplateToForm(result.sourceVariant);
+          setSourceVariantId(result.sourceVariantId);
+          setAutoPopulateSeverity('success');
+          setAutoPopulateMessage(
+            result.message ||
+              `Loaded template from "${result.sourceVariant._sourceName || 'existing vehicle'}". All steps will be pre-filled; you can still edit everything.`,
+          );
+        } else {
+          setSourceVariantId(null);
+          setAutoPopulateSeverity('warning');
+          setAutoPopulateMessage(
+            result?.message ||
+              'No existing vehicle found for this Brand, Model, and Generation. Continue with manual entry.',
+          );
+        }
+      } catch (err: any) {
+        if (cancelled) return;
+        setSourceVariantId(null);
+        setAutoPopulateSeverity('warning');
+        setAutoPopulateMessage(
+          err?.response?.data?.message ||
+            'Could not look up an existing vehicle. You can continue entering data manually.',
+        );
+      } finally {
+        if (!cancelled) setIsLookingUpTemplate(false);
+      }
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoPopulate, selectedBrand, selectedModel, selectedGeneration, isNewVehicle, variantId]);
+
   const createMutation = useMutation({
-    mutationFn: (data: any) => createVariant(data),
+    mutationFn: async (formData: any) => {
+      const res = await createVariant(formData);
+      const newId = res.data._id;
+      const sourceId = pendingPopulateRef.current;
+      if (sourceId) {
+        try {
+          await populateVariantFromSource(newId, sourceId);
+        } catch (err) {
+          console.error('Failed to auto-populate related vehicle data', err);
+          throw Object.assign(
+            new Error(
+              'Vehicle created, but auto-populate of related data failed. You can continue filling steps manually.',
+            ),
+            { cause: err, createdVariantId: newId },
+          );
+        }
+      }
+      return res;
+    },
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ['variants'] });
       setVariantId(res.data._id);
+      pendingPopulateRef.current = null;
       onNext();
-    }
+    },
+    onError: (err: any) => {
+      if (err?.createdVariantId) {
+        setVariantId(err.createdVariantId);
+      }
+    },
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: any) => updateVariant(variantId!, data),
+    mutationFn: async (formData: any) => {
+      const res = await updateVariant(variantId!, formData);
+      const sourceId = pendingPopulateRef.current;
+      if (sourceId && autoPopulate && isNewVehicle) {
+        try {
+          await populateVariantFromSource(variantId!, sourceId);
+        } catch (err) {
+          console.error('Failed to auto-populate related vehicle data', err);
+        }
+      }
+      return res;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['variants'] });
       queryClient.invalidateQueries({ queryKey: ['variant', variantId] });
+      queryClient.invalidateQueries({ queryKey: ['specifications', variantId] });
+      queryClient.invalidateQueries({ queryKey: ['variant-features', variantId] });
+      queryClient.invalidateQueries({ queryKey: ['variant-colors', variantId] });
+      queryClient.invalidateQueries({ queryKey: ['variant-markets', variantId] });
+      queryClient.invalidateQueries({ queryKey: ['variant-media', variantId] });
+      pendingPopulateRef.current = null;
       onNext();
     }
   });
@@ -187,10 +364,22 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
     if (submitData.generationId === '') submitData.generationId = null;
     if (submitData.variantCode === '') delete submitData.variantCode;
 
+    pendingPopulateRef.current =
+      autoPopulate && isNewVehicle && sourceVariantId ? sourceVariantId : null;
+
     if (isEditMode) {
       updateMutation.mutate(submitData);
     } else {
       createMutation.mutate(submitData);
+    }
+  };
+
+  const handleAutoPopulateToggle = (checked: boolean) => {
+    setAutoPopulate(checked);
+    lastTemplateKeyRef.current = '';
+    if (!checked) {
+      setSourceVariantId(null);
+      setAutoPopulateMessage(null);
     }
   };
 
@@ -211,6 +400,44 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
       )}
 
       <Stack spacing={3}>
+        {isNewVehicle && (
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 1,
+              p: 2,
+              border: '1px solid',
+              borderColor: 'divider',
+              borderRadius: 1,
+              bgcolor: 'background.default',
+            }}
+          >
+            <Box>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={autoPopulate}
+                    onChange={(e) => handleAutoPopulateToggle(e.target.checked)}
+                    color="primary"
+                  />
+                }
+                label="Auto-populate existing data"
+              />
+              <Typography variant="caption" color="text.secondary" display="block" sx={{ ml: 1.5 }}>
+                When enabled, selecting Brand, Model, and Generation loads matching vehicle data into every step. Images are reused, not re-uploaded.
+              </Typography>
+            </Box>
+            {isLookingUpTemplate && <CircularProgress size={22} />}
+          </Box>
+        )}
+
+        {autoPopulate && autoPopulateMessage && (
+          <Alert severity={autoPopulateSeverity}>{autoPopulateMessage}</Alert>
+        )}
+
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start', flex: 1 }}>
             <Controller
@@ -227,6 +454,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
                       field.onChange(newValue ? newValue._id : '');
                       setValue('modelId', '');
                       setValue('generationId', '');
+                      lastTemplateKeyRef.current = '';
                     }}
                     renderInput={(params) => (
                       <TextField 
@@ -263,6 +491,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
                     onChange={(_, newValue) => {
                       field.onChange(newValue ? newValue._id : '');
                       setValue('generationId', '');
+                      lastTemplateKeyRef.current = '';
                     }}
                     disabled={!selectedBrand}
                     renderInput={(params) => (
@@ -298,6 +527,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
                     value={selectedOption}
                     onChange={(_, newValue) => {
                       field.onChange(newValue ? newValue._id : '');
+                      lastTemplateKeyRef.current = '';
                     }}
                     disabled={!selectedModel}
                     renderInput={(params) => (
@@ -518,7 +748,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
         </Box>
 
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
-          <Button type="submit" variant="contained" disabled={isSaving}>
+          <Button type="submit" variant="contained" disabled={isSaving || isLookingUpTemplate}>
             {isSaving ? 'Saving...' : 'Save & Continue'}
           </Button>
         </Box>
@@ -530,6 +760,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
             setValue('brandId', id, { shouldValidate: true });
             setValue('modelId', '');
             setValue('generationId', '');
+            lastTemplateKeyRef.current = '';
             setBrandModalOpen(false);
           }}
           onCancel={() => setBrandModalOpen(false)}
@@ -542,6 +773,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
           onSuccess={(id) => {
             setValue('modelId', id, { shouldValidate: true });
             setValue('generationId', '');
+            lastTemplateKeyRef.current = '';
             setModelModalOpen(false);
           }}
           onCancel={() => setModelModalOpen(false)}
@@ -553,6 +785,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({ variantId, setVariantId, onNext 
           initialData={{ brandId: selectedBrand || undefined, modelId: selectedModel || undefined }}
           onSuccess={(id) => {
             setValue('generationId', id, { shouldValidate: true });
+            lastTemplateKeyRef.current = '';
             setGenerationModalOpen(false);
           }}
           onCancel={() => setGenerationModalOpen(false)}

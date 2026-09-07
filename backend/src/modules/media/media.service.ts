@@ -138,11 +138,96 @@ export class MediaService {
     return { message: 'Media soft-deleted successfully' };
   }
 
+  /**
+   * Attach an existing media file to another entity by creating a lightweight
+   * Media document that reuses the same url / underlying storage object.
+   * Does not re-upload or duplicate binary files. storageKey is unique, so
+   * linked records use a resolvable `shared/{sourceId}/{entityId}` key.
+   */
+  async linkExistingMediaToEntity(
+    sourceMediaId: string,
+    entityType: 'variant' | 'brand' | 'model' | 'generation',
+    entityId: string,
+  ) {
+    const source = await mediaRepository.findById(sourceMediaId);
+    if (!source || source.status === 'inactive') {
+      throw new AppError('Source media not found', 404);
+    }
+
+    // Resolve to the original media if this is already a shared link
+    let root = source;
+    let depth = 0;
+    while (root.storageKey?.startsWith('shared/') && depth < 5) {
+      const rootId = root.storageKey.split('/')[1];
+      const next = rootId ? await mediaRepository.findById(rootId) : null;
+      if (!next) break;
+      root = next;
+      depth += 1;
+    }
+
+    // Avoid duplicate link records for the same entity + file url
+    const existingForEntity = await mediaRepository.findByEntity(entityType, entityId);
+    const alreadyLinked = existingForEntity.find(
+      (item) =>
+        item.url === root.url ||
+        item.storageKey === root.storageKey ||
+        item.storageKey === `shared/${root._id.toString()}/${entityId}`,
+    );
+    if (alreadyLinked) {
+      return this.normalizeMedia(alreadyLinked);
+    }
+
+    if (entityType === 'variant') {
+      const variant = await variantRepository.findById(entityId);
+      if (!variant) {
+        throw new AppError('Variant not found', 404);
+      }
+    }
+
+    const created = await mediaRepository.create({
+      folder: root.folder,
+      entityType,
+      entityId: entityId as any,
+      colorId: root.colorId,
+      angleTag: root.angleTag,
+      mediaType: root.mediaType,
+      storageProvider: root.storageProvider,
+      // Unique key that still resolves to the original file via getMediaStream
+      storageKey: `shared/${root._id.toString()}/${entityId}`,
+      url: root.url,
+      originalName: root.originalName,
+      mimeType: root.mimeType,
+      size: root.size,
+      altText: root.altText,
+      isPrimary: existingForEntity.length === 0,
+      sortOrder: root.sortOrder ?? 0,
+      status: 'active',
+    });
+
+    return this.normalizeMedia(created);
+  }
+
+  private async resolvePhysicalStorageKey(
+    storageKey: string,
+    depth = 0,
+  ): Promise<string> {
+    if (!storageKey?.startsWith('shared/') || depth >= 5) {
+      return storageKey;
+    }
+    const sourceId = storageKey.split('/')[1];
+    if (!sourceId) return storageKey;
+    const source = await mediaRepository.findById(sourceId);
+    if (!source?.storageKey) return storageKey;
+    return this.resolvePhysicalStorageKey(source.storageKey, depth + 1);
+  }
+
   async getMediaStream(storageKey: string): Promise<FileStreamResult | null> {
+    const resolvedKey = await this.resolvePhysicalStorageKey(storageKey);
+
     // 1. Try provider getStream
     if (this.storage.getStream) {
       try {
-        const result = await this.storage.getStream(storageKey);
+        const result = await this.storage.getStream(resolvedKey);
         if (result) return result;
       } catch (err) {
         console.error('Storage provider getStream error:', err);
@@ -152,7 +237,7 @@ export class MediaService {
     // 2. Fallback to local uploads directory
     try {
       const uploadDir = process.env.UPLOAD_DIR || 'uploads/media';
-      const filePath = path.join(path.resolve(uploadDir), storageKey);
+      const filePath = path.join(path.resolve(uploadDir), resolvedKey);
       await fs.access(filePath);
       const stat = await fs.stat(filePath);
       return {
