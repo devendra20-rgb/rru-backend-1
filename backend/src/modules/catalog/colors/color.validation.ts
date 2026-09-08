@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { PaginationQuerySchema } from '../../../utils/pagination';
 
 const COLOR_TYPES = ['exterior', 'interior'] as const;
+const FINISH_TYPES = ['solid', 'metallic', 'matte', 'pearlescent'] as const;
 const AVAILABILITIES = ['standard', 'optional', 'unavailable'] as const;
 
 // Hex code regex: optional leading # then 3 or 6 hex digits
@@ -10,10 +11,13 @@ const hexCodeRegex = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 export const createColorSchema = z.object({
   body: z.object({
     name: z.string().min(2, 'Name must be at least 2 characters').max(100),
+    colorCode: z.string().min(1, 'Color code is required').max(50).optional(),
     hexCode: z
       .string()
       .regex(hexCodeRegex, 'hexCode must be a valid hex color (e.g. #FF0000 or #F00)')
       .optional(),
+    colorFamily: z.string().max(50).optional(),
+    finishType: z.enum(FINISH_TYPES).optional(),
     type: z.enum(COLOR_TYPES),
     status: z.enum(['active', 'inactive']).optional(),
   }),
@@ -23,10 +27,13 @@ export const updateColorSchema = z.object({
   body: z
     .object({
       name: z.string().min(2).max(100).optional(),
+      colorCode: z.string().min(1).max(50).optional(),
       hexCode: z
         .string()
         .regex(hexCodeRegex, 'hexCode must be a valid hex color (e.g. #FF0000 or #F00)')
         .optional(),
+      colorFamily: z.string().max(50).optional(),
+      finishType: z.enum(FINISH_TYPES).optional(),
       type: z.enum(COLOR_TYPES).optional(),
       status: z.enum(['active', 'inactive']).optional(),
     })

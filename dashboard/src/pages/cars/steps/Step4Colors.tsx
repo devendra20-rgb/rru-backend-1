@@ -219,7 +219,7 @@ const Step4Colors: React.FC<Step4Props> = ({ variantId, onNext, onBack }) => {
         <ColorForm 
           onSuccess={() => {
             setColorModalOpen(false);
-            // Color list refreshes via react-query and appears dynamically
+            queryClient.invalidateQueries({ queryKey: ['colors'] });
           }}
           onCancel={() => setColorModalOpen(false)}
         />

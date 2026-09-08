@@ -26,6 +26,10 @@ class ColorRepository {
     return Color.findOne({ slug });
   }
 
+  async findByColorCode(colorCode: string): Promise<IColor | null> {
+    return Color.findOne({ colorCode: colorCode.trim().toUpperCase() });
+  }
+
   async findByName(name: string): Promise<IColor | null> {
     return Color.findOne({ name: { $regex: new RegExp(`^${name}$`, 'i') } });
   }
@@ -43,7 +47,11 @@ class ColorRepository {
     if (type) filter.type = type;
     if (status) filter.status = status;
     if (search) {
-      filter.$or = [{ name: { $regex: search, $options: 'i' } }];
+      filter.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { colorCode: { $regex: search, $options: 'i' } },
+        { colorFamily: { $regex: search, $options: 'i' } },
+      ];
     }
 
     const [data, total] = await Promise.all([

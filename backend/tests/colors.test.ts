@@ -49,6 +49,7 @@ describe('Colors API', () => {
     });
 
     const variant = await Variant.create({
+      modelId: model._id,
       generationId: generation._id,
       variantCode: 'COL-VAR',
       name: 'Color Variant',
@@ -92,7 +93,56 @@ describe('Colors API', () => {
       expect(response.body.data.slug).toBe('pearl-white');
       expect(response.body.data.type).toBe('exterior');
       expect(response.body.data.hexCode).toBe('#F5F5F5');
-      colorId = response.body.data.id;
+      colorId = response.body.data._id || response.body.data.id;
+    });
+
+    it('should persist colorCode, colorFamily, and finishType from the form', async () => {
+      const payload = {
+        name: 'Alpine Blue',
+        colorCode: 'ab-300',
+        hexCode: '#1E3A8A',
+        colorFamily: 'Blue',
+        finishType: 'metallic',
+        type: 'exterior',
+        status: 'active',
+      };
+
+      const response = await request(app)
+        .post('/api/v1/colors')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(payload);
+
+      expect(response.status).toBe(201);
+      expect(response.body.data.name).toBe('Alpine Blue');
+      expect(response.body.data.colorCode).toBe('AB-300');
+      expect(response.body.data.hexCode).toBe('#1E3A8A');
+      expect(response.body.data.colorFamily).toBe('Blue');
+      expect(response.body.data.finishType).toBe('metallic');
+      expect(response.body.data.type).toBe('exterior');
+
+      const persistedId = response.body.data._id || response.body.data.id;
+      const fromDb = await Color.findById(persistedId).lean();
+      expect(fromDb).toBeTruthy();
+      expect(fromDb!.colorCode).toBe('AB-300');
+      expect(fromDb!.hexCode).toBe('#1E3A8A');
+      expect(fromDb!.colorFamily).toBe('Blue');
+      expect(fromDb!.finishType).toBe('metallic');
+      expect(fromDb!.type).toBe('exterior');
+      expect(fromDb!.name).toBe('Alpine Blue');
+    });
+
+    it('should prevent duplicate color codes', async () => {
+      const response = await request(app)
+        .post('/api/v1/colors')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          name: 'Another Alpine Blue',
+          colorCode: 'AB-300',
+          hexCode: '#0000FF',
+          type: 'exterior',
+        });
+
+      expect(response.status).toBe(409);
     });
 
     it('should prevent duplicate color names', async () => {
@@ -190,7 +240,7 @@ describe('Colors API', () => {
 
       expect(response.status).toBe(201);
       expect(response.body.data.availability).toBe('standard');
-      variantColorId = response.body.data.id;
+      variantColorId = response.body.data._id || response.body.data.id;
     });
 
     it('should prevent duplicate mapping for the same variant and color', async () => {

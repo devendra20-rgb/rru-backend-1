@@ -4,6 +4,7 @@ import { PaginationQuery } from '../../../utils/pagination';
 // Enums
 export type ColorType = 'exterior' | 'interior';
 export type ColorStatus = 'active' | 'inactive';
+export type ColorFinishType = 'solid' | 'metallic' | 'matte' | 'pearlescent';
 
 export type VariantColorAvailability = 'standard' | 'optional' | 'unavailable';
 export type VariantColorStatus = 'active' | 'inactive';
@@ -13,7 +14,10 @@ export interface IColor extends Document {
   _id: Types.ObjectId;
   name: string;
   slug: string;
+  colorCode?: string;
   hexCode?: string;
+  colorFamily?: string;
+  finishType?: ColorFinishType;
   type: ColorType;
   status: ColorStatus;
   createdAt: Date;
@@ -34,14 +38,20 @@ export interface IVariantColor extends Document {
 // DTOs
 export interface CreateColorDTO {
   name: string;
+  colorCode?: string;
   hexCode?: string;
+  colorFamily?: string;
+  finishType?: ColorFinishType;
   type: ColorType;
   status?: ColorStatus;
 }
 
 export interface UpdateColorDTO {
   name?: string;
+  colorCode?: string;
   hexCode?: string;
+  colorFamily?: string;
+  finishType?: ColorFinishType;
   type?: ColorType;
   status?: ColorStatus;
 }

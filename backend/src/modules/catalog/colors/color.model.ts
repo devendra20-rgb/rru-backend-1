@@ -16,9 +16,25 @@ const colorSchema = new Schema<IColor>(
       lowercase: true,
       trim: true,
     },
+    colorCode: {
+      type: String,
+      trim: true,
+      uppercase: true,
+    },
     hexCode: {
       type: String,
       trim: true,
+    },
+    colorFamily: {
+      type: String,
+      trim: true,
+    },
+    finishType: {
+      type: String,
+      enum: {
+        values: ['solid', 'metallic', 'matte', 'pearlescent'],
+        message: '{VALUE} is not a valid finish type',
+      },
     },
     type: {
       type: String,
@@ -44,6 +60,7 @@ const colorSchema = new Schema<IColor>(
 colorSchema.index({ type: 1 });
 colorSchema.index({ status: 1 });
 colorSchema.index({ name: 'text' });
+colorSchema.index({ colorCode: 1 }, { unique: true, sparse: true });
 
 export const Color = model<IColor>('Color', colorSchema);
 

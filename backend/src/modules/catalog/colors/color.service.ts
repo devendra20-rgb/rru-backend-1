@@ -20,7 +20,20 @@ export class ColorService {
       throw new AppError('Color with this name already exists', 409);
     }
 
-    return colorRepository.create({ ...data, slug });
+    const payload: CreateColorDTO & { slug: string } = {
+      ...data,
+      slug,
+    };
+
+    if (data.colorCode) {
+      payload.colorCode = data.colorCode.trim().toUpperCase();
+      const existingCode = await colorRepository.findByColorCode(payload.colorCode);
+      if (existingCode) {
+        throw new AppError(`Color code '${payload.colorCode}' already exists`, 409);
+      }
+    }
+
+    return colorRepository.create(payload);
   }
 
   async getColors(query: ColorQuery) {
@@ -55,7 +68,17 @@ export class ColorService {
       }
     }
 
-    const updatedColor = await colorRepository.update(id, { ...data, slug });
+    const updatePayload: UpdateColorDTO & { slug?: string } = { ...data, slug };
+
+    if (data.colorCode !== undefined) {
+      updatePayload.colorCode = data.colorCode.trim().toUpperCase();
+      const existingCode = await colorRepository.findByColorCode(updatePayload.colorCode);
+      if (existingCode && existingCode._id.toString() !== id) {
+        throw new AppError(`Color code '${updatePayload.colorCode}' already exists`, 409);
+      }
+    }
+
+    const updatedColor = await colorRepository.update(id, updatePayload);
     if (!updatedColor) {
       throw new AppError('Color not found', 404);
     }
