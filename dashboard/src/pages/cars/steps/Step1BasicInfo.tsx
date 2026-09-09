@@ -467,7 +467,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
               bgcolor: 'background.default',
             }}
           >
-            <Box>
+            <Box sx={{ width: '100%' }}>
               <FormControlLabel
                 control={
                   <Switch
@@ -478,54 +478,55 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
                 }
                 label="Auto-populate existing data"
               />
-              <Typography
-  variant="caption"
-  color="text.secondary"
-  sx={{
-    ml: "...",
-    display: "...",
-  }}
->
-                When enabled, selecting Brand and Model (and Generation if available) loads matching vehicle data into every step. If multiple vehicles match, you choose which one to use. Images are reused, not re-uploaded.
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', ml: 1.5, mb: 1 }}>
+                Copies specs, features, colors, markets, and media from an existing vehicle of the same Brand/Model
+                {selectedGeneration ? '/Generation' : ''}. If several vehicles match, pick one below — this is separate from the Generation field.
               </Typography>
+
+              {autoPopulate && isLookingUpTemplate && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 1.5, mb: 1 }}>
+                  <CircularProgress size={18} />
+                  <Typography variant="caption">Looking for matching vehicles…</Typography>
+                </Box>
+              )}
+
+              {autoPopulate && autoPopulateMessage && (
+                <Alert severity={autoPopulateSeverity} sx={{ mt: 1 }}>
+                  {autoPopulateMessage}
+                </Alert>
+              )}
+
+              {autoPopulate && templateCandidates.length > 1 && (
+                <FormControl fullWidth sx={{ mt: 2 }}>
+                  <InputLabel>Copy from which existing vehicle? *</InputLabel>
+                  <Select
+                    label="Copy from which existing vehicle? *"
+                    value={sourceVariantId || ''}
+                    onChange={(e) => {
+                      const chosen = templateCandidates.find((c) => c.sourceVariantId === e.target.value);
+                      if (chosen) selectTemplateCandidate(chosen);
+                    }}
+                  >
+                    <MenuItem value="" disabled>
+                      Select a vehicle to copy…
+                    </MenuItem>
+                    {templateCandidates.map((candidate) => (
+                      <MenuItem key={candidate.sourceVariantId} value={candidate.sourceVariantId}>
+                        {candidate.name}
+                        {candidate.modelYear ? ` · ${candidate.modelYear}` : ''}
+                        {candidate.variantCode ? ` · ${candidate.variantCode}` : ''}
+                        {candidate.fuelType ? ` · ${String(candidate.fuelType).replace(/_/g, ' ')}` : ''}
+                        {candidate.status ? ` · ${candidate.status}` : ''}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  <FormHelperText>
+                    Not the Generation field — choose the specific vehicle whose data should be copied.
+                  </FormHelperText>
+                </FormControl>
+              )}
             </Box>
-            {isLookingUpTemplate && <CircularProgress size={22} />}
           </Box>
-        )}
-
-        {autoPopulate && autoPopulateMessage && (
-          <Alert severity={autoPopulateSeverity}>{autoPopulateMessage}</Alert>
-        )}
-
-        {autoPopulate && templateCandidates.length > 1 && (
-          <FormControl fullWidth>
-            <InputLabel>Populate from existing vehicle *</InputLabel>
-            <Select
-              label="Populate from existing vehicle *"
-              value={sourceVariantId || ''}
-              onChange={(e) => {
-                const chosen = templateCandidates.find((c) => c.sourceVariantId === e.target.value);
-                if (chosen) selectTemplateCandidate(chosen);
-              }}
-            >
-              <MenuItem value="" disabled>
-                Select a vehicle…
-              </MenuItem>
-              {templateCandidates.map((candidate) => (
-                <MenuItem key={candidate.sourceVariantId} value={candidate.sourceVariantId}>
-                  {candidate.name}
-                  {candidate.modelYear ? ` · ${candidate.modelYear}` : ''}
-                  {candidate.variantCode ? ` · ${candidate.variantCode}` : ''}
-                  {candidate.fuelType ? ` · ${String(candidate.fuelType).replace(/_/g, ' ')}` : ''}
-                  {candidate.status ? ` · ${candidate.status}` : ''}
-                </MenuItem>
-              ))}
-            </Select>
-            <FormHelperText>
-              Multiple vehicles share this Brand/Model
-              {selectedGeneration ? '/Generation' : ' (no generation)'}. Pick the source to copy from.
-            </FormHelperText>
-          </FormControl>
         )}
 
         <Box sx={{ display: 'flex', gap: 2 }}>
@@ -604,41 +605,70 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
             </IconButton>
           </Box>
 
-          <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start', flex: 1 }}>
-            <Controller
-              name="generationId"
-              control={control}
-              render={({ field }) => {
-                const selectedOption = generationsData?.data?.find((g: any) => g._id === field.value) || null;
-                return (
-                  <Autocomplete
-                    options={generationsData?.data || []}
-                    getOptionLabel={(option: any) => option.name || ''}
-                    value={selectedOption}
-                    onChange={(_, newValue) => {
-                      field.onChange(newValue ? newValue._id : '');
-                      lastTemplateKeyRef.current = '';
-                    }}
-                    disabled={!selectedModel}
-                    renderInput={(params) => (
-                      <TextField 
-                        {...params} 
-                        label="Generation (Optional)" 
-                        error={!!errors.generationId} 
-                        helperText={errors.generationId?.message} 
-                      />
-                    )}
-                    sx={{ '& .MuiAutocomplete-listbox': { maxHeight: 250 } }}
+          {(() => {
+            const generations = generationsData?.data || [];
+            const hasGenerations = generations.length > 0 || !!selectedGeneration;
+            if (!selectedModel) {
+              return (
+                <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start', flex: 1 }}>
+                  <TextField
+                    label="Generation (Optional)"
                     fullWidth
-                    isOptionEqualToValue={(option: any, value: any) => option._id === value._id}
+                    disabled
+                    helperText="Select a model first"
                   />
-                );
-              }}
-            />
-            <IconButton color="primary" sx={{ mt: 1 }} disabled={!selectedModel} onClick={() => setGenerationModalOpen(true)}>
-              <AddIcon />
-            </IconButton>
-          </Box>
+                </Box>
+              );
+            }
+            if (!hasGenerations) {
+              return (
+                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flex: 1 }}>
+                  <Alert severity="info" sx={{ flex: 1, py: 0.5 }}>
+                    No generations for this model — leave blank, or add one.
+                  </Alert>
+                  <IconButton color="primary" onClick={() => setGenerationModalOpen(true)}>
+                    <AddIcon />
+                  </IconButton>
+                </Box>
+              );
+            }
+            return (
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start', flex: 1 }}>
+                <Controller
+                  name="generationId"
+                  control={control}
+                  render={({ field }) => {
+                    const selectedOption = generations.find((g: any) => g._id === field.value) || null;
+                    return (
+                      <Autocomplete
+                        options={generations}
+                        getOptionLabel={(option: any) => option.name || ''}
+                        value={selectedOption}
+                        onChange={(_, newValue) => {
+                          field.onChange(newValue ? newValue._id : '');
+                          lastTemplateKeyRef.current = '';
+                        }}
+                        renderInput={(params) => (
+                          <TextField 
+                            {...params} 
+                            label="Generation (Optional)" 
+                            error={!!errors.generationId} 
+                            helperText={errors.generationId?.message || 'Model generation/year range — not a vehicle to copy from'} 
+                          />
+                        )}
+                        sx={{ '& .MuiAutocomplete-listbox': { maxHeight: 250 } }}
+                        fullWidth
+                        isOptionEqualToValue={(option: any, value: any) => option._id === value._id}
+                      />
+                    );
+                  }}
+                />
+                <IconButton color="primary" sx={{ mt: 1 }} onClick={() => setGenerationModalOpen(true)}>
+                  <AddIcon />
+                </IconButton>
+              </Box>
+            );
+          })()}
         </Box>
 
         <Box sx={{ display: 'flex', gap: 2 }}>

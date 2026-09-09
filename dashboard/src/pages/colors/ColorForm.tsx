@@ -235,24 +235,26 @@ const ColorForm: React.FC<ColorFormProps> = ({ onSuccess, onCancel }) => {
             </Box>
 
             <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
-              <Controller
-                name="colorFamily"
-                control={control}
-                render={({ field }) => (
-                  <FormControl fullWidth error={!!errors.colorFamily}>
-                    <InputLabel>Color Family</InputLabel>
-                    <Select {...field} label="Color Family">
-                      <MenuItem value="">None</MenuItem>
-                      {colorFamilies.map((fam) => (
-                        <MenuItem key={fam} value={fam}>{fam}</MenuItem>
-                      ))}
-                    </Select>
-                    {errors.colorFamily && <FormHelperText>{errors.colorFamily.message}</FormHelperText>}
-                  </FormControl>
-                )}
-              />
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Controller
+                  name="colorFamily"
+                  control={control}
+                  render={({ field }) => (
+                    <FormControl fullWidth error={!!errors.colorFamily}>
+                      <InputLabel>Color Family</InputLabel>
+                      <Select {...field} label="Color Family">
+                        <MenuItem value="">None</MenuItem>
+                        {colorFamilies.map((fam) => (
+                          <MenuItem key={fam} value={fam}>{fam}</MenuItem>
+                        ))}
+                      </Select>
+                      {errors.colorFamily && <FormHelperText>{errors.colorFamily.message}</FormHelperText>}
+                    </FormControl>
+                  )}
+                />
+              </Box>
 
-              <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                 <FormControl fullWidth error={!!errors.finishType}>
                   <InputLabel>Finish Type</InputLabel>
                   <Select
