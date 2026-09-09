@@ -52,9 +52,31 @@ export const deleteVariant = async (id: string): Promise<SingleResponse<null>> =
   return response.data;
 };
 
+export interface VariantTemplateCandidate {
+  sourceVariantId: string;
+  name: string;
+  variantCode?: string;
+  status?: string;
+  modelId?: string;
+  generationId?: string | null;
+  modelYear?: number;
+  fuelType?: string;
+  transmissionType?: string;
+  drivetrain?: string;
+  engine?: Variant['engine'];
+  seatingCapacity?: number;
+  doors?: number;
+  description?: string;
+  shortDescription?: string;
+  _sourceName?: string;
+  _completenessScore?: number;
+}
+
 export interface VariantTemplateResult {
   found: boolean;
+  requiresSelection?: boolean;
   message: string;
+  candidates?: VariantTemplateCandidate[];
   sourceVariantId: string | null;
   sourceVariant: {
     modelId?: string;

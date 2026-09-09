@@ -4,7 +4,7 @@ import { PaginationQuery } from '../../../utils/pagination';
 // Enums
 export type ColorType = 'exterior' | 'interior';
 export type ColorStatus = 'active' | 'inactive';
-export type ColorFinishType = 'solid' | 'metallic' | 'matte' | 'pearlescent';
+export type ColorFinishType = string;
 
 export type VariantColorAvailability = 'standard' | 'optional' | 'unavailable';
 export type VariantColorStatus = 'active' | 'inactive';

@@ -2,7 +2,6 @@ import { z } from 'zod';
 import { PaginationQuerySchema } from '../../../utils/pagination';
 
 const COLOR_TYPES = ['exterior', 'interior'] as const;
-const FINISH_TYPES = ['solid', 'metallic', 'matte', 'pearlescent'] as const;
 const AVAILABILITIES = ['standard', 'optional', 'unavailable'] as const;
 
 // Hex code regex: optional leading # then 3 or 6 hex digits
@@ -17,7 +16,7 @@ export const createColorSchema = z.object({
       .regex(hexCodeRegex, 'hexCode must be a valid hex color (e.g. #FF0000 or #F00)')
       .optional(),
     colorFamily: z.string().max(50).optional(),
-    finishType: z.enum(FINISH_TYPES).optional(),
+    finishType: z.string().trim().min(1).max(50).optional(),
     type: z.enum(COLOR_TYPES),
     status: z.enum(['active', 'inactive']).optional(),
   }),
@@ -33,7 +32,7 @@ export const updateColorSchema = z.object({
         .regex(hexCodeRegex, 'hexCode must be a valid hex color (e.g. #FF0000 or #F00)')
         .optional(),
       colorFamily: z.string().max(50).optional(),
-      finishType: z.enum(FINISH_TYPES).optional(),
+      finishType: z.string().trim().min(1).max(50).optional(),
       type: z.enum(COLOR_TYPES).optional(),
       status: z.enum(['active', 'inactive']).optional(),
     })

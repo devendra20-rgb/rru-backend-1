@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm, Controller } from 'react-hook-form';
@@ -22,6 +22,9 @@ import {
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { getColor, createColor, updateColor } from '../../api/colors.api';
 
+const PRESET_FINISH_TYPES = ['solid', 'metallic', 'matte', 'pearlescent'] as const;
+const CUSTOM_FINISH_VALUE = '__custom__';
+
 // Validation Schema
 const hexCodeRegex = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
@@ -30,7 +33,7 @@ const colorSchema = z.object({
   colorCode: z.string().min(1, 'Color Code is required'),
   hexCode: z.string().regex(hexCodeRegex, 'Must be a valid hex color (e.g. #FF0000 or #F00)'),
   colorFamily: z.string().optional(),
-  finishType: z.enum(['solid', 'metallic', 'matte', 'pearlescent', '']).optional(),
+  finishType: z.string().max(50).optional(),
   type: z.enum(['exterior', 'interior']),
   status: z.enum(['active', 'inactive']).default('active'),
 });
@@ -42,16 +45,22 @@ export interface ColorFormProps {
   onCancel?: () => void;
 }
 
+const isPresetFinishType = (value?: string) =>
+  !!value && (PRESET_FINISH_TYPES as readonly string[]).includes(value);
+
 const ColorForm: React.FC<ColorFormProps> = ({ onSuccess, onCancel }) => {
   const { id } = useParams<{ id: string }>();
   const isEditMode = !!id;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [useCustomFinish, setUseCustomFinish] = useState(false);
 
   const {
     control,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors }
   } = useForm<ColorFormData>({
     resolver: zodResolver(colorSchema) as any,
@@ -66,6 +75,8 @@ const ColorForm: React.FC<ColorFormProps> = ({ onSuccess, onCancel }) => {
     }
   });
 
+  const finishTypeValue = watch('finishType');
+
   const { data, isLoading: isFetching, isError, error } = useQuery({
     queryKey: ['color', id],
     queryFn: () => getColor(id!),
@@ -75,15 +86,17 @@ const ColorForm: React.FC<ColorFormProps> = ({ onSuccess, onCancel }) => {
   useEffect(() => {
     if (data?.data) {
       const color = data.data;
+      const finish = color.finishType || 'solid';
       reset({
         name: color.name,
         colorCode: color.colorCode || '',
         hexCode: color.hexCode || '',
         colorFamily: color.colorFamily || '',
-        finishType: color.finishType || 'solid',
+        finishType: finish,
         type: color.type || 'exterior',
         status: color.status,
       });
+      setUseCustomFinish(!!finish && !isPresetFinishType(finish));
     }
   }, [data, reset]);
 
@@ -107,9 +120,10 @@ const ColorForm: React.FC<ColorFormProps> = ({ onSuccess, onCancel }) => {
   });
 
   const onSubmit = async (data: ColorFormData) => {
+    const trimmedFinish = data.finishType?.trim() || '';
     const submitData = {
       ...data,
-      finishType: data.finishType === '' ? undefined : data.finishType,
+      finishType: trimmedFinish === '' ? undefined : trimmedFinish,
       colorFamily: data.colorFamily === '' ? undefined : data.colorFamily
     } as any;
     
@@ -139,6 +153,8 @@ const ColorForm: React.FC<ColorFormProps> = ({ onSuccess, onCancel }) => {
     { value: 'exterior', label: 'Exterior' },
     { value: 'interior', label: 'Interior' }
   ];
+
+  const finishSelectValue = useCustomFinish ? CUSTOM_FINISH_VALUE : (finishTypeValue || '');
 
   return (
     <Box>
@@ -218,7 +234,7 @@ const ColorForm: React.FC<ColorFormProps> = ({ onSuccess, onCancel }) => {
               />
             </Box>
 
-            <Box sx={{ display: 'flex', gap: 2 }}>
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
               <Controller
                 name="colorFamily"
                 control={control}
@@ -236,23 +252,58 @@ const ColorForm: React.FC<ColorFormProps> = ({ onSuccess, onCancel }) => {
                 )}
               />
 
-              <Controller
-                name="finishType"
-                control={control}
-                render={({ field }) => (
-                  <FormControl fullWidth error={!!errors.finishType}>
-                    <InputLabel>Finish Type</InputLabel>
-                    <Select {...field} label="Finish Type">
-                      <MenuItem value="">None</MenuItem>
-                      <MenuItem value="solid">Solid</MenuItem>
-                      <MenuItem value="metallic">Metallic</MenuItem>
-                      <MenuItem value="matte">Matte</MenuItem>
-                      <MenuItem value="pearlescent">Pearlescent</MenuItem>
-                    </Select>
-                    {errors.finishType && <FormHelperText>{errors.finishType.message}</FormHelperText>}
-                  </FormControl>
+              <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                <FormControl fullWidth error={!!errors.finishType}>
+                  <InputLabel>Finish Type</InputLabel>
+                  <Select
+                    label="Finish Type"
+                    value={finishSelectValue}
+                    onChange={(e) => {
+                      const next = e.target.value;
+                      if (next === CUSTOM_FINISH_VALUE) {
+                        setUseCustomFinish(true);
+                        // Clear preset value so user enters a custom one
+                        if (isPresetFinishType(finishTypeValue) || !finishTypeValue) {
+                          setValue('finishType', '');
+                        }
+                      } else {
+                        setUseCustomFinish(false);
+                        setValue('finishType', next);
+                      }
+                    }}
+                  >
+                    <MenuItem value="">None</MenuItem>
+                    {PRESET_FINISH_TYPES.map((finish) => (
+                      <MenuItem key={finish} value={finish} sx={{ textTransform: 'capitalize' }}>
+                        {finish}
+                      </MenuItem>
+                    ))}
+                    <MenuItem value={CUSTOM_FINISH_VALUE}>Custom…</MenuItem>
+                  </Select>
+                  {errors.finishType && !useCustomFinish && (
+                    <FormHelperText>{errors.finishType.message}</FormHelperText>
+                  )}
+                </FormControl>
+
+                {useCustomFinish && (
+                  <Controller
+                    name="finishType"
+                    control={control}
+                    render={({ field }) => (
+                      <TextField
+                        {...field}
+                        value={field.value || ''}
+                        label="Custom Finish Type"
+                        placeholder="e.g. satin, gloss, chrome"
+                        fullWidth
+                        autoFocus
+                        error={!!errors.finishType}
+                        helperText={errors.finishType?.message || 'Enter a custom finish type'}
+                      />
+                    )}
+                  />
                 )}
-              />
+              </Box>
             </Box>
 
             <Box sx={{ display: 'flex', gap: 2 }}>

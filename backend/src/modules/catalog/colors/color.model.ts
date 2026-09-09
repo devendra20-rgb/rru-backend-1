@@ -31,10 +31,7 @@ const colorSchema = new Schema<IColor>(
     },
     finishType: {
       type: String,
-      enum: {
-        values: ['solid', 'metallic', 'matte', 'pearlescent'],
-        message: '{VALUE} is not a valid finish type',
-      },
+      trim: true,
     },
     type: {
       type: String,

@@ -79,8 +79,9 @@ const scoreVariantCompleteness = async (variantId: string, variant: any): Promis
 
 export const variantPopulateService = {
   /**
-   * Find the most complete existing variant for Brand/Model/Generation.
+   * Find existing variants for Brand/Model/Generation to use as templates.
    * Generation is optional: when omitted, only variants without a generation are considered.
+   * When multiple match, returns all candidates so the UI can let the user choose.
    */
   async findTemplate(params: {
     modelId: string;
@@ -111,55 +112,85 @@ export const variantPopulateService = {
       filter._id = { $ne: excludeVariantId };
     }
 
-    const candidates = await variantRepository.findMany(filter, 0, 100, { updatedAt: -1 });
+    const matches = await variantRepository.findMany(filter, 0, 100, { updatedAt: -1 });
 
-    if (!candidates.length) {
+    if (!matches.length) {
       return {
         found: false,
-        message: 'No existing vehicle found for the selected Brand, Model, and Generation. You can continue entering data manually.',
+        requiresSelection: false,
+        message:
+          'No existing vehicle found for the selected Brand, Model, and Generation. You can continue entering data manually.',
+        candidates: [],
         sourceVariant: null,
         sourceVariantId: null,
       };
     }
 
-    let best: any = null;
-    let bestScore = -1;
-
-    for (const candidate of candidates) {
+    const scored = [];
+    for (const candidate of matches) {
       const score = await scoreVariantCompleteness(candidate._id.toString(), candidate);
-      if (
-        score > bestScore ||
-        (score === bestScore &&
-          best &&
-          new Date(candidate.updatedAt).getTime() > new Date(best.updatedAt).getTime())
-      ) {
-        best = candidate;
-        bestScore = score;
-      }
+      scored.push({ candidate, score });
     }
 
-    const source = deepClone(best);
-    const generationIdValue = idOf(source.generationId) || null;
+    scored.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return (
+        new Date(b.candidate.updatedAt).getTime() - new Date(a.candidate.updatedAt).getTime()
+      );
+    });
+
+    const toTemplatePayload = (variant: any, score: number) => {
+      const cloned = deepClone(variant);
+      return {
+        sourceVariantId: cloned._id.toString(),
+        name: cloned.name,
+        variantCode: cloned.variantCode,
+        status: cloned.status,
+        modelId: idOf(cloned.modelId),
+        generationId: idOf(cloned.generationId) || null,
+        modelYear: cloned.modelYear,
+        fuelType: cloned.fuelType,
+        transmissionType: cloned.transmissionType,
+        drivetrain: cloned.drivetrain,
+        engine: cloned.engine ? deepClone(cloned.engine) : undefined,
+        seatingCapacity: cloned.seatingCapacity,
+        doors: cloned.doors,
+        description: cloned.description,
+        shortDescription: cloned.shortDescription,
+        _sourceName: cloned.name,
+        _completenessScore: score,
+      };
+    };
+
+    const candidates = scored.map(({ candidate, score }) =>
+      toTemplatePayload(candidate, score),
+    );
+    const best = candidates[0];
+    const requiresSelection = candidates.length > 1;
 
     return {
       found: true,
-      message: `Found existing vehicle "${source.name}" to use as a template.`,
-      sourceVariantId: source._id.toString(),
+      requiresSelection,
+      message: requiresSelection
+        ? `Found ${candidates.length} existing vehicles for this Brand/Model${generationId ? '/Generation' : ''}. Choose which one to use as the template.`
+        : `Found existing vehicle "${best._sourceName}" to use as a template.`,
+      candidates,
+      // Recommended default = most complete (still editable via UI selection)
+      sourceVariantId: best.sourceVariantId,
       sourceVariant: {
-        modelId: idOf(source.modelId),
-        generationId: generationIdValue,
-        modelYear: source.modelYear,
-        fuelType: source.fuelType,
-        transmissionType: source.transmissionType,
-        drivetrain: source.drivetrain,
-        engine: source.engine ? deepClone(source.engine) : undefined,
-        seatingCapacity: source.seatingCapacity,
-        doors: source.doors,
-        description: source.description,
-        shortDescription: source.shortDescription,
-        // Intentionally omit name / variantCode / slug / status — unique or user-controlled
-        _sourceName: source.name,
-        _completenessScore: bestScore,
+        modelId: best.modelId,
+        generationId: best.generationId,
+        modelYear: best.modelYear,
+        fuelType: best.fuelType,
+        transmissionType: best.transmissionType,
+        drivetrain: best.drivetrain,
+        engine: best.engine,
+        seatingCapacity: best.seatingCapacity,
+        doors: best.doors,
+        description: best.description,
+        shortDescription: best.shortDescription,
+        _sourceName: best._sourceName,
+        _completenessScore: best._completenessScore,
       },
     };
   },

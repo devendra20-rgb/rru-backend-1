@@ -7,7 +7,7 @@ export interface Color {
   colorCode?: string;
   hexCode?: string;
   colorFamily?: string;
-  finishType?: 'solid' | 'metallic' | 'matte' | 'pearlescent';
+  finishType?: string;
   type: 'exterior' | 'interior';
   status: 'active' | 'inactive';
   createdAt: string;

@@ -33,6 +33,7 @@ import {
   updateVariant,
   getVariantTemplate,
   populateVariantFromSource,
+  type VariantTemplateCandidate,
 } from '../../../api/variants.api';
 import { getBrands } from '../../../api/brands.api';
 import { getModels } from '../../../api/models.api';
@@ -97,6 +98,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
   // Auto-populate
   const [autoPopulate, setAutoPopulate] = useState(false);
   const [sourceVariantId, setSourceVariantId] = useState<string | null>(null);
+  const [templateCandidates, setTemplateCandidates] = useState<VariantTemplateCandidate[]>([]);
   const [autoPopulateMessage, setAutoPopulateMessage] = useState<string | null>(null);
   const [autoPopulateSeverity, setAutoPopulateSeverity] = useState<'info' | 'success' | 'warning'>('info');
   const [isLookingUpTemplate, setIsLookingUpTemplate] = useState(false);
@@ -193,7 +195,17 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
   };
 
   const applyTemplateToForm = (
-    source: NonNullable<Awaited<ReturnType<typeof getVariantTemplate>>['data']>['sourceVariant'],
+    source: {
+      modelYear?: number;
+      fuelType?: string;
+      transmissionType?: string;
+      drivetrain?: string;
+      engine?: BasicInfoData['engine'];
+      seatingCapacity?: number;
+      doors?: number;
+      description?: string;
+      shortDescription?: string;
+    } | null | undefined,
   ) => {
     if (!source) return;
     // Keep current name / status / variantCode — do not overwrite unique fields
@@ -216,6 +228,16 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
     if (source.shortDescription !== undefined) setValue('shortDescription', source.shortDescription || '');
   };
 
+  const selectTemplateCandidate = (candidate: VariantTemplateCandidate) => {
+    clearTemplateDerivedFields();
+    applyTemplateToForm(candidate);
+    setSourceVariantId(candidate.sourceVariantId);
+    setAutoPopulateSeverity('success');
+    setAutoPopulateMessage(
+      `Using "${candidate.name}"${candidate.modelYear ? ` (${candidate.modelYear})` : ''} as the template. All steps will be pre-filled; you can still edit everything.`,
+    );
+  };
+
   // Lookup template when switch is ON and Brand + Model (+ optional Generation) are selected
   useEffect(() => {
     if (!autoPopulate || !isNewVehicle) {
@@ -224,6 +246,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
 
     if (!selectedBrand || !selectedModel) {
       setSourceVariantId(null);
+      setTemplateCandidates([]);
       setAutoPopulateMessage(null);
       lastTemplateKeyRef.current = '';
       return;
@@ -241,6 +264,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
       setIsLookingUpTemplate(true);
       setAutoPopulateMessage(null);
       setSourceVariantId(null);
+      setTemplateCandidates([]);
       // Clear previously auto-filled fields so stale data from another combo cannot linger
       clearTemplateDerivedFields();
 
@@ -253,9 +277,34 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
         if (cancelled) return;
 
         const result = res.data;
-        if (result?.found && result.sourceVariant && result.sourceVariantId) {
+        const candidates = result?.candidates || [];
+
+        if (result?.found && candidates.length > 0) {
+          setTemplateCandidates(candidates);
+
+          if (result.requiresSelection && candidates.length > 1) {
+            // Multiple matches (common when Generation is empty) — do not guess; let the user pick
+            setSourceVariantId(null);
+            setAutoPopulateSeverity('info');
+            setAutoPopulateMessage(
+              result.message ||
+                `Found ${candidates.length} existing vehicles for this selection. Choose which one to populate from.`,
+            );
+          } else {
+            const chosen = candidates[0];
+            selectTemplateCandidate(chosen);
+          }
+        } else if (result?.found && result.sourceVariant && result.sourceVariantId) {
+          // Backward-compatible fallback if candidates array is missing
           applyTemplateToForm(result.sourceVariant);
           setSourceVariantId(result.sourceVariantId);
+          setTemplateCandidates([
+            {
+              sourceVariantId: result.sourceVariantId,
+              name: result.sourceVariant._sourceName || 'Existing vehicle',
+              ...result.sourceVariant,
+            },
+          ]);
           setAutoPopulateSeverity('success');
           setAutoPopulateMessage(
             result.message ||
@@ -263,6 +312,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
           );
         } else {
           setSourceVariantId(null);
+          setTemplateCandidates([]);
           setAutoPopulateSeverity('warning');
           setAutoPopulateMessage(
             result?.message ||
@@ -272,6 +322,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
       } catch (err: any) {
         if (cancelled) return;
         setSourceVariantId(null);
+        setTemplateCandidates([]);
         setAutoPopulateSeverity('warning');
         setAutoPopulateMessage(
           err?.response?.data?.message ||
@@ -379,6 +430,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
     lastTemplateKeyRef.current = '';
     if (!checked) {
       setSourceVariantId(null);
+      setTemplateCandidates([]);
       setAutoPopulateMessage(null);
     }
   };
@@ -426,15 +478,8 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
                 }
                 label="Auto-populate existing data"
               />
-              <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{
-                    ml: "...",
-                    display: "...",
-                  }}
-                >
-                When enabled, selecting Brand, Model, and Generation loads matching vehicle data into every step. Images are reused, not re-uploaded.
+              <Typography variant="caption" color="text.secondary" display="block" sx={{ ml: 1.5 }}>
+                When enabled, selecting Brand and Model (and Generation if available) loads matching vehicle data into every step. If multiple vehicles match, you choose which one to use. Images are reused, not re-uploaded.
               </Typography>
             </Box>
             {isLookingUpTemplate && <CircularProgress size={22} />}
@@ -443,6 +488,37 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
 
         {autoPopulate && autoPopulateMessage && (
           <Alert severity={autoPopulateSeverity}>{autoPopulateMessage}</Alert>
+        )}
+
+        {autoPopulate && templateCandidates.length > 1 && (
+          <FormControl fullWidth>
+            <InputLabel>Populate from existing vehicle *</InputLabel>
+            <Select
+              label="Populate from existing vehicle *"
+              value={sourceVariantId || ''}
+              onChange={(e) => {
+                const chosen = templateCandidates.find((c) => c.sourceVariantId === e.target.value);
+                if (chosen) selectTemplateCandidate(chosen);
+              }}
+            >
+              <MenuItem value="" disabled>
+                Select a vehicle…
+              </MenuItem>
+              {templateCandidates.map((candidate) => (
+                <MenuItem key={candidate.sourceVariantId} value={candidate.sourceVariantId}>
+                  {candidate.name}
+                  {candidate.modelYear ? ` · ${candidate.modelYear}` : ''}
+                  {candidate.variantCode ? ` · ${candidate.variantCode}` : ''}
+                  {candidate.fuelType ? ` · ${String(candidate.fuelType).replace(/_/g, ' ')}` : ''}
+                  {candidate.status ? ` · ${candidate.status}` : ''}
+                </MenuItem>
+              ))}
+            </Select>
+            <FormHelperText>
+              Multiple vehicles share this Brand/Model
+              {selectedGeneration ? '/Generation' : ' (no generation)'}. Pick the source to copy from.
+            </FormHelperText>
+          </FormControl>
         )}
 
         <Box sx={{ display: 'flex', gap: 2 }}>

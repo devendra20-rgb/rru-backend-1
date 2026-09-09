@@ -145,6 +145,26 @@ describe('Colors API', () => {
       expect(response.status).toBe(409);
     });
 
+    it('should persist a custom finishType', async () => {
+      const response = await request(app)
+        .post('/api/v1/colors')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          name: 'Satin Graphite',
+          colorCode: 'SG-01',
+          hexCode: '#4B5563',
+          finishType: 'satin',
+          type: 'exterior',
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body.data.finishType).toBe('satin');
+
+      const persistedId = response.body.data._id || response.body.data.id;
+      const fromDb = await Color.findById(persistedId).lean();
+      expect(fromDb!.finishType).toBe('satin');
+    });
+
     it('should prevent duplicate color names', async () => {
       const response = await request(app)
         .post('/api/v1/colors')
