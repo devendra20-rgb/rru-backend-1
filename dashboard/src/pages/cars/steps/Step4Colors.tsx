@@ -219,7 +219,14 @@ const Step4Colors: React.FC<Step4Props> = ({ variantId, onNext, onBack }) => {
         </Alert>
       )}
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 3 }} alignItems={{ sm: 'flex-start' }}>
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={2}
+          sx={{
+            mb: 2,
+            alignItems: { sm: "center" },
+          }}
+        >
         <Autocomplete
           sx={{ flex: 1, minWidth: 240 }}
           options={availableToAdd}
