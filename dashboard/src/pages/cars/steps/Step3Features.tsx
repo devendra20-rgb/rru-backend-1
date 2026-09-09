@@ -254,12 +254,14 @@ const Step3Features: React.FC<Step3Props> = ({ variantId, onNext, onBack }) => {
         </Alert>
       )}
 
-      <Stack
-        direction={{ xs: 'column', sm: 'row' }}
-        spacing={2}
-        sx={{ mb: 2 }}
-        alignItems={{ sm: 'center' }}
-      >
+<Stack
+  direction={{ xs: "column", sm: "row" }}
+  spacing={"..."}
+  sx={{
+    mb: "...",
+    alignItems: { sm: "..." },
+  }}
+>
         <TextField
           fullWidth
           size="small"
@@ -374,7 +376,13 @@ const Step3Features: React.FC<Step3Props> = ({ variantId, onNext, onBack }) => {
                                 {feature.name}
                               </Typography>
                               {feature.description && (
-                                <Typography variant="caption" color="text.secondary" display="block">
+                                <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{
+                                  display: "...",
+                                }}
+                              >
                                   {feature.description}
                                 </Typography>
                               )}
