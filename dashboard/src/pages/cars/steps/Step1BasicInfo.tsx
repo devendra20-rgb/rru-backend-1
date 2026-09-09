@@ -426,7 +426,14 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
                 }
                 label="Auto-populate existing data"
               />
-              <Typography variant="caption" color="text.secondary" display="block" sx={{ ml: 1.5 }}>
+              <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{
+                    ml: "...",
+                    display: "...",
+                  }}
+                >
                 When enabled, selecting Brand, Model, and Generation loads matching vehicle data into every step. Images are reused, not re-uploaded.
               </Typography>
             </Box>
