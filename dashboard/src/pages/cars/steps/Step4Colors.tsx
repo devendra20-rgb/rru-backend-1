@@ -23,7 +23,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getColors, getVariantColors, createVariantColor, updateVariantColor } from '../../../api/colors.api';
 import type { Color, VariantColor } from '../../../api/colors.api';
 import AddIcon from '@mui/icons-material/Add';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlined';
 import QuickAddModal from '../../../components/common/QuickAddModal';
 import ColorForm from '../../colors/ColorForm';
 
