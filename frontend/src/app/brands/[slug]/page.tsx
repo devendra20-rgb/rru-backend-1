@@ -21,23 +21,41 @@ export default function BrandDetailPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (slug) {
-      brandsService.getBySlug(slug).then((b) => {
-        if (b) {
-          setBrand(b);
-        } else {
-          // fallback if backend brands/slug endpoint isn't present
-          setBrand({ _id: slug, brandCode: slug, name: slug.toUpperCase(), slug, status: 'active' });
-        }
-      }).catch(() => {
-        setBrand({ _id: slug, brandCode: slug, name: slug.toUpperCase(), slug, status: 'active' });
-      });
+    if (!slug) return;
 
-      vehiclesService.getByBrandSlug(slug).then((v) => {
-        setBrandVehicles(v);
-        setLoading(false);
-      }).catch(() => setLoading(false));
-    }
+    let cancelled = false;
+    setLoading(true);
+
+    (async () => {
+      try {
+        const brandDoc = await brandsService.getBySlug(slug);
+        if (cancelled) return;
+
+        if (brandDoc) {
+          setBrand(brandDoc);
+        } else {
+          setBrand(null);
+          setBrandVehicles([]);
+          setLoading(false);
+          return;
+        }
+
+        const vehicles = await vehiclesService.getByBrandSlug(slug);
+        if (cancelled) return;
+        setBrandVehicles(vehicles);
+      } catch {
+        if (!cancelled) {
+          setBrand(null);
+          setBrandVehicles([]);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [slug]);
 
   if (loading) {

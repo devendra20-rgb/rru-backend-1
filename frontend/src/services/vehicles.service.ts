@@ -84,9 +84,53 @@ export function normalizeVehicle(raw: any): Vehicle {
 
 export const vehiclesService = {
   getAll: async (filters?: VehicleFilters): Promise<Vehicle[]> => {
-    if (USE_MOCK) return vehiclesMock;
-    const res = await api.get<{ data: any[] }>('/api/v1/vehicles', filters as Record<string, string | number | boolean | undefined>);
+    if (USE_MOCK) {
+      const q = (filters?.search || '').trim().toLowerCase();
+      if (!q) return vehiclesMock;
+      return vehiclesMock.filter((v) =>
+        [v.brand, v.model, v.variant, v.slug].join(' ').toLowerCase().includes(q),
+      );
+    }
+    const res = await api.get<{ data: any[] }>('/api/v1/vehicles', {
+      ...(filters as Record<string, string | number | boolean | undefined>),
+      limit: Math.min(Number(filters?.limit) || 100, 100),
+      page: filters?.page || 1,
+    });
     return (res.data || []).map(normalizeVehicle);
+  },
+
+  /** Search vehicles by brand / model / variant name (server-side). */
+  search: async (query: string, limit = 40): Promise<Vehicle[]> => {
+    const q = query.trim();
+    if (!q) return vehiclesService.getAll({ limit });
+    return vehiclesService.getAll({ search: q, limit });
+  },
+
+  /** Fetch every page of active vehicles (backend max 100/page). */
+  getAllPages: async (filters?: Omit<VehicleFilters, 'page' | 'limit'>): Promise<Vehicle[]> => {
+    if (USE_MOCK) return vehiclesService.getAll(filters);
+
+    const pageSize = 100;
+    const all: Vehicle[] = [];
+    let page = 1;
+    let totalPages = 1;
+
+    while (page <= totalPages && page <= 20) {
+      const res = await api.get<{ data: any[]; meta?: { totalPages?: number; total?: number } }>(
+        '/api/v1/vehicles',
+        {
+          ...(filters as Record<string, string | number | boolean | undefined>),
+          limit: pageSize,
+          page,
+        },
+      );
+      all.push(...(res.data || []).map(normalizeVehicle));
+      totalPages = res.meta?.totalPages || 1;
+      if (!res.data?.length) break;
+      page += 1;
+    }
+
+    return all;
   },
 
   getFeatured: async (): Promise<Vehicle[]> => {
@@ -119,8 +163,19 @@ export const vehiclesService = {
   getByBrandSlug: async (brandSlug: string): Promise<Vehicle[]> => {
     if (USE_MOCK) return vehiclesMock.filter((v) => v.brandSlug === brandSlug);
     try {
-      const res = await api.get<{ data: any[] }>('/api/v1/vehicles', { search: brandSlug, limit: 50 });
-      return (res.data || []).map(normalizeVehicle);
+      // Prefer identity filter (brandSlug / brandId) — never use free-text search with a slug
+      // because "land-rover" does not match brand name "Land Rover".
+      const bySlug = await vehiclesService.getAllPages({ brandSlug });
+      if (bySlug.length > 0) {
+        return bySlug.filter((v) => !v.brandSlug || v.brandSlug === brandSlug);
+      }
+
+      // Fallback: resolve brand document then filter by brandId
+      const { brandsService } = await import('./brands.service');
+      const brand = await brandsService.getBySlug(brandSlug);
+      if (!brand?._id) return [];
+      const byId = await vehiclesService.getAllPages({ brandId: brand._id });
+      return byId.filter((v) => !v.brandSlug || v.brandSlug === brandSlug || v.brand === brand.name);
     } catch {
       return [];
     }

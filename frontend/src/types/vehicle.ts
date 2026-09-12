@@ -96,6 +96,8 @@ export interface VehicleBadge {
 export interface VehicleFilters {
   market?: string;
   brand?: string;
+  brandId?: string;
+  brandSlug?: string;
   bodyType?: string;
   fuelType?: string;
   transmission?: string;

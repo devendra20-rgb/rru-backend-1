@@ -14,6 +14,7 @@ export class CarsService {
       limit = 10,
       search,
       brandId,
+      brandSlug,
       modelId,
       generationId,
       marketId,
@@ -33,6 +34,21 @@ export class CarsService {
     const limitNum = Number(query.limit) || 10;
     const skip = (pageNum - 1) * limitNum;
 
+    // Resolve brandSlug → brandId (preferred identity filter for public brand pages)
+    let resolvedBrandId = brandId;
+    if (!resolvedBrandId && brandSlug) {
+      const brandDoc = await Brand.findOne({
+        slug: brandSlug.toLowerCase().trim(),
+        status: 'active',
+      })
+        .select('_id')
+        .lean();
+      if (!brandDoc) {
+        return { data: [], total: 0 };
+      }
+      resolvedBrandId = brandDoc._id.toString();
+    }
+
     // 1. Build initial variantMatch with only active variants
     const variantMatch: any = { status: 'active' };
 
@@ -43,13 +59,22 @@ export class CarsService {
 
     // Optional Search via Text or Regex
     if (search) {
-      const regex = new RegExp(search, 'i');
+      const raw = search.trim();
+      const escaped = raw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      // Match both "land-rover" and "Land Rover" style queries
+      const flexible = escaped.replace(/[\s-]+/g, '[\\s-]+');
+      const regex = new RegExp(flexible, 'i');
 
-      const brands = await Brand.find({ name: regex, status: 'active' }).select('_id').lean();
+      const brands = await Brand.find({
+        status: 'active',
+        $or: [{ name: regex }, { slug: regex }, { brandCode: regex }],
+      })
+        .select('_id')
+        .lean();
       const brandIds = brands.map((b) => b._id);
 
       const models = await VehicleModel.find({
-        $or: [{ name: regex }, { brandId: { $in: brandIds } }],
+        $or: [{ name: regex }, { slug: regex }, { brandId: { $in: brandIds } }],
         status: 'active',
       })
         .select('_id')
@@ -57,7 +82,7 @@ export class CarsService {
       const modelIds = models.map((m) => m._id);
 
       const generations = await Generation.find({
-        $or: [{ name: regex }, { modelId: { $in: modelIds } }],
+        $or: [{ name: regex }, { slug: regex }, { modelId: { $in: modelIds } }],
         status: 'active',
       })
         .select('_id')
@@ -67,28 +92,58 @@ export class CarsService {
       variantMatch.$or = [
         { name: regex },
         { variantCode: regex },
+        { slug: regex },
         { modelId: { $in: modelIds } },
         { generationId: { $in: resolvedGenerationIdsFromSearch } },
       ];
     }
 
     // 2. Pre-filter by brandId / modelId / generationId
-    if (brandId || modelId || generationId) {
+    // Some seeded variants only have generationId (missing modelId) — match both paths.
+    if (resolvedBrandId || modelId || generationId) {
       if (generationId) {
         variantMatch.generationId = new Types.ObjectId(generationId);
       } else {
         let modelIdsToSearch: Types.ObjectId[] = [];
         if (modelId) {
           modelIdsToSearch = [new Types.ObjectId(modelId)];
-        } else if (brandId) {
-          const models = await VehicleModel.find({ brandId, status: 'active' }).select('_id').lean();
+        } else if (resolvedBrandId) {
+          const models = await VehicleModel.find({
+            brandId: resolvedBrandId,
+            status: 'active',
+          })
+            .select('_id')
+            .lean();
           modelIdsToSearch = models.map((m) => m._id);
         }
-        
+
         if (modelIdsToSearch.length === 0) {
           return { data: [], total: 0 }; // Quick exit if hierarchy gives 0 results
         }
-        variantMatch.modelId = { $in: modelIdsToSearch };
+
+        const generationsForModels = await Generation.find({
+          modelId: { $in: modelIdsToSearch },
+          status: 'active',
+        })
+          .select('_id')
+          .lean();
+        const generationIdsForModels = generationsForModels.map((g) => g._id);
+
+        const brandOrModelFilter = {
+          $or: [
+            { modelId: { $in: modelIdsToSearch } },
+            ...(generationIdsForModels.length
+              ? [{ generationId: { $in: generationIdsForModels } }]
+              : []),
+          ],
+        };
+
+        if (variantMatch.$or) {
+          variantMatch.$and = [{ $or: variantMatch.$or }, brandOrModelFilter];
+          delete variantMatch.$or;
+        } else {
+          Object.assign(variantMatch, brandOrModelFilter);
+        }
       }
     }
 
@@ -146,7 +201,7 @@ export class CarsService {
       pipeline.push({ $limit: limitNum });
     }
 
-    // 5. Lookups for parent hierarchy
+    // 5. Lookups for parent hierarchy (resolve model via generation when modelId is missing)
     pipeline.push(
       {
         $lookup: {
@@ -158,9 +213,14 @@ export class CarsService {
       },
       { $unwind: { path: '$generation', preserveNullAndEmptyArrays: true } },
       {
+        $addFields: {
+          resolvedModelId: { $ifNull: ['$modelId', '$generation.modelId'] },
+        },
+      },
+      {
         $lookup: {
           from: 'models',
-          localField: 'modelId',
+          localField: 'resolvedModelId',
           foreignField: '_id',
           as: 'model',
         },
@@ -307,7 +367,7 @@ export class CarsService {
 
   private buildCarDetailPipeline(): any[] {
     return [
-      // 1. Hierarchy lookups
+      // 1. Hierarchy lookups (resolve model via generation when modelId is missing)
       {
         $lookup: {
           from: 'generations',
@@ -318,9 +378,14 @@ export class CarsService {
       },
       { $unwind: { path: '$generation', preserveNullAndEmptyArrays: true } },
       {
+        $addFields: {
+          resolvedModelId: { $ifNull: ['$modelId', '$generation.modelId'] },
+        },
+      },
+      {
         $lookup: {
           from: 'models',
-          localField: 'modelId',
+          localField: 'resolvedModelId',
           foreignField: '_id',
           as: 'model',
         },

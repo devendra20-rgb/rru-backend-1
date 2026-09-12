@@ -62,13 +62,15 @@
   border: 1px solid var(--line);
   border-radius: var(--radius-xl);
   background: var(--white);
-  overflow: hidden;
+  overflow: visible;
   position: relative;
   transition: box-shadow var(--transition-base);
 }
 
+.pickerSlot:focus-within,
 .pickerSlot:hover {
   box-shadow: var(--shadow-md);
+  z-index: 20;
 }
 
 .pickerSlotFilled {
@@ -165,7 +167,6 @@
   background: #f8fafb;
   border: 2px dashed var(--line);
   border-radius: var(--radius-xl);
-  cursor: pointer;
   transition: all var(--transition-base);
 }
 
@@ -190,7 +191,14 @@
   font-size: var(--font-size-md);
   font-weight: 800;
   color: var(--deep);
-  margin-bottom: 16px;
+  margin-bottom: 6px;
+}
+
+.addHint {
+  margin: 0 0 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
 }
 
 .addSelect {
@@ -263,7 +271,7 @@
   border-radius: var(--radius-xl);
   border: 1px solid var(--line);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
-  margin-bottom: 32px;
+  margin-bottom: 48px;
   overflow: hidden;
 }
 
@@ -376,14 +384,19 @@
    FEATURE CHECKLIST SECTION
    ============================================ */
 .featureSection {
-  margin-bottom: 32px;
+  margin-bottom: 48px;
+}
+
+.featureSection .sectionHeading,
+.verdictSection .sectionHeading {
+  margin-bottom: 16px;
 }
 
 .sectionHeading {
   font-size: var(--font-size-xl);
   font-weight: 800;
   color: var(--deep);
-  margin: 0 0 16px;
+  margin: 0 0 8px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -396,6 +409,7 @@
   border-radius: var(--radius-xl);
   border: 1px solid var(--line);
   overflow: hidden;
+  min-width: 560px;
 }
 
 .featureTable th,
@@ -411,6 +425,11 @@
   font-weight: 700;
   color: var(--text);
   min-width: 180px;
+  position: sticky;
+  left: 0;
+  background: var(--white);
+  z-index: 1;
+  border-right: 1px solid var(--line);
 }
 
 .featureTable th {
@@ -422,6 +441,10 @@
   text-align: center;
 }
 
+.featureTable th:first-child {
+  background: #f8fafb;
+}
+
 .featureTable td {
   text-align: center;
 }
@@ -429,11 +452,13 @@
 .featureCheck {
   color: var(--green);
   font-weight: 700;
+  font-size: 16px;
 }
 
 .featureMissing {
-  color: var(--line);
-  font-weight: 400;
+  color: #c5cdd3;
+  font-weight: 600;
+  opacity: 0.75;
 }
 
 .featureCategoryRow td {
@@ -450,25 +475,41 @@
    VISUAL GALLERY SECTION
    ============================================ */
 .gallerySection {
-  margin-bottom: 32px;
+  margin-top: 8px;
+  margin-bottom: 48px;
+  padding: 28px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
 }
 
 .gallerySectionHeader {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
+  align-items: flex-start;
+  margin-bottom: 20px;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 16px;
+}
+
+.galleryHint {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--muted);
+  font-weight: 500;
+  max-width: 420px;
+  line-height: 1.45;
 }
 
 .angleTabs {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .angleTab {
-  padding: 7px 16px;
+  padding: 8px 16px;
   border-radius: var(--radius-full);
   border: 1px solid var(--line);
   background: var(--white);
@@ -490,6 +531,63 @@
   border-color: var(--petrol);
 }
 
+.galleryNavBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  margin-bottom: 18px;
+  background: #f4f7f8;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+
+.galleryNavBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+  background: var(--white);
+  color: var(--deep);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.galleryNavBtn:hover:not(:disabled) {
+  border-color: var(--petrol);
+  color: var(--petrol);
+}
+
+.galleryNavBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.galleryNavStatus {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+}
+
+.galleryNavAngle {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--deep);
+}
+
+.galleryNavCount {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
 .galleryGrid {
   display: grid;
   gap: 20px;
@@ -499,14 +597,62 @@
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  background: var(--white);
+  background: #fafbfc;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.galleryCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--white);
+  border-bottom: 1px solid var(--line);
+}
+
+.galleryCardTitle {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.galleryCardBrand {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.galleryCardModel {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--deep);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.galleryAnglePill {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: #eef3f4;
+  color: var(--petrol);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
 .galleryImageWrap {
   position: relative;
-  height: 220px;
-  background: #f4f6f8;
+  aspect-ratio: 16 / 10;
+  background: linear-gradient(180deg, #eef2f4 0%, #e4eaee 100%);
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -516,65 +662,76 @@
 .galleryPhoto {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s ease;
+  object-fit: contain;
+  object-position: center;
+  padding: 8px;
 }
 
-.galleryPhoto:hover {
-  transform: scale(1.03);
+.galleryEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px 16px;
+  color: var(--muted);
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
 }
 
-.galleryBadge {
-  position: absolute;
-  bottom: 10px;
-  left: 10px;
-  background: rgba(8, 41, 50, 0.85);
-  color: var(--white);
-  padding: 4px 12px;
-  border-radius: 6px;
+.galleryEmptySub {
   font-size: 12px;
-  font-weight: 800;
-  backdrop-filter: blur(4px);
-}
-
-.galleryCountBadge {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: rgba(0, 0, 0, 0.6);
-  color: #fff;
-  padding: 4px 10px;
-  border-radius: var(--radius-full);
-  font-size: 11px;
-  font-weight: 700;
-  backdrop-filter: blur(4px);
+  font-weight: 500;
+  opacity: 0.85;
+  max-width: 220px;
 }
 
 .galleryThumbnails {
   display: flex;
   gap: 8px;
-  padding: 10px 12px;
+  padding: 12px;
   border-top: 1px solid var(--line);
+  background: var(--white);
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }
 
 .thumbBtn {
-  width: 52px;
-  height: 38px;
-  border-radius: 6px;
+  width: 72px;
+  flex-shrink: 0;
+  border-radius: 8px;
   border: 2px solid var(--line);
   overflow: hidden;
   cursor: pointer;
   padding: 0;
-  background: #eee;
+  background: #f0f3f5;
   transition: all var(--transition-fast);
-  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .thumbBtn img {
   width: 100%;
-  height: 100%;
+  height: 48px;
   object-fit: cover;
+  display: block;
+}
+
+.thumbLabel {
+  display: block;
+  padding: 4px 4px 5px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: var(--white);
+  border-top: 1px solid var(--line);
 }
 
 .thumbBtnActive {
@@ -582,11 +739,30 @@
   box-shadow: 0 0 0 2px rgba(13, 59, 73, 0.15);
 }
 
+.thumbBtnActive .thumbLabel {
+  color: var(--petrol);
+  background: #eef3f4;
+}
+
+.thumbBtnEmpty {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.thumbPlaceholder {
+  display: grid;
+  place-items: center;
+  height: 48px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+}
+
 /* ============================================
    VERDICT / SUMMARY SECTION
    ============================================ */
 .verdictSection {
-  margin-bottom: 32px;
+  margin-bottom: 40px;
 }
 
 .verdictGrid {
@@ -735,6 +911,19 @@
 
   .angleTabs {
     flex-wrap: wrap;
+  }
+
+  .gallerySection {
+    padding: 18px 14px;
+  }
+
+  .galleryNavBar {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .galleryGrid {
+    grid-template-columns: 1fr !important;
   }
 
   .verdictGrid {

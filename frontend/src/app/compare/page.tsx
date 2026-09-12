@@ -4,14 +4,15 @@ import { useState, useMemo, useEffect, useCallback, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import {
-  ChevronRight, ChevronDown, Plus, Car, X,
+  ChevronRight, ChevronDown, ChevronLeft, Plus, Car, X,
   DollarSign, Gauge, Fuel, Ruler, Shield, Sofa,
-  Camera, Trophy, Zap, LayoutGrid,
+  Camera, Trophy, Zap, LayoutGrid, ImageOff,
 } from 'lucide-react';
 import { useCompare } from '@/hooks/useCompare';
 import { vehiclesService } from '@/services/vehicles.service';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice, resolveMediaUrl } from '@/lib/utils';
 import type { Vehicle, VehicleMedia } from '@/types/vehicle';
+import VehicleSearchPicker from '@/components/ui/VehicleSearchPicker';
 import styles from './compare.module.css';
 
 /* ─── Spec Groups ─── */
@@ -95,10 +96,35 @@ const ANGLE_TABS = [
   { key: 'detail', label: 'Detail' },
 ];
 
+const ANGLE_LABELS: Record<string, string> = {
+  'exterior-front': 'Front',
+  'exterior-side': 'Side',
+  'exterior-rear': 'Rear',
+  interior: 'Interior',
+  detail: 'Detail',
+  overhead: 'Overhead',
+  '360-frame': '360°',
+};
+
+/** Preferred order so "All Photos" lines up similar shots across cars */
+const ANGLE_PRIORITY = [
+  'exterior-front',
+  'exterior-side',
+  'exterior-rear',
+  'interior',
+  'detail',
+  'overhead',
+];
+
+const formatFeatureCategory = (category: string) =>
+  category
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+
 /* ─── Component ─── */
 function CompareContent() {
   const searchParams = useSearchParams();
-  const { compareList, addToCompare, removeFromCompare } = useCompare();
+  const { compareList, addToCompare, removeFromCompare, clearCompare } = useCompare();
 
   const [allVehicles, setAllVehicles] = useState<Vehicle[]>([]);
   const [detailedVehicles, setDetailedVehicles] = useState<Record<string, Vehicle>>({});
@@ -107,14 +133,26 @@ function CompareContent() {
   const [hideCommon, setHideCommon] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const [angleFilter, setAngleFilter] = useState('all');
-  const [activePhotoIndices, setActivePhotoIndices] = useState<Record<string, number>>({});
+  /** Shared index — advances all cars together for true side-by-side compare */
+  const [sharedPhotoIndex, setSharedPhotoIndex] = useState(0);
 
-  // Load all vehicles for the selector
+  // Load catalog for the picker (all pages — API max is 100/page)
   useEffect(() => {
-    vehiclesService.getAll({ limit: 50 }).then((vList) => {
-      setAllVehicles(vList);
-      setLoading(false);
-    }).catch(() => setLoading(false));
+    let cancelled = false;
+    vehiclesService
+      .getAllPages()
+      .then((vList) => {
+        if (!cancelled) {
+          setAllVehicles(vList);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Seed from URL query params if compare list is empty
@@ -127,14 +165,6 @@ function CompareContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  // Auto-select first 2 if nothing selected after vehicles load
-  useEffect(() => {
-    if (!loading && allVehicles.length >= 2 && compareList.length === 0) {
-      addToCompare(allVehicles[0].slug);
-      addToCompare(allVehicles[1].slug);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, allVehicles]);
 
   // Fetch detailed data for each selected slug
   useEffect(() => {
@@ -187,15 +217,115 @@ function CompareContent() {
     return new Set(values).size > 1;
   };
 
-  const getFilteredMedia = (vehicle: Vehicle): VehicleMedia[] => {
-    const items = vehicle.mediaItems || [];
-    if (!items.length) return vehicle.imageUrl ? [{ url: vehicle.imageUrl, isPrimary: true }] : [];
-    let filtered = items;
-    if (angleFilter !== 'all') {
-      const angleFiltered = filtered.filter((m) => m.angleTag === angleFilter);
-      if (angleFiltered.length > 0) filtered = angleFiltered;
+  const getSortedMedia = useCallback((vehicle: Vehicle): VehicleMedia[] => {
+    const items = (vehicle.mediaItems || [])
+      .filter((m) => m.url && m.mediaType !== 'video' && m.angleTag !== '360-frame')
+      .slice()
+      .sort((a, b) => {
+        const orderA = a.sortOrder ?? (a.isPrimary ? -1 : 999);
+        const orderB = b.sortOrder ?? (b.isPrimary ? -1 : 999);
+        if (orderA !== orderB) return orderA - orderB;
+        const priA = ANGLE_PRIORITY.indexOf(a.angleTag || '');
+        const priB = ANGLE_PRIORITY.indexOf(b.angleTag || '');
+        const normA = priA === -1 ? 99 : priA;
+        const normB = priB === -1 ? 99 : priB;
+        return normA - normB;
+      });
+
+    if (items.length) return items;
+    return vehicle.imageUrl ? [{ url: vehicle.imageUrl, isPrimary: true }] : [];
+  }, []);
+
+  /**
+   * Build aligned photo slots across all compared cars.
+   * - Specific angle tab: only that angle (no mismatched fallback)
+   * - All Photos: align by preferred angle order so Front lines up with Front, etc.
+   */
+  const alignedGalleries = useMemo(() => {
+    if (filledVehicles.length === 0) {
+      return { slots: [] as string[], perVehicle: [] as (VehicleMedia | null)[][], maxIndex: 0 };
     }
-    return filtered.length > 0 ? filtered : (vehicle.imageUrl ? [{ url: vehicle.imageUrl, isPrimary: true }] : []);
+
+    const perVehicleRaw = filledVehicles.map((v) => getSortedMedia(v));
+
+    if (angleFilter !== 'all') {
+      const perVehicle = perVehicleRaw.map((items) => {
+        const matched = items.filter((m) => m.angleTag === angleFilter);
+        return matched.length > 0 ? matched : [];
+      });
+      const maxLen = Math.max(1, ...perVehicle.map((list) => list.length));
+      const slots = Array.from({ length: maxLen }, (_, i) =>
+        i === 0 ? (ANGLE_LABELS[angleFilter] || angleFilter) : `${ANGLE_LABELS[angleFilter] || angleFilter} ${i + 1}`,
+      );
+      const padded = perVehicle.map((list) =>
+        Array.from({ length: maxLen }, (_, i) => list[i] || null),
+      );
+      return { slots, perVehicle: padded, maxIndex: Math.max(0, maxLen - 1) };
+    }
+
+    // All Photos: create slots from union of angles (priority order), then leftover untagged
+    const slotKeys: string[] = [];
+    ANGLE_PRIORITY.forEach((tag) => {
+      const anyHas = perVehicleRaw.some((items) => items.some((m) => m.angleTag === tag));
+      if (anyHas) slotKeys.push(tag);
+    });
+
+    // Remaining images without priority tags — pad by index across cars
+    const leftovers = perVehicleRaw.map((items) =>
+      items.filter((m) => !m.angleTag || !ANGLE_PRIORITY.includes(m.angleTag)),
+    );
+    const maxLeftover = Math.max(0, ...leftovers.map((l) => l.length));
+    for (let i = 0; i < maxLeftover; i++) {
+      slotKeys.push(`other-${i}`);
+    }
+
+    if (slotKeys.length === 0) {
+      const maxLen = Math.max(1, ...perVehicleRaw.map((l) => l.length));
+      const slots = Array.from({ length: maxLen }, (_, i) => `Photo ${i + 1}`);
+      const padded = perVehicleRaw.map((list) =>
+        Array.from({ length: maxLen }, (_, i) => list[i] || null),
+      );
+      return { slots, perVehicle: padded, maxIndex: Math.max(0, maxLen - 1) };
+    }
+
+    const perVehicle = filledVehicles.map((_, vIdx) => {
+      const items = perVehicleRaw[vIdx];
+      return slotKeys.map((key) => {
+        if (key.startsWith('other-')) {
+          const leftoverIdx = Number(key.replace('other-', ''));
+          const leftoverItems = leftovers[vIdx];
+          return leftoverItems[leftoverIdx] || null;
+        }
+        return items.find((m) => m.angleTag === key) || null;
+      });
+    });
+
+    const slots = slotKeys.map((key) =>
+      key.startsWith('other-')
+        ? `Photo ${Number(key.replace('other-', '')) + 1}`
+        : ANGLE_LABELS[key] || key,
+    );
+
+    return { slots, perVehicle, maxIndex: Math.max(0, slots.length - 1) };
+  }, [filledVehicles, angleFilter, getSortedMedia]);
+
+  // Keep shared index in range when filter / vehicles change
+  useEffect(() => {
+    setSharedPhotoIndex(0);
+  }, [angleFilter, compareList]);
+
+  useEffect(() => {
+    if (sharedPhotoIndex > alignedGalleries.maxIndex) {
+      setSharedPhotoIndex(alignedGalleries.maxIndex);
+    }
+  }, [alignedGalleries.maxIndex, sharedPhotoIndex]);
+
+  const goPrevPhoto = () => {
+    setSharedPhotoIndex((i) => Math.max(0, i - 1));
+  };
+
+  const goNextPhoto = () => {
+    setSharedPhotoIndex((i) => Math.min(alignedGalleries.maxIndex, i + 1));
   };
 
   /* ─── Verdict Computation ─── */
@@ -303,11 +433,23 @@ function CompareContent() {
       </div>
 
       {/* Page Header */}
-      <div className={styles.pageHeader}>
-        <h1 className={styles.pageTitle}>Compare cars before you buy.</h1>
-        <p className={styles.pageSubtitle}>
-          Put vehicles side by side and see the differences that actually matter.
-        </p>
+      <div className={styles.pageHeader} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 16 }}>
+        <div>
+          <h1 className={styles.pageTitle}>Compare cars before you buy.</h1>
+          <p className={styles.pageSubtitle}>
+            Put vehicles side by side and see the differences that actually matter.
+          </p>
+        </div>
+        {compareList.length > 0 && (
+          <button
+            type="button"
+            className="btn-outline"
+            onClick={clearCompare}
+            style={{ padding: '8px 16px', fontSize: 14, cursor: 'pointer', borderRadius: 8, height: 'fit-content' }}
+          >
+            Clear All
+          </button>
+        )}
       </div>
 
       {/* Vehicle Picker */}
@@ -320,7 +462,7 @@ function CompareContent() {
             <div className={styles.pickerSlotContent}>
               <div className={styles.pickerImageWrap}>
                 {vehicle.imageUrl ? (
-                  <img src={vehicle.imageUrl} alt={`${vehicle.brand} ${vehicle.model}`} />
+                  <img src={resolveMediaUrl(vehicle.imageUrl)} alt={`${vehicle.brand} ${vehicle.model}`} />
                 ) : (
                   <Car size={36} color="#94a3b8" />
                 )}
@@ -339,21 +481,13 @@ function CompareContent() {
             <div className={styles.addSlotContent}>
               <div className={styles.addIcon}><Plus size={24} /></div>
               <div className={styles.addText}>Add Vehicle</div>
-              <select
-                className={styles.addSelect}
-                value=""
-                onChange={(e) => handleAdd(e.target.value)}
-              >
-                <option value="">Select a vehicle...</option>
-                {allVehicles
-                  .filter((v) => v.status === 'active' || v.status === 'upcoming')
-                  .filter((v) => !compareList.includes(v.slug))
-                  .map((v) => (
-                    <option key={v._id} value={v.slug}>
-                      {v.brand} {v.model} — {v.variant}
-                    </option>
-                  ))}
-              </select>
+              <p className={styles.addHint}>Search any brand, model, or variant</p>
+              <VehicleSearchPicker
+                excludeSlugs={compareList}
+                initialVehicles={allVehicles}
+                onSelect={handleAdd}
+                placeholder="Search cars…"
+              />
             </div>
           </div>
         ))}
@@ -473,16 +607,23 @@ function CompareContent() {
           {/* Visual Gallery */}
           <div className={styles.gallerySection}>
             <div className={styles.gallerySectionHeader}>
-              <h2 className={styles.sectionHeading}>
-                <Camera size={20} /> Visual Comparison
-              </h2>
-              <div className={styles.angleTabs}>
+              <div>
+                <h2 className={styles.sectionHeading}>
+                  <Camera size={20} /> Visual Comparison
+                </h2>
+                <p className={styles.galleryHint}>
+                  Photos are lined up by angle so you compare the same view on every car.
+                </p>
+              </div>
+              <div className={styles.angleTabs} role="tablist" aria-label="Photo angle">
                 {ANGLE_TABS.map((tab) => (
                   <button
                     key={tab.key}
                     type="button"
+                    role="tab"
+                    aria-selected={angleFilter === tab.key}
                     className={`${styles.angleTab} ${angleFilter === tab.key ? styles.angleTabActive : ''}`}
-                    onClick={() => { setAngleFilter(tab.key); setActivePhotoIndices({}); }}
+                    onClick={() => setAngleFilter(tab.key)}
                   >
                     {tab.label}
                   </button>
@@ -490,49 +631,117 @@ function CompareContent() {
               </div>
             </div>
 
+            {alignedGalleries.slots.length > 0 && (
+              <div className={styles.galleryNavBar}>
+                <button
+                  type="button"
+                  className={styles.galleryNavBtn}
+                  onClick={goPrevPhoto}
+                  disabled={sharedPhotoIndex <= 0}
+                  aria-label="Previous photo"
+                >
+                  <ChevronLeft size={18} />
+                  Previous
+                </button>
+                <div className={styles.galleryNavStatus}>
+                  <span className={styles.galleryNavAngle}>
+                    {alignedGalleries.slots[sharedPhotoIndex] || 'Photo'}
+                  </span>
+                  <span className={styles.galleryNavCount}>
+                    {sharedPhotoIndex + 1} / {alignedGalleries.slots.length}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className={styles.galleryNavBtn}
+                  onClick={goNextPhoto}
+                  disabled={sharedPhotoIndex >= alignedGalleries.maxIndex}
+                  aria-label="Next photo"
+                >
+                  Next
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            )}
+
             <div
               className={styles.galleryGrid}
-              style={{ gridTemplateColumns: `repeat(${filledVehicles.length}, 1fr)` }}
+              style={{ gridTemplateColumns: `repeat(${filledVehicles.length}, minmax(0, 1fr))` }}
             >
-              {filledVehicles.map((vehicle) => {
-                const filteredMedia = getFilteredMedia(vehicle);
-                const activeIdx = activePhotoIndices[vehicle._id] || 0;
-                const currentMedia = filteredMedia[activeIdx] || filteredMedia[0];
+              {filledVehicles.map((vehicle, vIdx) => {
+                const mediaSlots = alignedGalleries.perVehicle[vIdx] || [];
+                const currentMedia = mediaSlots[sharedPhotoIndex] || null;
+                const availableCount = mediaSlots.filter(Boolean).length;
+                const angleLabel =
+                  currentMedia?.angleTag
+                    ? ANGLE_LABELS[currentMedia.angleTag] || currentMedia.angleTag
+                    : alignedGalleries.slots[sharedPhotoIndex];
 
                 return (
                   <div key={vehicle._id} className={styles.galleryCard}>
+                    <div className={styles.galleryCardHeader}>
+                      <div className={styles.galleryCardTitle}>
+                        <span className={styles.galleryCardBrand}>{vehicle.brand}</span>
+                        <span className={styles.galleryCardModel}>{vehicle.model}</span>
+                      </div>
+                      {angleLabel && (
+                        <span className={styles.galleryAnglePill}>{angleLabel}</span>
+                      )}
+                    </div>
+
                     <div className={styles.galleryImageWrap}>
                       {currentMedia ? (
                         <img
-                          key={currentMedia.url}
-                          src={currentMedia.url}
-                          alt={currentMedia.altText || `${vehicle.brand} ${vehicle.model}`}
+                          key={`${vehicle._id}-${currentMedia.url}-${sharedPhotoIndex}`}
+                          src={resolveMediaUrl(currentMedia.url)}
+                          alt={
+                            currentMedia.altText ||
+                            `${vehicle.brand} ${vehicle.model} — ${angleLabel || 'photo'}`
+                          }
                           className={styles.galleryPhoto}
                         />
                       ) : (
-                        <Car size={36} color="#94a3b8" />
-                      )}
-                      <div className={styles.galleryBadge}>
-                        {vehicle.brand} {vehicle.model}
-                      </div>
-                      {filteredMedia.length > 1 && (
-                        <div className={styles.galleryCountBadge}>
-                          {activeIdx + 1} / {filteredMedia.length}
+                        <div className={styles.galleryEmpty}>
+                          <ImageOff size={28} strokeWidth={1.5} />
+                          <span>
+                            {angleFilter === 'all'
+                              ? 'No matching photo for this angle'
+                              : `No ${ANGLE_LABELS[angleFilter] || angleFilter} photos`}
+                          </span>
+                          {availableCount === 0 && (
+                            <span className={styles.galleryEmptySub}>
+                              This vehicle has no photos for the selected view.
+                            </span>
+                          )}
                         </div>
                       )}
                     </div>
-                    {filteredMedia.length > 1 && (
-                      <div className={styles.galleryThumbnails}>
-                        {filteredMedia.slice(0, 6).map((img, imgIdx) => (
-                          <button
-                            key={imgIdx}
-                            type="button"
-                            className={`${styles.thumbBtn} ${activeIdx === imgIdx ? styles.thumbBtnActive : ''}`}
-                            onClick={() => setActivePhotoIndices((p) => ({ ...p, [vehicle._id]: imgIdx }))}
-                          >
-                            <img src={img.url} alt={img.altText || `Thumbnail ${imgIdx + 1}`} />
-                          </button>
-                        ))}
+
+                    {alignedGalleries.slots.length > 1 && (
+                      <div className={styles.galleryThumbnails} role="listbox" aria-label={`${vehicle.model} photos`}>
+                        {alignedGalleries.slots.map((slotLabel, imgIdx) => {
+                          const thumb = mediaSlots[imgIdx];
+                          const isActive = sharedPhotoIndex === imgIdx;
+                          return (
+                            <button
+                              key={`${vehicle._id}-thumb-${imgIdx}`}
+                              type="button"
+                              role="option"
+                              aria-selected={isActive}
+                              title={slotLabel}
+                              disabled={!thumb}
+                              className={`${styles.thumbBtn} ${isActive ? styles.thumbBtnActive : ''} ${!thumb ? styles.thumbBtnEmpty : ''}`}
+                              onClick={() => setSharedPhotoIndex(imgIdx)}
+                            >
+                              {thumb ? (
+                                <img src={resolveMediaUrl(thumb.url)} alt={slotLabel} />
+                              ) : (
+                                <span className={styles.thumbPlaceholder}>—</span>
+                              )}
+                              <span className={styles.thumbLabel}>{slotLabel}</span>
+                            </button>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
@@ -628,7 +837,7 @@ function FeatureCategoryRows({
   return (
     <>
       <tr className={styles.featureCategoryRow}>
-        <td colSpan={colCount + 1}>{category}</td>
+        <td colSpan={colCount + 1}>{formatFeatureCategory(category)}</td>
       </tr>
       {features.map((f) => (
         <tr key={f.name}>

@@ -5,6 +5,7 @@ export interface GetCarsQuery {
   limit?: number;
   search?: string;
   brandId?: string;
+  brandSlug?: string;
   modelId?: string;
   generationId?: string;
   marketId?: string;

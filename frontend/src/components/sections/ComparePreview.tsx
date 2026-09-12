@@ -12,34 +12,31 @@ import styles from './sections.module.css';
 //
 //
 export default function ComparePreview() {
-  const [carA, setCarA] = useState<Vehicle | null>(null);
-  const [carB, setCarB] = useState<Vehicle | null>(null);
+  const [allCars, setAllCars] = useState<Vehicle[]>([]);
+  const [carAId, setCarAId] = useState<string>('');
+  const [carBId, setCarBId] = useState<string>('');
   const { addToCompare } = useCompare();
   const router = useRouter();
 
   useEffect(() => {
-    vehiclesService.getAll({ limit: 10 }).then((cars) => {
-      if (cars.length >= 2) {
-        setCarA(cars[0]);
-        setCarB(cars[1]);
-      } else if (cars.length === 1) {
-        setCarA(cars[0]);
-      }
+    vehiclesService.getAll({ limit: 50 }).then((cars) => {
+      setAllCars(cars);
     }).catch(console.error);
   }, []);
 
-  if (!carA || !carB) return null;
+  const carA = allCars.find(c => c._id === carAId) || null;
+  const carB = allCars.find(c => c._id === carBId) || null;
 
   const compareData = [
-    { label: 'Starting Price', a: formatPrice(carA.priceFrom || 0, 'AED', true), b: formatPrice(carB.priceFrom || 0, 'AED', true) },
-    { label: 'Seats', a: `${carA.seats} Seats`, b: `${carB.seats} Seats` },
-    { label: 'Fuel', a: carA.fuelType, b: carB.fuelType },
-    { label: 'Ownership / month', a: formatPrice(carA.costToOwnMonthly || 0), b: formatPrice(carB.costToOwnMonthly || 0) },
+    { label: 'Starting Price', a: carA ? formatPrice(carA.priceFrom || 0, 'AED', true) : '-', b: carB ? formatPrice(carB.priceFrom || 0, 'AED', true) : '-' },
+    { label: 'Seats', a: carA ? `${carA.seats} Seats` : '-', b: carB ? `${carB.seats} Seats` : '-' },
+    { label: 'Fuel', a: carA ? carA.fuelType : '-', b: carB ? carB.fuelType : '-' },
+    { label: 'Ownership / month', a: carA ? formatPrice(carA.costToOwnMonthly || 0) : '-', b: carB ? formatPrice(carB.costToOwnMonthly || 0) : '-' },
   ];
 
   const handleBuildComparison = () => {
-    addToCompare(carA.slug);
-    addToCompare(carB.slug);
+    if (carA) addToCompare(carA.slug);
+    if (carB) addToCompare(carB.slug);
     router.push('/compare');
   };
 
@@ -51,25 +48,63 @@ export default function ComparePreview() {
       </p>
 
       <div className={styles.compareGrid}>
-        <Link href={`/new-cars/${carA.slug}`} className={styles.compareCar} style={{ textDecoration: 'none', color: 'inherit' }}>
-          <div className={styles.compareImg}>
-            {carA.imageUrl ? <img src={resolveMediaUrl(carA.imageUrl)} alt={carA.model} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} /> : <Car size={32} />}
-          </div>
-          <h3 className={styles.compareCarName}>{carA.brand} {carA.model}</h3>
-          <span style={{ fontSize: 12, color: 'var(--muted)' }}>{carA.variant}</span>
-        </Link>
+        <div className={styles.compareCarWrapper}>
+          <select 
+            className={styles.carSelect} 
+            value={carAId} 
+            onChange={(e) => setCarAId(e.target.value)}
+          >
+            <option value="">Select a car...</option>
+            {allCars.map(car => (
+              <option key={car._id} value={car._id}>{car.brand} {car.model}</option>
+            ))}
+          </select>
+          {carA ? (
+            <Link href={`/new-cars/${carA.slug}`} className={styles.compareCar} style={{ textDecoration: 'none', color: 'inherit', display: 'block', marginTop: '12px' }}>
+              <div className={styles.compareImg}>
+                {carA.imageUrl ? <img src={resolveMediaUrl(carA.imageUrl)} alt={carA.model} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} /> : <Car size={32} />}
+              </div>
+              <h3 className={styles.compareCarName}>{carA.brand} {carA.model}</h3>
+              <span style={{ fontSize: 12, color: 'var(--muted)' }}>{carA.variant}</span>
+            </Link>
+          ) : (
+            <div className={styles.compareCarEmpty}>
+              <Car size={48} color="var(--muted)" />
+              <p>Select a car to compare</p>
+            </div>
+          )}
+        </div>
 
         <div className={styles.vs}>
           <div className={styles.vsCircle}>VS</div>
         </div>
 
-        <Link href={`/new-cars/${carB.slug}`} className={styles.compareCar} style={{ textDecoration: 'none', color: 'inherit' }}>
-          <div className={styles.compareImg}>
-            {carB.imageUrl ? <img src={resolveMediaUrl(carB.imageUrl)} alt={carB.model} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} /> : <Car size={32} />}
-          </div>
-          <h3 className={styles.compareCarName}>{carB.brand} {carB.model}</h3>
-          <span style={{ fontSize: 12, color: 'var(--muted)' }}>{carB.variant}</span>
-        </Link>
+        <div className={styles.compareCarWrapper}>
+          <select 
+            className={styles.carSelect} 
+            value={carBId} 
+            onChange={(e) => setCarBId(e.target.value)}
+          >
+            <option value="">Select a car...</option>
+            {allCars.map(car => (
+              <option key={car._id} value={car._id}>{car.brand} {car.model}</option>
+            ))}
+          </select>
+          {carB ? (
+            <Link href={`/new-cars/${carB.slug}`} className={styles.compareCar} style={{ textDecoration: 'none', color: 'inherit', display: 'block', marginTop: '12px' }}>
+              <div className={styles.compareImg}>
+                {carB.imageUrl ? <img src={resolveMediaUrl(carB.imageUrl)} alt={carB.model} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} /> : <Car size={32} />}
+              </div>
+              <h3 className={styles.compareCarName}>{carB.brand} {carB.model}</h3>
+              <span style={{ fontSize: 12, color: 'var(--muted)' }}>{carB.variant}</span>
+            </Link>
+          ) : (
+            <div className={styles.compareCarEmpty}>
+              <Car size={48} color="var(--muted)" />
+              <p>Select a car to compare</p>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className={styles.compareRows}>
@@ -83,7 +118,13 @@ export default function ComparePreview() {
       </div>
 
       <div className={styles.compareCta}>
-        <button type="button" className="btn-primary" onClick={handleBuildComparison}>
+        <button 
+          type="button" 
+          className="btn-primary" 
+          onClick={handleBuildComparison}
+          disabled={!carA || !carB}
+          style={{ opacity: (!carA || !carB) ? 0.5 : 1 }}
+        >
           <GitCompare size={16} /> Build Your Comparison
         </button>
       </div>

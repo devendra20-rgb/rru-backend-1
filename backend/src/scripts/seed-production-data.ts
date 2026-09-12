@@ -613,6 +613,7 @@ async function seed() {
 
     for (const vd of vehicleData.variants) {
       const variant: any = await Variant.create({
+        modelId: vehicleModel._id,
         generationId: generation._id,
         variantCode: vd.variantCode,
         name: vd.name,

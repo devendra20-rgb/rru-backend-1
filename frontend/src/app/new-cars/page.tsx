@@ -33,12 +33,26 @@ function NewCarsContent() {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   useEffect(() => {
-    vehiclesService.getAll({ limit: 50 }).then((v) => {
-      setVehicles(v);
-      setLoading(false);
-    }).catch(() => setLoading(false));
+    let cancelled = false;
+    setLoading(true);
 
-    brandsService.getAll().then(setBrands).catch(console.error);
+    Promise.all([
+      vehiclesService.getAllPages(),
+      brandsService.getAll(),
+    ])
+      .then(([vList, brandList]) => {
+        if (cancelled) return;
+        setVehicles(vList);
+        setBrands(brandList);
+        setLoading(false);
+      })
+      .catch(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Initialize filters from URL query parameters
@@ -104,11 +118,13 @@ function NewCarsContent() {
   const filteredVehicles = useMemo(() => {
     let result = vehicles.filter((v) => v.status === 'active' || v.status === 'upcoming');
 
-    // Text search query filter
+    // Text search query filter (normalize hyphens/spaces so "land-rover" matches "Land Rover")
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
+      const q = searchQuery.toLowerCase().trim().replace(/[\s-]+/g, ' ');
       result = result.filter((v) => {
-        const text = `${v.brand} ${v.model} ${v.variant} ${v.bodyType} ${v.fuelType} ${(v.tags || []).join(' ')}`.toLowerCase();
+        const text = `${v.brand} ${v.model} ${v.variant} ${v.brandSlug} ${v.bodyType} ${v.fuelType} ${(v.tags || []).join(' ')}`
+          .toLowerCase()
+          .replace(/[\s-]+/g, ' ');
         return text.includes(q);
       });
     }

@@ -11,6 +11,7 @@ export const getCarsQuerySchema = z.object({
     limit: z.coerce.number().int().min(1).max(100).optional().default(10),
     search: z.string().trim().optional(),
     brandId: objectIdSchema.optional(),
+    brandSlug: z.string().trim().min(1).optional(),
     modelId: objectIdSchema.optional(),
     generationId: objectIdSchema.optional(),
     marketId: objectIdSchema.optional(),
