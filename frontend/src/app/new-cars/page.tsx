@@ -9,10 +9,28 @@ import { brandsService } from '@/services/brands.service';
 import type { Vehicle } from '@/types/vehicle';
 import type { Brand } from '@/types/brand';
 import { BODY_TYPES, FUEL_TYPES, TRANSMISSIONS } from '@/lib/constants';
+import {
+  fuelMatchesFilter,
+  transmissionMatchesFilter,
+} from '@/lib/vehicleNormalize';
 import VehicleCard from '@/components/ui/VehicleCard';
 import styles from './newcars.module.css';
 
 type SortOption = 'popular' | 'price-low' | 'price-high' | 'cost-low' | 'newest';
+
+const SEAT_OPTIONS = [
+  { value: '5', label: '5 Seats' },
+  { value: '7', label: '7+ Seats' },
+  { value: '8', label: '8+ Seats' },
+] as const;
+
+function matchesSeatFilter(seats: number, filter: string): boolean {
+  const n = parseInt(filter, 10);
+  if (Number.isNaN(n)) return true;
+  if (n >= 8) return seats >= 8;
+  if (n === 7) return seats >= 7;
+  return seats === n;
+}
 
 function NewCarsContent() {
   const searchParams = useSearchParams();
@@ -58,39 +76,39 @@ function NewCarsContent() {
   // Initialize filters from URL query parameters
   useEffect(() => {
     const q = searchParams.get('search');
-    if (q) setSearchQuery(q);
+    setSearchQuery(q || '');
 
     const brand = searchParams.get('brand');
-    if (brand) setSelectedBrand(brand);
+    setSelectedBrand(brand || '');
 
     const body = searchParams.get('bodyType');
-    if (body) setSelectedBodyTypes([body]);
+    setSelectedBodyTypes(body ? [body] : []);
 
     const fuel = searchParams.get('fuelType');
-    if (fuel) setSelectedFuelTypes([fuel]);
+    setSelectedFuelTypes(fuel ? [fuel] : []);
 
     const trans = searchParams.get('transmission');
-    if (trans) setSelectedTransmission(trans);
+    setSelectedTransmission(trans || '');
 
     const seats = searchParams.get('seats');
-    if (seats) setSelectedSeats(seats);
+    setSelectedSeats(seats || '');
 
     const max = searchParams.get('maxPrice');
-    if (max) setMaxPrice(max);
+    setMaxPrice(max || '');
 
     const min = searchParams.get('minPrice');
-    if (min) setMinPrice(min);
+    setMinPrice(min || '');
   }, [searchParams]);
 
   const toggleBodyType = (bt: string) => {
     setSelectedBodyTypes((prev) =>
-      prev.includes(bt) ? prev.filter((x) => x !== bt) : [...prev, bt]
+      prev.includes(bt) ? prev.filter((x) => x !== bt) : [...prev, bt],
     );
   };
 
   const toggleFuelType = (ft: string) => {
     setSelectedFuelTypes((prev) =>
-      prev.includes(ft) ? prev.filter((x) => x !== ft) : [...prev, ft]
+      prev.includes(ft) ? prev.filter((x) => x !== ft) : [...prev, ft],
     );
   };
 
@@ -118,7 +136,6 @@ function NewCarsContent() {
   const filteredVehicles = useMemo(() => {
     let result = vehicles.filter((v) => v.status === 'active' || v.status === 'upcoming');
 
-    // Text search query filter (normalize hyphens/spaces so "land-rover" matches "Land Rover")
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim().replace(/[\s-]+/g, ' ');
       result = result.filter((v) => {
@@ -130,52 +147,83 @@ function NewCarsContent() {
     }
 
     if (selectedBrand) {
-      result = result.filter((v) => v.brandSlug === selectedBrand || v.brand.toLowerCase() === selectedBrand.toLowerCase());
-    }
-    if (selectedBodyTypes.length > 0) {
-      result = result.filter((v) => selectedBodyTypes.map(b => b.toLowerCase()).includes(v.bodyType.toLowerCase()));
-    }
-    if (selectedFuelTypes.length > 0) {
-      result = result.filter((v) => selectedFuelTypes.map(f => f.toLowerCase()).includes(v.fuelType.toLowerCase()));
-    }
-    if (selectedTransmission) {
-      result = result.filter((v) => v.transmission.toLowerCase() === selectedTransmission.toLowerCase());
-    }
-    if (selectedSeats) {
-      const seats = parseInt(selectedSeats);
-      if (seats === 7) {
-        result = result.filter((v) => v.seats >= 7);
-      } else {
-        result = result.filter((v) => v.seats === seats);
-      }
-    }
-    if (minPrice) {
-      result = result.filter((v) => (v.priceFrom || 0) >= parseInt(minPrice));
-    }
-    if (maxPrice) {
-      result = result.filter((v) => (v.priceFrom || 0) <= parseInt(maxPrice));
+      result = result.filter(
+        (v) =>
+          v.brandSlug === selectedBrand ||
+          v.brand.toLowerCase() === selectedBrand.toLowerCase(),
+      );
     }
 
-    // Sort
+    if (selectedBodyTypes.length > 0) {
+      const wanted = selectedBodyTypes.map((b) => b.toLowerCase());
+      result = result.filter((v) => wanted.includes((v.bodyType || '').toLowerCase()));
+    }
+
+    if (selectedFuelTypes.length > 0) {
+      result = result.filter((v) =>
+        selectedFuelTypes.some((ft) => fuelMatchesFilter(v.fuelType, ft)),
+      );
+    }
+
+    if (selectedTransmission) {
+      result = result.filter((v) =>
+        transmissionMatchesFilter(v.transmission, selectedTransmission),
+      );
+    }
+
+    if (selectedSeats) {
+      result = result.filter((v) => matchesSeatFilter(v.seats, selectedSeats));
+    }
+
+    const min = minPrice ? parseInt(minPrice, 10) : NaN;
+    const max = maxPrice ? parseInt(maxPrice, 10) : NaN;
+    if (!Number.isNaN(min) || !Number.isNaN(max)) {
+      result = result.filter((v) => {
+        const price = v.priceFrom;
+        if (price == null || price <= 0) return false;
+        if (!Number.isNaN(min) && price < min) return false;
+        if (!Number.isNaN(max) && price > max) return false;
+        return true;
+      });
+    }
+
     switch (sortBy) {
       case 'price-low':
-        result.sort((a, b) => (a.priceFrom || 0) - (b.priceFrom || 0));
+        result = [...result].sort(
+          (a, b) =>
+            (a.priceFrom || Number.POSITIVE_INFINITY) - (b.priceFrom || Number.POSITIVE_INFINITY),
+        );
         break;
       case 'price-high':
-        result.sort((a, b) => (b.priceFrom || 0) - (a.priceFrom || 0));
+        result = [...result].sort((a, b) => (b.priceFrom || 0) - (a.priceFrom || 0));
         break;
       case 'cost-low':
-        result.sort((a, b) => (a.costToOwnMonthly || 0) - (b.costToOwnMonthly || 0));
+        result = [...result].sort(
+          (a, b) =>
+            (a.costToOwnMonthly || Number.POSITIVE_INFINITY) -
+            (b.costToOwnMonthly || Number.POSITIVE_INFINITY),
+        );
         break;
       case 'newest':
-        result.sort((a, b) => b.year - a.year);
+        result = [...result].sort((a, b) => b.year - a.year);
         break;
       default:
         break;
     }
 
     return result;
-  }, [vehicles, searchQuery, selectedBrand, selectedBodyTypes, selectedFuelTypes, selectedTransmission, selectedSeats, minPrice, maxPrice, sortBy]);
+  }, [
+    vehicles,
+    searchQuery,
+    selectedBrand,
+    selectedBodyTypes,
+    selectedFuelTypes,
+    selectedTransmission,
+    selectedSeats,
+    minPrice,
+    maxPrice,
+    sortBy,
+  ]);
 
   const activeFilterTags: { label: string; clear: () => void }[] = [];
 
@@ -193,18 +241,31 @@ function NewCarsContent() {
     activeFilterTags.push({ label: ft, clear: () => toggleFuelType(ft) });
   });
   if (selectedTransmission) {
-    activeFilterTags.push({ label: selectedTransmission, clear: () => setSelectedTransmission('') });
+    activeFilterTags.push({
+      label: selectedTransmission,
+      clear: () => setSelectedTransmission(''),
+    });
   }
   if (selectedSeats) {
-    activeFilterTags.push({ label: `${selectedSeats}+ Seats`, clear: () => setSelectedSeats('') });
+    const seatLabel =
+      SEAT_OPTIONS.find((s) => s.value === selectedSeats)?.label || `${selectedSeats} Seats`;
+    activeFilterTags.push({ label: seatLabel, clear: () => setSelectedSeats('') });
+  }
+  if (minPrice) {
+    activeFilterTags.push({
+      label: `From AED ${parseInt(minPrice, 10).toLocaleString()}`,
+      clear: () => setMinPrice(''),
+    });
   }
   if (maxPrice) {
-    activeFilterTags.push({ label: `Under AED ${parseInt(maxPrice).toLocaleString()}`, clear: () => setMaxPrice('') });
+    activeFilterTags.push({
+      label: `Under AED ${parseInt(maxPrice, 10).toLocaleString()}`,
+      clear: () => setMaxPrice(''),
+    });
   }
 
   return (
     <div className={styles.listingPage}>
-      {/* Header */}
       <div className={styles.listingHeader}>
         <div className={styles.listingBreadcrumb}>
           <Link href="/">Home</Link>
@@ -217,8 +278,8 @@ function NewCarsContent() {
         </p>
       </div>
 
-      {/* Mobile Filter Toggle */}
       <button
+        type="button"
         className={styles.mobileFilterToggle}
         onClick={() => setShowMobileFilters(!showMobileFilters)}
       >
@@ -227,32 +288,29 @@ function NewCarsContent() {
       </button>
 
       <div className={styles.listingLayout}>
-        {/* Filter Sidebar */}
         <aside
           className={`${styles.filterSidebar} ${showMobileFilters ? styles.filterSidebarOpen : ''}`}
         >
           <div className={styles.filterHeader}>
             <h3 className={styles.filterHeaderTitle}>Filters</h3>
             {hasActiveFilters && (
-              <button className={styles.filterClearBtn} onClick={clearFilters}>
+              <button type="button" className={styles.filterClearBtn} onClick={clearFilters}>
                 Clear all
               </button>
             )}
           </div>
 
-          {/* Search Box */}
           <div className={styles.filterGroup}>
             <label className={styles.filterLabel}>Search Keywords</label>
             <input
               type="text"
               className={styles.filterPriceInput}
-              placeholder="e.g. 7 seater, hybrid..."
+              placeholder="e.g. Toyota, hybrid..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
 
-          {/* Brand */}
           <div className={styles.filterGroup}>
             <label className={styles.filterLabel}>Brand</label>
             <select
@@ -269,13 +327,13 @@ function NewCarsContent() {
             </select>
           </div>
 
-          {/* Body Type */}
           <div className={styles.filterGroup}>
             <label className={styles.filterLabel}>Body Type</label>
             <div className={styles.filterChips}>
               {BODY_TYPES.map((bt) => (
                 <button
                   key={bt}
+                  type="button"
                   className={`${styles.filterChip} ${selectedBodyTypes.includes(bt) ? styles.filterChipActive : ''}`}
                   onClick={() => toggleBodyType(bt)}
                 >
@@ -285,13 +343,13 @@ function NewCarsContent() {
             </div>
           </div>
 
-          {/* Fuel Type */}
           <div className={styles.filterGroup}>
             <label className={styles.filterLabel}>Fuel Type</label>
             <div className={styles.filterChips}>
               {FUEL_TYPES.map((ft) => (
                 <button
                   key={ft}
+                  type="button"
                   className={`${styles.filterChip} ${selectedFuelTypes.includes(ft) ? styles.filterChipActive : ''}`}
                   onClick={() => toggleFuelType(ft)}
                 >
@@ -301,7 +359,6 @@ function NewCarsContent() {
             </div>
           </div>
 
-          {/* Transmission */}
           <div className={styles.filterGroup}>
             <label className={styles.filterLabel}>Transmission</label>
             <select
@@ -318,23 +375,22 @@ function NewCarsContent() {
             </select>
           </div>
 
-          {/* Seats */}
           <div className={styles.filterGroup}>
             <label className={styles.filterLabel}>Seats</label>
             <div className={styles.filterChips}>
-              {['5', '7'].map((s) => (
+              {SEAT_OPTIONS.map((s) => (
                 <button
-                  key={s}
-                  className={`${styles.filterChip} ${selectedSeats === s ? styles.filterChipActive : ''}`}
-                  onClick={() => setSelectedSeats(selectedSeats === s ? '' : s)}
+                  key={s.value}
+                  type="button"
+                  className={`${styles.filterChip} ${selectedSeats === s.value ? styles.filterChipActive : ''}`}
+                  onClick={() => setSelectedSeats(selectedSeats === s.value ? '' : s.value)}
                 >
-                  {s === '7' ? '7+' : s} Seats
+                  {s.label}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Price Range */}
           <div className={styles.filterGroup}>
             <label className={styles.filterLabel}>Price Range (AED)</label>
             <div className={styles.filterPriceInputs}>
@@ -356,14 +412,13 @@ function NewCarsContent() {
           </div>
         </aside>
 
-        {/* Results Area */}
         <div className={styles.resultsArea}>
-          {/* Active filter tags */}
           {activeFilterTags.length > 0 && (
             <div className={styles.activeFilters}>
               {activeFilterTags.map((tag) => (
                 <button
                   key={tag.label}
+                  type="button"
                   className={styles.activeFilterTag}
                   onClick={tag.clear}
                 >
@@ -374,7 +429,6 @@ function NewCarsContent() {
             </div>
           )}
 
-          {/* Results header */}
           <div className={styles.resultsHeader}>
             <div className={styles.resultsCount}>
               Showing <strong>{filteredVehicles.length}</strong> cars
@@ -395,10 +449,11 @@ function NewCarsContent() {
             </div>
           </div>
 
-          {/* Results grid */}
           <div className={styles.resultsGrid}>
             {loading ? (
-              <div style={{ padding: 40, textAlign: 'center', color: 'var(--muted)' }}>Loading vehicles...</div>
+              <div style={{ padding: 40, textAlign: 'center', color: 'var(--muted)' }}>
+                Loading vehicles...
+              </div>
             ) : filteredVehicles.length > 0 ? (
               filteredVehicles.map((vehicle) => (
                 <VehicleCard key={vehicle._id} vehicle={vehicle} />
@@ -412,7 +467,7 @@ function NewCarsContent() {
                 <p className={styles.emptyStateDesc}>
                   Try adjusting your filters or search keywords to see more results.
                 </p>
-                <button className="btn-primary" onClick={clearFilters}>
+                <button type="button" className="btn-primary" onClick={clearFilters}>
                   Clear All Filters
                 </button>
               </div>

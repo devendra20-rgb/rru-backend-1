@@ -304,7 +304,7 @@ export class CarsService {
       pipeline.push({ $limit: limitNum });
     }
 
-    // 9. Projection
+    // 9. Projection — include fields used by public explore filters
     pipeline.push({
       $project: {
         _id: 1,
@@ -314,8 +314,15 @@ export class CarsService {
         fuelType: 1,
         transmissionType: 1,
         drivetrain: 1,
+        seatingCapacity: 1,
+        doors: 1,
         brand: { _id: '$brand._id', name: '$brand.name', slug: '$brand.slug' },
-        model: { _id: '$model._id', name: '$model.name', slug: '$model.slug' },
+        model: {
+          _id: '$model._id',
+          name: '$model.name',
+          slug: '$model.slug',
+          bodyType: '$model.bodyType',
+        },
         generation: { _id: '$generation._id', name: '$generation.name', slug: '$generation.slug' },
         primaryMedia: { url: '$primaryMedia.url', altText: '$primaryMedia.altText', colorId: '$primaryMedia.colorId', angleTag: '$primaryMedia.angleTag' },
         pricing: '$marketInfo.pricing',

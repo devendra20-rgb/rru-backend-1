@@ -8,6 +8,7 @@ import { vehiclesService } from '@/services/vehicles.service';
 import { costToOwnService } from '@/services/costToOwn.service';
 import type { Vehicle } from '@/types/vehicle';
 import type { CostToOwnBreakdown, SegmentComparison } from '@/types/cost';
+import VehicleSearchPicker from '@/components/ui/VehicleSearchPicker';
 import styles from './costoown.module.css';
 
 function CostToOwnContent() {
@@ -103,19 +104,11 @@ function CostToOwnContent() {
 
           <div className={styles.configGroup}>
             <label className={styles.configLabel}>Vehicle</label>
-            <select
-              className={styles.configSelect}
-              value={selectedSlug}
-              onChange={(e) => setSelectedSlug(e.target.value)}
-            >
-              {vehicles
-                .filter((v) => v.status === 'active' || v.status === 'upcoming')
-                .map((v) => (
-                  <option key={v._id} value={v.slug}>
-                    {v.brand} {v.model} — {v.variant}
-                  </option>
-                ))}
-            </select>
+            <VehicleSearchPicker
+              initialVehicles={vehicles}
+              onSelect={(slug) => setSelectedSlug(slug)}
+              placeholder="Search brand, model, or variant…"
+            />
           </div>
 
           <div className={styles.configGroup}>

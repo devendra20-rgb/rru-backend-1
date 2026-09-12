@@ -1,5 +1,5 @@
 'use client';
-//
+
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -8,24 +8,24 @@ import { vehiclesService } from '@/services/vehicles.service';
 import { useCompare } from '@/hooks/useCompare';
 import type { Vehicle } from '@/types/vehicle';
 import { formatPrice, resolveMediaUrl } from '@/lib/utils';
+import VehicleSearchPicker from '@/components/ui/VehicleSearchPicker';
 import styles from './sections.module.css';
-//
-//
+
 export default function ComparePreview() {
   const [allCars, setAllCars] = useState<Vehicle[]>([]);
-  const [carAId, setCarAId] = useState<string>('');
-  const [carBId, setCarBId] = useState<string>('');
+  const [carASlug, setCarASlug] = useState<string>('');
+  const [carBSlug, setCarBSlug] = useState<string>('');
   const { addToCompare } = useCompare();
   const router = useRouter();
 
   useEffect(() => {
-    vehiclesService.getAll({ limit: 50 }).then((cars) => {
+    vehiclesService.getAll({ limit: 100 }).then((cars) => {
       setAllCars(cars);
     }).catch(console.error);
   }, []);
 
-  const carA = allCars.find(c => c._id === carAId) || null;
-  const carB = allCars.find(c => c._id === carBId) || null;
+  const carA = allCars.find(c => c.slug === carASlug || c._id === carASlug) || null;
+  const carB = allCars.find(c => c.slug === carBSlug || c._id === carBSlug) || null;
 
   const compareData = [
     { label: 'Starting Price', a: carA ? formatPrice(carA.priceFrom || 0, 'AED', true) : '-', b: carB ? formatPrice(carB.priceFrom || 0, 'AED', true) : '-' },
@@ -49,16 +49,12 @@ export default function ComparePreview() {
 
       <div className={styles.compareGrid}>
         <div className={styles.compareCarWrapper}>
-          <select 
-            className={styles.carSelect} 
-            value={carAId} 
-            onChange={(e) => setCarAId(e.target.value)}
-          >
-            <option value="">Select a car...</option>
-            {allCars.map(car => (
-              <option key={car._id} value={car._id}>{car.brand} {car.model}</option>
-            ))}
-          </select>
+          <VehicleSearchPicker
+            excludeSlugs={carBSlug ? [carBSlug] : []}
+            initialVehicles={allCars}
+            onSelect={(slug) => setCarASlug(slug)}
+            placeholder="Search Car 1 (brand, model, variant)…"
+          />
           {carA ? (
             <Link href={`/new-cars/${carA.slug}`} className={styles.compareCar} style={{ textDecoration: 'none', color: 'inherit', display: 'block', marginTop: '12px' }}>
               <div className={styles.compareImg}>
@@ -70,7 +66,7 @@ export default function ComparePreview() {
           ) : (
             <div className={styles.compareCarEmpty}>
               <Car size={48} color="var(--muted)" />
-              <p>Select a car to compare</p>
+              <p>Type to search and select Car 1</p>
             </div>
           )}
         </div>
@@ -80,16 +76,12 @@ export default function ComparePreview() {
         </div>
 
         <div className={styles.compareCarWrapper}>
-          <select 
-            className={styles.carSelect} 
-            value={carBId} 
-            onChange={(e) => setCarBId(e.target.value)}
-          >
-            <option value="">Select a car...</option>
-            {allCars.map(car => (
-              <option key={car._id} value={car._id}>{car.brand} {car.model}</option>
-            ))}
-          </select>
+          <VehicleSearchPicker
+            excludeSlugs={carASlug ? [carASlug] : []}
+            initialVehicles={allCars}
+            onSelect={(slug) => setCarBSlug(slug)}
+            placeholder="Search Car 2 (brand, model, variant)…"
+          />
           {carB ? (
             <Link href={`/new-cars/${carB.slug}`} className={styles.compareCar} style={{ textDecoration: 'none', color: 'inherit', display: 'block', marginTop: '12px' }}>
               <div className={styles.compareImg}>
@@ -101,7 +93,7 @@ export default function ComparePreview() {
           ) : (
             <div className={styles.compareCarEmpty}>
               <Car size={48} color="var(--muted)" />
-              <p>Select a car to compare</p>
+              <p>Type to search and select Car 2</p>
             </div>
           )}
         </div>

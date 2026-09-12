@@ -56,6 +56,8 @@ export interface Vehicle {
   colors?: VehicleColor[];
   features?: VehicleFeature[];
   specifications?: VehicleSpecifications;
+  shortDescription?: string;
+  description?: string;
   // Used car specific
   kilometres?: number;
   owners?: number;

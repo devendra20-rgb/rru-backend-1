@@ -29,6 +29,8 @@ export interface CarListingCard {
   fuelType?: string;
   transmissionType?: string;
   drivetrain?: string;
+  seatingCapacity?: number;
+  doors?: number;
   brand: {
     _id: string;
     name: string;
@@ -38,6 +40,7 @@ export interface CarListingCard {
     _id: string;
     name: string;
     slug: string;
+    bodyType?: string;
   };
   generation: {
     _id: string;

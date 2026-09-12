@@ -69,13 +69,17 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
         <div className={styles.vehicleCardReceipt}>
           <span>Price from</span>
           <span className={styles.vehicleCardReceiptValue}>
-            {formatPrice(vehicle.priceFrom || 0)}
+            {vehicle.priceFrom != null && vehicle.priceFrom > 0
+              ? formatPrice(vehicle.priceFrom)
+              : 'On request'}
           </span>
         </div>
         <div className={styles.vehicleCardReceipt}>
           <span>Est. monthly ownership</span>
           <span className={styles.vehicleCardReceiptValue}>
-            {formatPrice(vehicle.costToOwnMonthly || 0)}
+            {vehicle.costToOwnMonthly
+              ? formatPrice(vehicle.costToOwnMonthly)
+              : '—'}
           </span>
         </div>
         {vehicle.tags && vehicle.tags.length > 0 && (
