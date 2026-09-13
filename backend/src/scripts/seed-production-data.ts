@@ -26,25 +26,8 @@ async function seed() {
   await mongoose.connect(MONGODB_URI);
   console.log('Connected!');
 
-  // Clear ALL relevant collections
-  console.log('Clearing old data...');
-  await Promise.all([
-    Brand.deleteMany({}),
-    VehicleModel.deleteMany({}),
-    Generation.deleteMany({}),
-    Variant.deleteMany({}),
-    Specification.deleteMany({}),
-    Market.deleteMany({}),
-    VariantMarket.deleteMany({}),
-    Media.deleteMany({}),
-    CostToOwn.deleteMany({}),
-    Review.deleteMany({}),
-    Article.deleteMany({}),
-    Color.deleteMany({}),
-    VariantColor.deleteMany({}),
-    Feature.deleteMany({}),
-    VariantFeature.deleteMany({}),
-  ]);
+  // Safe seeding without deleting existing catalog
+  console.log('Seeding data safely (non-destructive)...');
 
   // Admin user
   let adminUser = await User.findOne({ email: 'admin@example.com' });

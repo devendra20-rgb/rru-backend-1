@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import mongoose from 'mongoose';
 import app from '../src/app';
+import { connectDB, disconnectDB } from '../src/database/mongodb';
 import { env } from '../src/config/env';
 
 // Models
@@ -24,7 +25,7 @@ describe('Public Cars API', () => {
   let marketId: string;
 
   beforeAll(async () => {
-    await mongoose.connect(env.MONGODB_URI);
+    await connectDB();
 
     // Clear db
     await Brand.deleteMany({});
@@ -162,7 +163,7 @@ describe('Public Cars API', () => {
     await VariantFeature.deleteMany({});
     await Color.deleteMany({});
     await VariantColor.deleteMany({});
-    await mongoose.disconnect();
+    await disconnectDB();
   });
 
   describe('GET /api/v1/cars', () => {

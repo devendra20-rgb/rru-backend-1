@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import mongoose from 'mongoose';
 import app from '../src/app';
+import { connectDB, disconnectDB } from '../src/database/mongodb';
 import { Brand } from '../src/modules/catalog/brands/brand.model';
 import { VehicleModel } from '../src/modules/catalog/models/model.model';
 import { Generation } from '../src/modules/catalog/generations/generation.model';
@@ -23,7 +24,7 @@ describe('Variants API', () => {
 
   beforeAll(async () => {
     // Setup Database
-    await mongoose.connect(env.MONGODB_URI);
+    await connectDB();
 
     // Clear collections
     await Brand.deleteMany({});
@@ -63,7 +64,7 @@ describe('Variants API', () => {
     await VehicleModel.deleteMany({});
     await Generation.deleteMany({});
     await Variant.deleteMany({});
-    await mongoose.disconnect();
+    await disconnectDB();
   });
 
   describe('POST /api/v1/variants', () => {
