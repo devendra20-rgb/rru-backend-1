@@ -47,6 +47,7 @@ describe('Specifications API', () => {
     });
 
     const variant = await Variant.create({
+      modelId: model._id,
       generationId: generation._id,
       variantCode: 'SPEC-VAR',
       name: 'Spec Variant',
@@ -54,7 +55,7 @@ describe('Specifications API', () => {
     });
 
     variantId = variant._id.toString();
-  });
+  }, 30000);
 
   afterAll(async () => {
     await Specification.deleteMany({});
@@ -181,4 +182,65 @@ describe('Specifications API', () => {
 
     expect(res.status).toBe(403);
   });
+
+  it('should verify legacy specification with missing status and backfill behavior', async () => {
+    // Create a new variant specifically for legacy status test
+    const gen = (await Generation.findOne({}))!;
+    const legacyVariant = await Variant.create({
+      modelId: gen.modelId,
+      generationId: gen._id,
+      variantCode: 'LEGACY-VAR',
+      name: 'Legacy Variant',
+      slug: 'legacy-variant',
+    });
+    const legacyVariantId = legacyVariant._id.toString();
+
+    // Create a raw specification in MongoDB without the status field
+    const db = (await connectDB()).connection.db!;
+    await db.collection('specifications').insertOne({
+      variantId: legacyVariant._id,
+      performance: { topSpeedKph: 220, acceleration0To100Kph: 6.2 },
+      dimensions: { lengthMm: 4400, widthMm: 1750 },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    // 1. GET should return 404 while status is missing
+    const getBefore = await request(app).get(`/api/v1/specifications/variant/${legacyVariantId}`);
+    expect(getBefore.status).toBe(404);
+
+    // 2. Duplicate POST should return 409 because variantId exists
+    const duplicatePost = await request(app)
+      .post('/api/v1/specifications')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        variantId: legacyVariantId,
+        performance: { topSpeedKph: 230 },
+      });
+    expect(duplicatePost.status).toBe(409);
+
+    // 3. Execute targeted status setting (backfill simulation)
+    await db.collection('specifications').updateOne(
+      { variantId: legacyVariant._id, status: { $exists: false } },
+      { $set: { status: 'active' } }
+    );
+
+    // 4. GET should now return 200 with status: 'active' and preserved fields
+    const getAfter = await request(app).get(`/api/v1/specifications/variant/${legacyVariantId}`);
+    expect(getAfter.status).toBe(200);
+    expect(getAfter.body.data.status).toBe('active');
+    expect(getAfter.body.data.performance.topSpeedKph).toBe(220);
+    expect(getAfter.body.data.dimensions.lengthMm).toBe(4400);
+
+    // 5. PATCH edit flow should work cleanly
+    const patchRes = await request(app)
+      .patch(`/api/v1/specifications/${getAfter.body.data._id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        performance: { topSpeedKph: 225 },
+      });
+    expect(patchRes.status).toBe(200);
+    expect(patchRes.body.data.performance.topSpeedKph).toBe(225);
+  });
 });
+

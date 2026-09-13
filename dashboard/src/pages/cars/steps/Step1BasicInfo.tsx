@@ -33,15 +33,18 @@ import {
   updateVariant,
   getVariantTemplate,
   populateVariantFromSource,
+  getVariantBySlug,
   type VariantTemplateCandidate,
 } from '../../../api/variants.api';
 import { getBrands } from '../../../api/brands.api';
 import { getModels } from '../../../api/models.api';
 import { getGenerations } from '../../../api/generations.api';
+import { buildDefaultSlug, findUniqueSlug, slugify } from '../../../utils/variantSlug';
 
 const basicInfoSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   variantCode: z.string().optional(),
+  slug: z.string().optional(),
   brandId: z.string().min(1, 'Brand is required'),
   modelId: z.string().min(1, 'Model is required'),
   generationId: z.string().optional(),
@@ -105,6 +108,9 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
   const lastTemplateKeyRef = useRef<string>('');
   const pendingPopulateRef = useRef<string | null>(null);
 
+  const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
+  const [slugNotice, setSlugNotice] = useState<string | null>(null);
+
   const {
     control,
     handleSubmit,
@@ -117,6 +123,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
     defaultValues: {
       name: '',
       variantCode: '',
+      slug: '',
       brandId: '',
       modelId: '',
       generationId: '',
@@ -133,6 +140,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
   const selectedBrand = watch('brandId');
   const selectedModel = watch('modelId');
   const selectedGeneration = watch('generationId');
+  const watchedName = watch('name');
 
   // Fetch initial data if edit mode
   const { data, isLoading: isFetching, isError } = useQuery({
@@ -165,6 +173,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
       reset({
         name: variant.name,
         variantCode: variant.variantCode || '',
+        slug: variant.slug || '',
         brandId: variant.model?.brandId?._id || variant.model?.brandId || '',
         modelId: variant.model?._id || variant.modelId?._id || variant.modelId || '',
         generationId: variant.generationId?._id || variant.generationId || '',
@@ -179,8 +188,33 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
         shortDescription: variant.shortDescription || '',
         status: variant.status
       });
+      setIsSlugManuallyEdited(true); // Preserve existing variant's slug when editing
     }
   }, [data, reset]);
+
+  // Automatic default slug generation on create (Model + optional Generation + Variant Name)
+  useEffect(() => {
+    if (!isEditMode && !isSlugManuallyEdited) {
+      const selectedModelObj = modelsData?.data?.find((m: any) => m._id === selectedModel);
+      const selectedGenObj = generationsData?.data?.find((g: any) => g._id === selectedGeneration);
+
+      const generatedSlug = buildDefaultSlug(
+        selectedModelObj?.slug || selectedModelObj?.name,
+        selectedGenObj?.slug || selectedGenObj?.name,
+        watchedName
+      );
+      setValue('slug', generatedSlug, { shouldValidate: true });
+    }
+  }, [
+    isEditMode,
+    isSlugManuallyEdited,
+    selectedModel,
+    selectedGeneration,
+    watchedName,
+    modelsData,
+    generationsData,
+    setValue,
+  ]);
 
   const clearTemplateDerivedFields = () => {
     setValue('modelYear', undefined);
@@ -399,9 +433,46 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
     }
   });
 
-  const onSubmit = (formData: any) => {
+  const onSubmit = async (formData: any) => {
     const submitData = { ...formData };
     
+    // Process & validate slug
+    let candidateSlug = (submitData.slug || '').trim();
+    if (!candidateSlug) {
+      const selectedModelObj = modelsData?.data?.find((m: any) => m._id === submitData.modelId);
+      const selectedGenObj = generationsData?.data?.find((g: any) => g._id === submitData.generationId);
+      candidateSlug = buildDefaultSlug(
+        selectedModelObj?.slug || selectedModelObj?.name,
+        selectedGenObj?.slug || selectedGenObj?.name,
+        submitData.name
+      );
+    } else {
+      candidateSlug = slugify(candidateSlug);
+    }
+
+    if (candidateSlug) {
+      const checkFn = async (slugToCheck: string) => {
+        const res = await getVariantBySlug(slugToCheck);
+        if (!res?.data) return null;
+        return { _id: res.data._id, slug: res.data.slug };
+      };
+
+      const { slug: finalSlug, isModified } = await findUniqueSlug(
+        candidateSlug,
+        variantId || null,
+        checkFn
+      );
+
+      submitData.slug = finalSlug;
+      setValue('slug', finalSlug);
+
+      if (isModified) {
+        setSlugNotice(`Slug "${candidateSlug}" was taken. Assigned unique slug "${finalSlug}".`);
+      } else {
+        setSlugNotice(null);
+      }
+    }
+
     if (submitData.description === '') delete submitData.description;
     if (submitData.shortDescription === '') delete submitData.shortDescription;
     if (submitData.fuelType === '') delete submitData.fuelType;
@@ -445,6 +516,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
   return (
     <Box component="form" onSubmit={handleSubmit(onSubmit)}>
       {isError && <Alert severity="error" sx={{ mb: 3 }}>Failed to load vehicle data.</Alert>}
+      {slugNotice && <Alert severity="info" sx={{ mb: 3 }}>{slugNotice}</Alert>}
       {saveError && (
         <Alert severity="error" sx={{ mb: 3 }}>
           {saveError instanceof Error ? saveError.message : 'Failed to save vehicle.'}
@@ -484,14 +556,14 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
               </Typography>
 
               {autoPopulate && isLookingUpTemplate && (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 1.5, mb: 1 }}>
-                  <CircularProgress size={18} />
-                  <Typography variant="caption">Looking for matching vehicles…</Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, my: 1 }}>
+                  <CircularProgress size={16} />
+                  <Typography variant="caption">Looking for matching vehicle template...</Typography>
                 </Box>
               )}
 
-              {autoPopulate && autoPopulateMessage && (
-                <Alert severity={autoPopulateSeverity} sx={{ mt: 1 }}>
+              {autoPopulateMessage && (
+                <Alert severity={autoPopulateSeverity} sx={{ mt: 1, py: 0 }}>
                   {autoPopulateMessage}
                 </Alert>
               )}
@@ -688,6 +760,31 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
           />
 
           <Controller
+            name="slug"
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="Slug *"
+                fullWidth
+                placeholder="e.g. bmw-m3-competition"
+                value={field.value || ''}
+                onChange={(e) => {
+                  setIsSlugManuallyEdited(true);
+                  field.onChange(e.target.value);
+                }}
+                error={!!errors.slug}
+                helperText={
+                  errors.slug?.message ||
+                  (isEditMode
+                    ? 'Preserved from existing variant (editable)'
+                    : 'Auto-generated from Model + Generation + Variant Name (editable)')
+                }
+              />
+            )}
+          />
+
+          <Controller
             name="variantCode"
             control={control}
             render={({ field }) => (
@@ -698,7 +795,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
                 placeholder="Auto-generated by system"
                 disabled={true}
                 error={!!errors.variantCode}
-                helperText={field.value ? "Auto-generated code" : "Will be generated on save"}
+                helperText={errors.variantCode?.message}
               />
             )}
           />

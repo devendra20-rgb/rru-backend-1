@@ -37,6 +37,18 @@ export const getVariant = async (id: string): Promise<SingleResponse<Variant>> =
   return response.data;
 };
 
+export const getVariantBySlug = async (slug: string): Promise<SingleResponse<Variant> | null> => {
+  try {
+    const response = await api.get(`/variants/slug/${slug}`);
+    return response.data;
+  } catch (error: any) {
+    if (error?.response?.status === 404) {
+      return null;
+    }
+    throw error;
+  }
+};
+
 export const createVariant = async (data: Partial<Variant>): Promise<SingleResponse<Variant>> => {
   const response = await api.post('/variants', data);
   return response.data;

@@ -7,7 +7,7 @@ import { logger } from '../utils/logger';
 
 // 🛡️ GLOBAL SAFETY GUARD: Block any un-filtered deleteMany({}) on production/development databases
 mongoose.plugin((schema) => {
-  schema.pre('deleteMany', function (next) {
+  schema.pre('deleteMany' as any, function (this: any, next: (err?: any) => void) {
     const filter = this.getFilter();
     const dbName = mongoose.connection.name;
     const isLiveDb = dbName && !dbName.endsWith('_test');
