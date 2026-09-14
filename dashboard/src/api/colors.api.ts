@@ -68,3 +68,15 @@ export const deleteVariantColor = async (id: string): Promise<SingleResponse<nul
   return response.data;
 };
 
+// Bulk Upsert: sends all color mappings in a single request (replaces N individual calls)
+export const bulkSaveVariantColors = async (
+  variantId: string,
+  items: Array<{
+    colorId: string;
+    availability: 'standard' | 'optional' | 'unavailable';
+    status?: 'active' | 'inactive';
+  }>,
+): Promise<any> => {
+  const response = await api.post('/variant-colors/bulk', { variantId, items });
+  return response.data;
+};

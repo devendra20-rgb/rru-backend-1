@@ -50,7 +50,6 @@ const featureSchema = new Schema<IFeature>(
   },
 );
 
-featureSchema.index({ slug: 1 }, { unique: true });
 featureSchema.index({ category: 1 });
 featureSchema.index({ status: 1 });
 featureSchema.index({ name: 'text', description: 'text' });

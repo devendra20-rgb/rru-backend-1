@@ -24,7 +24,7 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import AddIcon from '@mui/icons-material/Add';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getFeatures, getVariantFeatures, createVariantFeature, updateVariantFeature } from '../../../api/features.api';
+import { getFeatures, getVariantFeatures, bulkSaveVariantFeatures } from '../../../api/features.api';
 import type { VariantFeature } from '../../../api/features.api';
 import QuickAddModal from '../../../components/common/QuickAddModal';
 import FeatureForm from '../../features/FeatureForm';
@@ -207,23 +207,26 @@ const Step3Features: React.FC<Step3Props> = ({ variantId, onNext, onBack }) => {
   const expandAll = () => setExpandedCategories(groupedFeatures.map((g) => g.category));
   const collapseAll = () => setExpandedCategories([]);
 
-  const saveMapping = async (mapping: Partial<VariantFeature>) => {
-    if (mapping._id) {
-      await updateVariantFeature(mapping._id, {
-        availability: mapping.availability,
-        value: mapping.value,
-      });
-    } else if (mapping.availability !== 'unavailable') {
-      await createVariantFeature(mapping);
-    }
-  };
 
   const handleSaveAndNext = async () => {
     setIsSaving(true);
     setError(null);
     try {
-      const promises = Array.from(dirtyMappings).map((featureId) => saveMapping(mappings[featureId]));
-      await Promise.all(promises);
+      // Collect only dirty (changed) mappings into a single bulk payload
+      const items = Array.from(dirtyMappings)
+        .map((featureId) => mappings[featureId])
+        .filter(Boolean)
+        .map((mapping) => ({
+          featureId: mapping.featureId as string,
+          availability: (mapping.availability ?? 'unavailable') as 'standard' | 'optional' | 'unavailable',
+          value: mapping.value ?? '',
+          status: (mapping.status ?? 'active') as 'active' | 'inactive',
+        }));
+
+      if (items.length > 0) {
+        // Single HTTP request replaces N individual POST/PATCH calls
+        await bulkSaveVariantFeatures(variantId, items);
+      }
 
       queryClient.invalidateQueries({ queryKey: ['variant-features', variantId] });
       onNext();

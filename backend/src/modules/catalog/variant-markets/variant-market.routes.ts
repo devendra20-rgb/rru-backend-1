@@ -8,6 +8,7 @@ import {
   UpdateVariantMarketSchema,
   VariantMarketIdParamSchema,
   VariantMarketListQuerySchema,
+  BulkUpsertVariantMarketsSchema,
 } from './variant-market.validation';
 
 const router = Router({ mergeParams: true });
@@ -50,6 +51,13 @@ router.delete(
   '/:id',
   validate(z.object({ params: VariantMarketIdParamSchema }) as any),
   variantMarketController.deleteVariantMarket,
+);
+
+// Bulk upsert: replaces N individual POST/PATCH calls with a single atomic bulkWrite
+router.post(
+  '/bulk',
+  validate(BulkUpsertVariantMarketsSchema as any),
+  variantMarketController.bulkUpsertVariantMarkets,
 );
 
 export default router;

@@ -140,6 +140,41 @@ class VariantFeatureRepository {
       { new: true, runValidators: true },
     ).populate('featureId');
   }
+
+  async bulkUpsert(
+    variantId: string,
+    items: Array<{
+      featureId: string;
+      availability: 'standard' | 'optional' | 'unavailable';
+      value?: string;
+      status?: 'active' | 'inactive';
+    }>,
+  ): Promise<{ upserted: number; modified: number }> {
+    if (items.length === 0) return { upserted: 0, modified: 0 };
+
+    const ops = items.map((item) => ({
+      updateOne: {
+        filter: {
+          variantId: new Types.ObjectId(variantId),
+          featureId: new Types.ObjectId(item.featureId),
+        },
+        update: {
+          $set: {
+            availability: item.availability,
+            value: item.value ?? '',
+            status: item.status ?? 'active',
+          },
+        },
+        upsert: true,
+      },
+    }));
+
+    const result = await VariantFeature.bulkWrite(ops, { ordered: false });
+    return {
+      upserted: result.upsertedCount,
+      modified: result.modifiedCount,
+    };
+  }
 }
 
 export const featureRepository = new FeatureRepository();

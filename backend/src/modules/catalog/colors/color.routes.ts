@@ -9,6 +9,7 @@ import {
   updateVariantColorSchema,
   colorQuerySchema,
   variantColorQuerySchema,
+  bulkUpsertVariantColorsSchema,
 } from './color.validation';
 
 // Colors Router
@@ -47,6 +48,13 @@ variantColorRouter.patch(
   colorController.updateVariantColor,
 );
 variantColorRouter.delete('/:id', colorController.deleteVariantColor);
+
+// Bulk upsert: replaces N individual POST/PATCH calls with a single atomic bulkWrite
+variantColorRouter.post(
+  '/bulk',
+  validate(bulkUpsertVariantColorsSchema),
+  colorController.bulkUpsertVariantColors,
+);
 
 export default {
   colorRouter,

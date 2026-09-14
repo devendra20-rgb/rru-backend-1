@@ -133,6 +133,28 @@ export class FeatureService {
     }
     return variantFeature;
   }
+
+  async bulkUpsertVariantFeatures(
+    variantId: string,
+    items: Array<{
+      featureId: string;
+      availability: 'standard' | 'optional' | 'unavailable';
+      value?: string;
+      status?: 'active' | 'inactive';
+    }>,
+  ) {
+    // Validate variant exists once — not N times
+    const variant = await variantRepository.findById(variantId);
+    if (!variant) {
+      throw new AppError('Variant not found', 404);
+    }
+
+    if (!items || items.length === 0) {
+      return { upserted: 0, modified: 0 };
+    }
+
+    return variantFeatureRepository.bulkUpsert(variantId, items);
+  }
 }
 
 export const featureService = new FeatureService();

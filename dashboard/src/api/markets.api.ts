@@ -78,3 +78,19 @@ export const deleteVariantMarket = async (variantId: string, id: string): Promis
   return response.data;
 };
 
+// Bulk Upsert: sends all market mappings in a single request (replaces N individual calls)
+export const bulkSaveVariantMarkets = async (
+  variantId: string,
+  items: Array<{
+    marketId: string;
+    availabilityStatus?: 'available' | 'unavailable' | 'upcoming' | 'discontinued';
+    status?: 'active' | 'inactive';
+    isFeatured?: boolean;
+    pricing?: Pricing;
+    launchDate?: string;
+    discontinuedDate?: string;
+  }>,
+): Promise<any> => {
+  const response = await api.post(`/variants/${variantId}/markets/bulk`, { variantId, items });
+  return response.data;
+};

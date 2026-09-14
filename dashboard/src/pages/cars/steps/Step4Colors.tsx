@@ -20,7 +20,7 @@ import {
   Stack,
 } from '@mui/material';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getColors, getVariantColors, createVariantColor, updateVariantColor } from '../../../api/colors.api';
+import { getColors, getVariantColors, bulkSaveVariantColors } from '../../../api/colors.api';
 import type { Color, VariantColor } from '../../../api/colors.api';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlined';
@@ -163,32 +163,25 @@ const Step4Colors: React.FC<Step4Props> = ({ variantId, onNext, onBack }) => {
     });
   };
 
-  const saveMapping = async (mapping: ColorMapping) => {
-    if (mapping._id) {
-      await updateVariantColor(mapping._id, {
-        availability: mapping.availability,
-        status: mapping.status,
-      });
-    } else if (mapping.availability && mapping.availability !== 'unavailable') {
-      await createVariantColor({
-        variantId,
-        colorId: mapping.colorId,
-        availability: mapping.availability,
-        status: mapping.status || 'active',
-      });
-    }
-  };
 
   const handleSaveAndNext = async () => {
     setIsSaving(true);
     setError(null);
     try {
-      const promises = Array.from(dirtyMappings).map((colorId) => {
-        const mapping = mappings[colorId];
-        if (!mapping) return Promise.resolve();
-        return saveMapping(mapping);
-      });
-      await Promise.all(promises);
+      // Collect only dirty (changed) mappings into a single bulk payload
+      const items = Array.from(dirtyMappings)
+        .map((colorId) => mappings[colorId])
+        .filter(Boolean)
+        .map((mapping) => ({
+          colorId: mapping.colorId as string,
+          availability: (mapping.availability ?? 'standard') as 'standard' | 'optional' | 'unavailable',
+          status: (mapping.status ?? 'active') as 'active' | 'inactive',
+        }));
+
+      if (items.length > 0) {
+        // Single HTTP request replaces N individual POST/PATCH calls
+        await bulkSaveVariantColors(variantId, items);
+      }
 
       queryClient.invalidateQueries({ queryKey: ['variant-colors', variantId] });
       onNext();

@@ -77,3 +77,25 @@ export const VariantMarketListQuerySchema = PaginationQuerySchema.extend({
     .optional(),
   priceType: z.enum(['starting', 'ex_showroom', 'on_road', 'msrp', 'other']).optional(),
 });
+
+export const BulkUpsertVariantMarketsSchema = z.object({
+  body: z.object({
+    variantId: z.string().regex(objectIdRegex, 'Invalid Variant ID format').optional(),
+    items: z
+      .array(
+        z.object({
+          marketId: z.string().regex(objectIdRegex, 'Invalid Market ID format'),
+          availabilityStatus: z
+            .enum(['available', 'unavailable', 'upcoming', 'discontinued'])
+            .optional()
+            .default('upcoming'),
+          status: z.enum(['active', 'inactive']).optional().default('active'),
+          isFeatured: z.boolean().optional().default(false),
+          launchDate: z.string().datetime().optional(),
+          discontinuedDate: z.string().datetime().optional(),
+          pricing: PricingSchema.optional(),
+        }),
+      )
+      .min(1, 'At least one item is required'),
+  }),
+});

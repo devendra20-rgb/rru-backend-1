@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Button, Typography, CircularProgress, Alert, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Select, MenuItem, TextField, Checkbox } from '@mui/material';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getMarkets, getVariantMarkets, createVariantMarket, updateVariantMarket } from '../../../api/markets.api';
+import { getMarkets, getVariantMarkets, bulkSaveVariantMarkets } from '../../../api/markets.api';
 import type { VariantMarket } from '../../../api/markets.api';
 
 interface Step5Props {
@@ -86,34 +86,36 @@ const Step5Markets: React.FC<Step5Props> = ({ variantId, onNext, onBack }) => {
     });
   };
 
-  const saveMapping = async (mapping: Partial<VariantMarket>) => {
-    // clean up payload
-    const payload = JSON.parse(JSON.stringify(mapping));
-    if (payload.availabilityStatus === 'unavailable') {
-      // If we are making it unavailable and it didn't exist before, we might just not create it
-      // But if it was created, we update it to 'unavailable'
-      if (!mapping._id) return;
-    }
-    
-    // Remove pricing if amount is 0/null/empty so it doesn't fail validation
-    if (payload.pricing && (!payload.pricing.amount || payload.pricing.amount === 0)) {
-      delete payload.pricing;
-    }
-
-    if (mapping._id) {
-      await updateVariantMarket(variantId, mapping._id, payload);
-    } else {
-      await createVariantMarket(variantId, payload);
-    }
-  };
 
   const handleSaveAndNext = async () => {
     setIsSaving(true);
     setError(null);
     try {
-      const promises = Array.from(dirtyMappings).map(marketId => saveMapping(mappings[marketId]));
-      await Promise.all(promises);
-      
+      // Collect only dirty (changed) mappings into a single bulk payload
+      const items = Array.from(dirtyMappings)
+        .map((marketId) => mappings[marketId])
+        .filter(Boolean)
+        .map((mapping) => {
+          const item: any = {
+            marketId: (mapping.marketId as any)?._id ?? mapping.marketId,
+            availabilityStatus: mapping.availabilityStatus ?? 'upcoming',
+            status: mapping.status ?? 'active',
+            isFeatured: mapping.isFeatured ?? false,
+          };
+          // Only include pricing if amount is valid and non-zero
+          if (mapping.pricing?.amount && mapping.pricing.amount > 0) {
+            item.pricing = mapping.pricing;
+          }
+          if (mapping.launchDate) item.launchDate = mapping.launchDate;
+          if (mapping.discontinuedDate) item.discontinuedDate = mapping.discontinuedDate;
+          return item;
+        });
+
+      if (items.length > 0) {
+        // Single HTTP request replaces N individual POST/PATCH calls
+        await bulkSaveVariantMarkets(variantId, items);
+      }
+
       queryClient.invalidateQueries({ queryKey: ['variant-markets', variantId] });
       onNext();
     } catch (err: any) {

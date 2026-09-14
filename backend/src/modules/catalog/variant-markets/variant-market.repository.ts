@@ -1,3 +1,4 @@
+import { Types } from 'mongoose';
 import { VariantMarket } from './variant-market.model';
 import {
   IVariantMarketCreate,
@@ -74,6 +75,46 @@ class VariantMarketRepository {
     return VariantMarket.findByIdAndUpdate(id, { status: 'inactive' }, { new: true })
       .populate('variantId')
       .populate('marketId');
+  }
+
+  async bulkUpsert(
+    variantId: string,
+    items: IVariantMarketCreate[],
+  ): Promise<{ upserted: number; modified: number }> {
+    if (items.length === 0) return { upserted: 0, modified: 0 };
+
+    const ops = items.map((item) => {
+      const setData: Record<string, any> = {
+        availabilityStatus: item.availabilityStatus ?? 'upcoming',
+        status: item.status ?? 'active',
+        isFeatured: item.isFeatured ?? false,
+      };
+
+      if (item.launchDate) setData.launchDate = item.launchDate;
+      if (item.discontinuedDate) setData.discontinuedDate = item.discontinuedDate;
+
+      // Only set pricing if a non-zero amount is provided
+      if (item.pricing && item.pricing.amount && item.pricing.amount > 0) {
+        setData.pricing = item.pricing;
+      }
+
+      return {
+        updateOne: {
+          filter: {
+            variantId: new Types.ObjectId(variantId as string),
+            marketId: new Types.ObjectId(item.marketId as string),
+          },
+          update: { $set: setData },
+          upsert: true,
+        },
+      };
+    });
+
+    const result = await VariantMarket.bulkWrite(ops, { ordered: false });
+    return {
+      upserted: result.upsertedCount,
+      modified: result.modifiedCount,
+    };
   }
 }
 

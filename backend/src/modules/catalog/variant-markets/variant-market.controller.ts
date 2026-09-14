@@ -78,3 +78,14 @@ export const deleteVariantMarket = async (req: Request, res: Response, next: Nex
     next(error);
   }
 };
+
+export const bulkUpsertVariantMarkets = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const variantId = req.params.variantId || req.body.variantId;
+    const { items } = req.body;
+    const result = await variantMarketService.bulkUpsert(variantId, items);
+    sendSuccess(res, 200, `Bulk saved: ${result.upserted} upserted, ${result.modified} updated`, result);
+  } catch (error) {
+    next(error);
+  }
+};

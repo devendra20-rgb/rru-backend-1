@@ -58,8 +58,6 @@ const specificationSchema = new Schema<ISpecification>(
   },
 );
 
-// Indexes
-specificationSchema.index({ variantId: 1 });
 specificationSchema.index({ status: 1 });
 
 export const Specification = model<ISpecification>('Specification', specificationSchema);

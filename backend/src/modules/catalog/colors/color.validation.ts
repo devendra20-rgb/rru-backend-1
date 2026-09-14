@@ -84,3 +84,18 @@ export const variantColorQuerySchema = z.object({
     status: z.enum(['active', 'inactive']).optional(),
   }),
 });
+
+export const bulkUpsertVariantColorsSchema = z.object({
+  body: z.object({
+    variantId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid variant ID'),
+    items: z
+      .array(
+        z.object({
+          colorId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid color ID'),
+          availability: z.enum(AVAILABILITIES),
+          status: z.enum(['active', 'inactive']).optional(),
+        }),
+      )
+      .min(1, 'At least one item is required'),
+  }),
+});

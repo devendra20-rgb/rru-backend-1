@@ -56,7 +56,6 @@ const customAttributeSchema = new Schema<ICustomAttribute>(
   }
 );
 
-customAttributeSchema.index({ key: 1 });
 customAttributeSchema.index({ status: 1 });
 customAttributeSchema.index({ appliesTo: 1 });
 customAttributeSchema.index({ sortOrder: 1 });

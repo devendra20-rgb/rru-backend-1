@@ -80,6 +80,12 @@ export class ColorController {
     const variantColor = await colorService.deleteVariantColor(req.params.id as string);
     return sendSuccess(res, 200, 'Variant color deleted successfully', variantColor);
   }
+
+  async bulkUpsertVariantColors(req: Request, res: Response) {
+    const { variantId, items } = req.body;
+    const result = await colorService.bulkUpsertVariantColors(variantId, items);
+    return sendSuccess(res, 200, `Bulk saved: ${result.upserted} upserted, ${result.modified} updated`, result);
+  }
 }
 
 export const colorController = new ColorController();

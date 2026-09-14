@@ -63,6 +63,22 @@ class VariantMarketService {
 
     return variantMarketRepository.softDelete(id);
   }
+
+  async bulkUpsert(variantId: string, items: IVariantMarketCreate[]) {
+    // Validate variant exists once
+    const variantExists = await variantRepository.findById(variantId);
+    if (!variantExists) {
+      throw new AppError('Variant not found', 404);
+    }
+
+    if (!items || items.length === 0) {
+      return { upserted: 0, modified: 0 };
+    }
+
+    // Attach variantId to all items
+    const enriched = items.map((item) => ({ ...item, variantId }));
+    return variantMarketRepository.bulkUpsert(variantId, enriched);
+  }
 }
 
 export const variantMarketService = new VariantMarketService();

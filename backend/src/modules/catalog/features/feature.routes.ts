@@ -9,6 +9,7 @@ import {
   updateVariantFeatureSchema,
   featureQuerySchema,
   variantFeatureQuerySchema,
+  bulkUpsertVariantFeaturesSchema,
 } from './feature.validation';
 
 // Features Router
@@ -51,6 +52,13 @@ variantFeatureRouter.patch(
   featureController.updateVariantFeature,
 );
 variantFeatureRouter.delete('/:id', featureController.deleteVariantFeature);
+
+// Bulk upsert: replaces N individual POST/PATCH calls with a single atomic bulkWrite
+variantFeatureRouter.post(
+  '/bulk',
+  validate(bulkUpsertVariantFeaturesSchema),
+  featureController.bulkUpsertVariantFeatures,
+);
 
 export default {
   featureRouter,

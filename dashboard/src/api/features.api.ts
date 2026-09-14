@@ -66,3 +66,16 @@ export const deleteVariantFeature = async (id: string): Promise<SingleResponse<n
   return response.data;
 };
 
+// Bulk Upsert: sends all feature mappings in a single request (replaces N individual calls)
+export const bulkSaveVariantFeatures = async (
+  variantId: string,
+  items: Array<{
+    featureId: string;
+    availability: 'standard' | 'optional' | 'unavailable';
+    value?: string;
+    status?: 'active' | 'inactive';
+  }>,
+): Promise<any> => {
+  const response = await api.post('/variant-features/bulk', { variantId, items });
+  return response.data;
+};

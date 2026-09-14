@@ -134,6 +134,39 @@ class VariantColorRepository {
       { new: true, runValidators: true },
     ).populate('colorId');
   }
+
+  async bulkUpsert(
+    variantId: string,
+    items: Array<{
+      colorId: string;
+      availability: 'standard' | 'optional' | 'unavailable';
+      status?: 'active' | 'inactive';
+    }>,
+  ): Promise<{ upserted: number; modified: number }> {
+    if (items.length === 0) return { upserted: 0, modified: 0 };
+
+    const ops = items.map((item) => ({
+      updateOne: {
+        filter: {
+          variantId: new Types.ObjectId(variantId),
+          colorId: new Types.ObjectId(item.colorId),
+        },
+        update: {
+          $set: {
+            availability: item.availability,
+            status: item.status ?? 'active',
+          },
+        },
+        upsert: true,
+      },
+    }));
+
+    const result = await VariantColor.bulkWrite(ops, { ordered: false });
+    return {
+      upserted: result.upsertedCount,
+      modified: result.modifiedCount,
+    };
+  }
 }
 
 export const colorRepository = new ColorRepository();

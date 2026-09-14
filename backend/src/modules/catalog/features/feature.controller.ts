@@ -85,6 +85,12 @@ export class FeatureController {
     const variantFeature = await featureService.deleteVariantFeature(req.params.id as string);
     return sendSuccess(res, 200, 'Variant feature deleted successfully', variantFeature);
   }
+
+  async bulkUpsertVariantFeatures(req: Request, res: Response) {
+    const { variantId, items } = req.body;
+    const result = await featureService.bulkUpsertVariantFeatures(variantId, items);
+    return sendSuccess(res, 200, `Bulk saved: ${result.upserted} upserted, ${result.modified} updated`, result);
+  }
 }
 
 export const featureController = new FeatureController();
