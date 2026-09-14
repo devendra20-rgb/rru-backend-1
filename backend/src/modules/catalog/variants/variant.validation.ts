@@ -19,8 +19,8 @@ export const CreateVariantSchema = z.object({
     fuelType: z
       .enum(['petrol', 'diesel', 'hybrid', 'plug_in_hybrid', 'electric', 'cng', 'lpg', 'other'])
       .optional(),
-    transmissionType: z.enum(['manual', 'automatic', 'cvt', 'dct', 'amt', 'other']).optional(),
-    drivetrain: z.enum(['fwd', 'rwd', 'awd', '4wd', 'other']).optional(),
+    transmissionType: z.string().optional(),
+    drivetrain: z.string().optional(),
     engine: z
       .object({
         displacementCc: z.number().positive().optional(),
@@ -57,8 +57,8 @@ export const UpdateVariantSchema = z.object({
     fuelType: z
       .enum(['petrol', 'diesel', 'hybrid', 'plug_in_hybrid', 'electric', 'cng', 'lpg', 'other'])
       .optional(),
-    transmissionType: z.enum(['manual', 'automatic', 'cvt', 'dct', 'amt', 'other']).optional(),
-    drivetrain: z.enum(['fwd', 'rwd', 'awd', '4wd', 'other']).optional(),
+    transmissionType: z.string().optional(),
+    drivetrain: z.string().optional(),
     engine: z
       .object({
         displacementCc: z.number().positive().optional(),
@@ -100,8 +100,8 @@ export const VariantListQuerySchema = PaginationQuerySchema.extend({
   fuelType: z
     .enum(['petrol', 'diesel', 'hybrid', 'plug_in_hybrid', 'electric', 'cng', 'lpg', 'other'])
     .optional(),
-  transmissionType: z.enum(['manual', 'automatic', 'cvt', 'dct', 'amt', 'other']).optional(),
-  drivetrain: z.enum(['fwd', 'rwd', 'awd', '4wd', 'other']).optional(),
+  transmissionType: z.string().optional(),
+  drivetrain: z.string().optional(),
   modelYear: z.preprocess((val) => (val ? Number(val) : undefined), z.number().int().optional()),
 });
 

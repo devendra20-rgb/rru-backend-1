@@ -17,11 +17,13 @@ import {
   Typography,
   Divider,
   IconButton,
+  InputAdornment,
   Autocomplete,
   FormControlLabel,
   Switch,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import QuickAddModal from '../../../components/common/QuickAddModal';
 import BrandForm from '../../brands/BrandForm';
 import ModelForm from '../../models/ModelForm';
@@ -50,8 +52,8 @@ const basicInfoSchema = z.object({
   generationId: z.string().optional(),
   modelYear: z.number().int().optional(),
   fuelType: z.enum(['petrol', 'diesel', 'hybrid', 'plug_in_hybrid', 'electric', 'cng', 'lpg', 'other']).optional(),
-  transmissionType: z.enum(['manual', 'automatic', 'cvt', 'dct', 'amt', 'other']).optional(),
-  drivetrain: z.enum(['fwd', 'rwd', 'awd', '4wd', 'other']).optional(),
+  transmissionType: z.string().optional(),
+  drivetrain: z.string().optional(),
   engine: z.object({
     displacementCc: z.number().optional(),
     cylinders: z.number().optional(),
@@ -110,6 +112,14 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
 
   const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
   const [slugNotice, setSlugNotice] = useState<string | null>(null);
+
+  const [isCustomTransmission, setIsCustomTransmission] = useState<boolean>(false);
+  const [transmissionSelect, setTransmissionSelect] = useState<string>('');
+  const [customTransmission, setCustomTransmission] = useState<string>('');
+
+  const [isCustomDrivetrain, setIsCustomDrivetrain] = useState<boolean>(false);
+  const [drivetrainSelect, setDrivetrainSelect] = useState<string>('');
+  const [customDrivetrain, setCustomDrivetrain] = useState<string>('');
 
   const {
     control,
@@ -170,6 +180,38 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
   useEffect(() => {
     if (data?.data) {
       const variant = data.data as any;
+      const rawTransmission = variant.transmissionType || '';
+      const stdTransmissions = ['manual', 'automatic', 'cvt', 'dct', 'amt'];
+      if (stdTransmissions.includes(rawTransmission)) {
+        setIsCustomTransmission(false);
+        setTransmissionSelect(rawTransmission);
+        setCustomTransmission('');
+      } else if (rawTransmission) {
+        setIsCustomTransmission(true);
+        setTransmissionSelect('custom');
+        setCustomTransmission(rawTransmission);
+      } else {
+        setIsCustomTransmission(false);
+        setTransmissionSelect('');
+        setCustomTransmission('');
+      }
+
+      const rawDrivetrain = variant.drivetrain || '';
+      const stdDrivetrains = ['fwd', 'rwd', 'awd', '4wd'];
+      if (stdDrivetrains.includes(rawDrivetrain)) {
+        setIsCustomDrivetrain(false);
+        setDrivetrainSelect(rawDrivetrain);
+        setCustomDrivetrain('');
+      } else if (rawDrivetrain) {
+        setIsCustomDrivetrain(true);
+        setDrivetrainSelect('custom');
+        setCustomDrivetrain(rawDrivetrain);
+      } else {
+        setIsCustomDrivetrain(false);
+        setDrivetrainSelect('');
+        setCustomDrivetrain('');
+      }
+
       reset({
         name: variant.name,
         variantCode: variant.variantCode || '',
@@ -179,8 +221,8 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
         generationId: variant.generationId?._id || variant.generationId || '',
         modelYear: variant.modelYear,
         fuelType: variant.fuelType,
-        transmissionType: variant.transmissionType,
-        drivetrain: variant.drivetrain,
+        transmissionType: rawTransmission,
+        drivetrain: rawDrivetrain,
         engine: variant.engine || {},
         seatingCapacity: variant.seatingCapacity,
         doors: variant.doors,
@@ -217,6 +259,12 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
   ]);
 
   const clearTemplateDerivedFields = () => {
+    setIsCustomTransmission(false);
+    setTransmissionSelect('');
+    setCustomTransmission('');
+    setIsCustomDrivetrain(false);
+    setDrivetrainSelect('');
+    setCustomDrivetrain('');
     setValue('modelYear', undefined);
     setValue('fuelType', undefined);
     setValue('transmissionType', undefined);
@@ -245,8 +293,34 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
     // Keep current name / status / variantCode — do not overwrite unique fields
     if (source.modelYear !== undefined) setValue('modelYear', source.modelYear);
     if (source.fuelType) setValue('fuelType', source.fuelType as any);
-    if (source.transmissionType) setValue('transmissionType', source.transmissionType as any);
-    if (source.drivetrain) setValue('drivetrain', source.drivetrain as any);
+    if (source.transmissionType) {
+      const rawTrans = source.transmissionType;
+      const stdTrans = ['manual', 'automatic', 'cvt', 'dct', 'amt'];
+      if (stdTrans.includes(rawTrans)) {
+        setIsCustomTransmission(false);
+        setTransmissionSelect(rawTrans);
+        setCustomTransmission('');
+      } else {
+        setIsCustomTransmission(true);
+        setTransmissionSelect('custom');
+        setCustomTransmission(rawTrans);
+      }
+      setValue('transmissionType', rawTrans as any);
+    }
+    if (source.drivetrain) {
+      const rawDrive = source.drivetrain;
+      const stdDrive = ['fwd', 'rwd', 'awd', '4wd'];
+      if (stdDrive.includes(rawDrive)) {
+        setIsCustomDrivetrain(false);
+        setDrivetrainSelect(rawDrive);
+        setCustomDrivetrain('');
+      } else {
+        setIsCustomDrivetrain(true);
+        setDrivetrainSelect('custom');
+        setCustomDrivetrain(rawDrive);
+      }
+      setValue('drivetrain', rawDrive as any);
+    }
     if (source.engine) {
       setValue('engine', {
         displacementCc: source.engine.displacementCc,
@@ -476,8 +550,26 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
     if (submitData.description === '') delete submitData.description;
     if (submitData.shortDescription === '') delete submitData.shortDescription;
     if (submitData.fuelType === '') delete submitData.fuelType;
-    if (submitData.transmissionType === '') delete submitData.transmissionType;
-    if (submitData.drivetrain === '') delete submitData.drivetrain;
+
+    if (isCustomTransmission || transmissionSelect === 'custom') {
+      const val = customTransmission.trim();
+      if (val) submitData.transmissionType = val;
+      else delete submitData.transmissionType;
+    } else if (transmissionSelect) {
+      submitData.transmissionType = transmissionSelect;
+    } else {
+      delete submitData.transmissionType;
+    }
+
+    if (isCustomDrivetrain || drivetrainSelect === 'custom') {
+      const val = customDrivetrain.trim();
+      if (val) submitData.drivetrain = val;
+      else delete submitData.drivetrain;
+    } else if (drivetrainSelect) {
+      submitData.drivetrain = drivetrainSelect;
+    } else {
+      delete submitData.drivetrain;
+    }
     
     if (submitData.engine) {
       if (submitData.engine.aspiration === '') delete submitData.engine.aspiration;
@@ -875,32 +967,124 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
               </FormControl>
             )}
           />
-          <Controller
-            name="transmissionType"
-            control={control}
-            render={({ field }) => (
-              <FormControl fullWidth>
-                <InputLabel>Transmission</InputLabel>
-                <Select {...field} label="Transmission" value={field.value || ''}>
-                  <MenuItem value="">None</MenuItem>
-                  {['manual', 'automatic', 'cvt', 'dct', 'amt', 'other'].map(v => <MenuItem key={v} value={v}>{v.toUpperCase()}</MenuItem>)}
-                </Select>
-              </FormControl>
-            )}
-          />
-          <Controller
-            name="drivetrain"
-            control={control}
-            render={({ field }) => (
-              <FormControl fullWidth>
-                <InputLabel>Drivetrain</InputLabel>
-                <Select {...field} label="Drivetrain" value={field.value || ''}>
-                  <MenuItem value="">None</MenuItem>
-                  {['fwd', 'rwd', 'awd', '4wd', 'other'].map(v => <MenuItem key={v} value={v}>{v.toUpperCase()}</MenuItem>)}
-                </Select>
-              </FormControl>
-            )}
-          />
+
+          {isCustomTransmission ? (
+            <TextField
+              label="Transmission"
+              fullWidth
+              placeholder="Enter custom transmission"
+              value={customTransmission}
+              onChange={(e) => {
+                const val = e.target.value;
+                setCustomTransmission(val);
+                setValue('transmissionType', val);
+              }}
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        size="small"
+                        edge="end"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsCustomTransmission(false);
+                          setTransmissionSelect('');
+                          setValue('transmissionType', undefined);
+                        }}
+                        title="Switch to dropdown list"
+                      >
+                        <ArrowDropDownIcon />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
+          ) : (
+            <FormControl fullWidth>
+              <InputLabel>Transmission</InputLabel>
+              <Select
+                label="Transmission"
+                value={transmissionSelect}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === 'custom') {
+                    setIsCustomTransmission(true);
+                    setTransmissionSelect('custom');
+                  } else {
+                    setTransmissionSelect(val);
+                    setValue('transmissionType', val);
+                  }
+                }}
+              >
+                <MenuItem value="">None</MenuItem>
+                {['manual', 'automatic', 'cvt', 'dct', 'amt'].map(v => (
+                  <MenuItem key={v} value={v}>{v.toUpperCase()}</MenuItem>
+                ))}
+                <MenuItem value="custom">CUSTOM</MenuItem>
+              </Select>
+            </FormControl>
+          )}
+
+          {isCustomDrivetrain ? (
+            <TextField
+              label="Drivetrain"
+              fullWidth
+              placeholder="Enter custom drivetrain"
+              value={customDrivetrain}
+              onChange={(e) => {
+                const val = e.target.value;
+                setCustomDrivetrain(val);
+                setValue('drivetrain', val);
+              }}
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        size="small"
+                        edge="end"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsCustomDrivetrain(false);
+                          setDrivetrainSelect('');
+                          setValue('drivetrain', undefined);
+                        }}
+                        title="Switch to dropdown list"
+                      >
+                        <ArrowDropDownIcon />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
+          ) : (
+            <FormControl fullWidth>
+              <InputLabel>Drivetrain</InputLabel>
+              <Select
+                label="Drivetrain"
+                value={drivetrainSelect}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === 'custom') {
+                    setIsCustomDrivetrain(true);
+                    setDrivetrainSelect('custom');
+                  } else {
+                    setDrivetrainSelect(val);
+                    setValue('drivetrain', val);
+                  }
+                }}
+              >
+                <MenuItem value="">None</MenuItem>
+                {['fwd', 'rwd', 'awd', '4wd'].map(v => (
+                  <MenuItem key={v} value={v}>{v.toUpperCase()}</MenuItem>
+                ))}
+                <MenuItem value="custom">CUSTOM</MenuItem>
+              </Select>
+            </FormControl>
+          )}
         </Box>
 
         <Box sx={{ display: 'flex', gap: 2 }}>

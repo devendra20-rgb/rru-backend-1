@@ -47,11 +47,9 @@ const variantSchema = new Schema<IVariant>(
     },
     transmissionType: {
       type: String,
-      enum: ['manual', 'automatic', 'cvt', 'dct', 'amt', 'other'],
     },
     drivetrain: {
       type: String,
-      enum: ['fwd', 'rwd', 'awd', '4wd', 'other'],
     },
     engine: {
       displacementCc: { type: Number },

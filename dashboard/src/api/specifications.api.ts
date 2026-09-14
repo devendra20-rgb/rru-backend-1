@@ -56,15 +56,8 @@ export interface Specification {
 
 // Fetch specifications for a particular variant
 export const getVariantSpecifications = async (variantId: string): Promise<SingleResponse<Specification | null>> => {
-  try {
-    const response = await api.get(`/specifications/variant/${variantId}`);
-    return response.data;
-  } catch (error: any) {
-    if (error.response?.status === 404) {
-      return { success: true, message: 'Specification not found', data: null };
-    }
-    throw error;
-  }
+  const response = await api.get(`/specifications/variant/${variantId}`);
+  return response.data;
 };
 
 // Create or Update specification for a variant

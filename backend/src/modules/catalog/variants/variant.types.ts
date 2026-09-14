@@ -3,9 +3,9 @@ import { Document, Types } from 'mongoose';
 export type FuelType =
   'petrol' | 'diesel' | 'hybrid' | 'plug_in_hybrid' | 'electric' | 'cng' | 'lpg' | 'other';
 
-export type TransmissionType = 'manual' | 'automatic' | 'cvt' | 'dct' | 'amt' | 'other';
+export type TransmissionType = 'manual' | 'automatic' | 'cvt' | 'dct' | 'amt' | 'other' | (string & {});
 
-export type Drivetrain = 'fwd' | 'rwd' | 'awd' | '4wd' | 'other';
+export type Drivetrain = 'fwd' | 'rwd' | 'awd' | '4wd' | 'other' | (string & {});
 
 export interface IEngine {
   displacementCc?: number;

@@ -50,7 +50,14 @@ const CarFormLayout: React.FC = () => {
           />
         );
       case 1:
-        return <Step2Specifications variantId={variantId!} onNext={handleNext} onBack={handleBack} />;
+        return (
+          <Step2Specifications 
+            variantId={variantId!} 
+            onNext={handleNext} 
+            onBack={handleBack} 
+            isNewVehicle={!isEditMode}
+          />
+        );
       case 2:
         return <Step3Features variantId={variantId!} onNext={handleNext} onBack={handleBack} />;
       case 3:
