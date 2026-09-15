@@ -72,7 +72,7 @@ interface Step2Props {
   isNewVehicle?: boolean;
 }
 
-const Step2Specifications: React.FC<Step2Props> = ({ variantId, onNext, onBack, isNewVehicle = false }) => {
+const Step2Specifications: React.FC<Step2Props> = ({ variantId, onNext, onBack }) => {
   const queryClient = useQueryClient();
   const [specId, setSpecId] = useState<string | null>(null);
 
@@ -96,7 +96,7 @@ const Step2Specifications: React.FC<Step2Props> = ({ variantId, onNext, onBack, 
     queryKey: ['specifications', variantId],
     queryFn: () => getVariantSpecifications(variantId),
     retry: (failureCount, error: any) => {
-      if (isNewVehicle && error?.response?.status === 404) return false;
+      if (error?.response?.status === 404) return false;
       return failureCount < 1;
     }
   });
@@ -162,8 +162,8 @@ const Step2Specifications: React.FC<Step2Props> = ({ variantId, onNext, onBack, 
 
   const isSaving = createMutation.isPending || updateMutation.isPending;
   const saveError = createMutation.error || updateMutation.error;
-  const isExpected404 = isNewVehicle && (fetchError as any)?.response?.status === 404;
-  const queryErrorToDisplay = fetchError && !isExpected404 ? fetchError : null;
+  const is404 = (fetchError as any)?.response?.status === 404;
+  const queryErrorToDisplay = fetchError && !is404 ? fetchError : null;
 
   if (isLoading || isLoadingAttrs) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>;

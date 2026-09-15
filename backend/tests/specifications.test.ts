@@ -183,7 +183,7 @@ describe('Specifications API', () => {
     expect(res.status).toBe(403);
   });
 
-  it('should verify legacy specification with missing status and backfill behavior', async () => {
+  it('should gracefully handle legacy specification with missing status and inactive status', async () => {
     // Create a new variant specifically for legacy status test
     const gen = (await Generation.findOne({}))!;
     const legacyVariant = await Variant.create({
@@ -205,9 +205,10 @@ describe('Specifications API', () => {
       updatedAt: new Date(),
     });
 
-    // 1. GET should return 404 while status is missing
+    // 1. GET should return 200 even if status field is missing (non-inactive)
     const getBefore = await request(app).get(`/api/v1/specifications/variant/${legacyVariantId}`);
-    expect(getBefore.status).toBe(404);
+    expect(getBefore.status).toBe(200);
+    expect(getBefore.body.data.performance.topSpeedKph).toBe(220);
 
     // 2. Duplicate POST should return 409 because variantId exists
     const duplicatePost = await request(app)
@@ -219,28 +220,23 @@ describe('Specifications API', () => {
       });
     expect(duplicatePost.status).toBe(409);
 
-    // 3. Execute targeted status setting (backfill simulation)
-    await db.collection('specifications').updateOne(
-      { variantId: legacyVariant._id, status: { $exists: false } },
-      { $set: { status: 'active' } }
-    );
-
-    // 4. GET should now return 200 with status: 'active' and preserved fields
-    const getAfter = await request(app).get(`/api/v1/specifications/variant/${legacyVariantId}`);
-    expect(getAfter.status).toBe(200);
-    expect(getAfter.body.data.status).toBe('active');
-    expect(getAfter.body.data.performance.topSpeedKph).toBe(220);
-    expect(getAfter.body.data.dimensions.lengthMm).toBe(4400);
-
-    // 5. PATCH edit flow should work cleanly
+    // 3. PATCH edit flow should work cleanly
     const patchRes = await request(app)
-      .patch(`/api/v1/specifications/${getAfter.body.data._id}`)
+      .patch(`/api/v1/specifications/${getBefore.body.data._id}`)
       .set('Authorization', `Bearer ${adminToken}`)
       .send({
         performance: { topSpeedKph: 225 },
       });
     expect(patchRes.status).toBe(200);
     expect(patchRes.body.data.performance.topSpeedKph).toBe(225);
+
+    // 4. Inactive specification should return 404 on getByVariantId
+    await db.collection('specifications').updateOne(
+      { variantId: legacyVariant._id },
+      { $set: { status: 'inactive' } }
+    );
+    const getInactive = await request(app).get(`/api/v1/specifications/variant/${legacyVariantId}`);
+    expect(getInactive.status).toBe(404);
   });
 });
 

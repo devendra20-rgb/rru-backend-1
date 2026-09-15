@@ -20,18 +20,14 @@ class SpecificationRepository {
   }
 
   async getByVariantId(variantId: string) {
-    return await Specification.findOne({ variantId, status: 'active' });
+    return await Specification.findOne({ variantId, status: { $ne: 'inactive' } });
   }
 
   async getAll(query: ISpecificationQuery) {
-    const filter: any = { status: 'active' };
+    const filter: any = query.status ? { status: query.status } : { status: { $ne: 'inactive' } };
 
     if (query.variantId) {
       filter.variantId = query.variantId;
-    }
-
-    if (query.status) {
-      filter.status = query.status;
     }
 
     const page = query.page || 1;
@@ -66,7 +62,7 @@ class SpecificationRepository {
   }
 
   async exists(variantId: string) {
-    const count = await Specification.countDocuments({ variantId });
+    const count = await Specification.countDocuments({ variantId, status: { $ne: 'inactive' } });
     return count > 0;
   }
 }
