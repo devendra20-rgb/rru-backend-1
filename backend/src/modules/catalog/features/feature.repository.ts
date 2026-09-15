@@ -1,4 +1,5 @@
 import { Types } from 'mongoose';
+import { generateSlug } from '../../../utils/slug';
 import { Feature, VariantFeature } from './feature.model';
 import {
   IFeature,
@@ -43,9 +44,15 @@ class FeatureRepository {
     if (category) filter.category = category;
     if (status) filter.status = status;
     if (search) {
+      const escaped = search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      // Treat spaces and hyphens as interchangeable so "Power Adjustable"
+      // still finds "Power-Adjustable Front Seats (14-Way)"
+      const flexible = escaped.replace(/[\s-]+/g, '[\\s-]+');
+      const slugNeedle = generateSlug(search);
       filter.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
+        { name: { $regex: flexible, $options: 'i' } },
+        { description: { $regex: flexible, $options: 'i' } },
+        ...(slugNeedle ? [{ slug: { $regex: slugNeedle, $options: 'i' } }] : []),
       ];
     }
 

@@ -63,7 +63,9 @@ export interface BrandFormProps {
 }
 
 const BrandForm: React.FC<BrandFormProps> = ({ onSuccess, onCancel }) => {
-  const { id } = useParams<{ id: string }>();
+  const { id: routeId } = useParams<{ id: string }>();
+  // Quick-add modals sit on /cars/:id/edit — ignore that route id
+  const id = onSuccess || onCancel ? undefined : routeId;
   const isEditMode = !!id;
   const navigate = useNavigate();
   const queryClient = useQueryClient();

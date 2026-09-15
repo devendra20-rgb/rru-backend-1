@@ -95,13 +95,20 @@ const Step3Features: React.FC<Step3Props> = ({ variantId, onNext, onBack }) => {
           (m: any) => (m.featureId as any)?._id === feature._id || m.featureId === feature._id,
         );
 
-        initialMappings[feature._id] = existing || {
-          variantId,
-          featureId: feature._id,
-          availability: 'unavailable',
-          value: '',
-          status: 'active',
-        };
+        initialMappings[feature._id] = existing
+          ? {
+              ...existing,
+              variantId,
+              // API populates featureId as an object — keep a plain string for saves
+              featureId: feature._id,
+            }
+          : {
+              variantId,
+              featureId: feature._id,
+              availability: 'unavailable',
+              value: '',
+              status: 'active',
+            };
       });
 
       setMappings(initialMappings);
@@ -214,14 +221,23 @@ const Step3Features: React.FC<Step3Props> = ({ variantId, onNext, onBack }) => {
     try {
       // Collect only dirty (changed) mappings into a single bulk payload
       const items = Array.from(dirtyMappings)
-        .map((featureId) => mappings[featureId])
-        .filter(Boolean)
-        .map((mapping) => ({
-          featureId: mapping.featureId as string,
-          availability: (mapping.availability ?? 'unavailable') as 'standard' | 'optional' | 'unavailable',
-          value: mapping.value ?? '',
-          status: (mapping.status ?? 'active') as 'active' | 'inactive',
-        }));
+        .map((featureId) => {
+          const mapping = mappings[featureId];
+          if (!mapping) return null;
+          const rawId = mapping.featureId as any;
+          const resolvedFeatureId =
+            typeof rawId === 'string' ? rawId : rawId?._id ? String(rawId._id) : featureId;
+          return {
+            featureId: resolvedFeatureId,
+            availability: (mapping.availability ?? 'unavailable') as
+              | 'standard'
+              | 'optional'
+              | 'unavailable',
+            value: mapping.value ?? '',
+            status: (mapping.status ?? 'active') as 'active' | 'inactive',
+          };
+        })
+        .filter((item): item is NonNullable<typeof item> => Boolean(item));
 
       if (items.length > 0) {
         // Single HTTP request replaces N individual POST/PATCH calls
@@ -257,14 +273,14 @@ const Step3Features: React.FC<Step3Props> = ({ variantId, onNext, onBack }) => {
         </Alert>
       )}
 
-<Stack
-  direction={{ xs: "column", sm: "row" }}
-  spacing={"..."}
-  sx={{
-    mb: "...",
-    alignItems: { sm: "..." },
-  }}
->
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        spacing={2}
+        sx={{
+          mb: 3,
+          alignItems: { sm: 'center' },
+        }}
+      >
         <TextField
           fullWidth
           size="small"
@@ -380,12 +396,10 @@ const Step3Features: React.FC<Step3Props> = ({ variantId, onNext, onBack }) => {
                               </Typography>
                               {feature.description && (
                                 <Typography
-                                variant="caption"
-                                color="text.secondary"
-                                sx={{
-                                  display: "...",
-                                }}
-                              >
+                                  variant="caption"
+                                  color="text.secondary"
+                                  sx={{ display: 'block' }}
+                                >
                                   {feature.description}
                                 </Typography>
                               )}

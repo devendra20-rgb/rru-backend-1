@@ -17,7 +17,10 @@ export class FeatureService {
 
     const existingFeature = await featureRepository.findBySlug(slug);
     if (existingFeature) {
-      throw new AppError('Feature with this name already exists', 409);
+      throw new AppError(
+        `Feature with this name already exists as "${existingFeature.name}"`,
+        409,
+      );
     }
 
     return featureRepository.create({ ...data, slug });
@@ -51,7 +54,10 @@ export class FeatureService {
       slug = generateSlug(data.name);
       const existingSlug = await featureRepository.findBySlug(slug);
       if (existingSlug && existingSlug._id.toString() !== id) {
-        throw new AppError('Feature with this name already exists', 409);
+        throw new AppError(
+          `Feature with this name already exists as "${existingSlug.name}"`,
+          409,
+        );
       }
     }
 

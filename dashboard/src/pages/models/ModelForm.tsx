@@ -48,7 +48,9 @@ export interface ModelFormProps {
 }
 
 const ModelForm: React.FC<ModelFormProps> = ({ onSuccess, onCancel, initialData }) => {
-  const { id } = useParams<{ id: string }>();
+  const { id: routeId } = useParams<{ id: string }>();
+  // Quick-add modals sit on /cars/:id/edit — ignore that route id
+  const id = onSuccess || onCancel ? undefined : routeId;
   const isEditMode = !!id;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
