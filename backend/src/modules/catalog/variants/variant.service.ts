@@ -124,27 +124,13 @@ export const variantService = {
     if (query.generationId) {
       filter.generationId = query.generationId;
     } else if (query.modelId) {
-      const generations = await generationRepository.findMany(
-        { modelId: query.modelId },
-        0,
-        10000,
-        { _id: 1 },
-      );
-      const generationIds = generations.map((g) => g._id);
-      filter.generationId = { $in: generationIds };
+      filter.modelId = query.modelId;
     } else if (query.brandId) {
       const models = await modelRepository.findMany({ brandId: query.brandId }, 0, 10000, {
         _id: 1,
       });
       const modelIds = models.map((m) => m._id);
-      const generations = await generationRepository.findMany(
-        { modelId: { $in: modelIds } },
-        0,
-        10000,
-        { _id: 1 },
-      );
-      const generationIds = generations.map((g) => g._id);
-      filter.generationId = { $in: generationIds };
+      filter.modelId = { $in: modelIds };
     }
 
     const [data, total] = await Promise.all([

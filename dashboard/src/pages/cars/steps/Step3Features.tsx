@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Box,
   Button,
@@ -75,6 +75,9 @@ const Step3Features: React.FC<Step3Props> = ({ variantId, onNext, onBack }) => {
 
   const [mappings, setMappings] = useState<Record<string, Partial<VariantFeature>>>({});
   const [dirtyMappings, setDirtyMappings] = useState<Set<string>>(new Set());
+  const dirtyMappingsRef = useRef(dirtyMappings);
+  dirtyMappingsRef.current = dirtyMappings;
+
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -111,11 +114,33 @@ const Step3Features: React.FC<Step3Props> = ({ variantId, onNext, onBack }) => {
             };
       });
 
-      setMappings(initialMappings);
+      setMappings((prev) => {
+        const next = { ...initialMappings };
+        // Preserve any in-memory dirty changes made by the user before refetch
+        dirtyMappingsRef.current.forEach((featureId) => {
+          if (prev[featureId]) {
+            next[featureId] = prev[featureId];
+          }
+        });
+        return next;
+      });
     }
   }, [masterFeaturesData, mappedFeaturesData, variantId]);
 
   const masterFeaturesList = masterFeaturesData?.data?.features || [];
+
+  const masterCategoryStats = useMemo(() => {
+    const stats: Record<string, { configured: number; total: number }> = {};
+    masterFeaturesList.forEach((f: any) => {
+      const cat = f.category || 'other';
+      if (!stats[cat]) stats[cat] = { configured: 0, total: 0 };
+      stats[cat].total += 1;
+      if (mappings[f._id]?.availability && mappings[f._id]?.availability !== 'unavailable') {
+        stats[cat].configured += 1;
+      }
+    });
+    return stats;
+  }, [masterFeaturesList, mappings]);
 
   const groupedFeatures = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -195,13 +220,6 @@ const Step3Features: React.FC<Step3Props> = ({ variantId, onNext, onBack }) => {
       featuresToUpdate.forEach((f) => next.add(f._id));
       return next;
     });
-  };
-
-  const getCategoryStats = (features: any[]) => {
-    const configured = features.filter(
-      (f) => mappings[f._id]?.availability && mappings[f._id]?.availability !== 'unavailable',
-    ).length;
-    return { configured, total: features.length };
   };
 
   const handleAccordionChange =
@@ -310,7 +328,7 @@ const Step3Features: React.FC<Step3Props> = ({ variantId, onNext, onBack }) => {
         </Paper>
       ) : (
         groupedFeatures.map(({ category, label, features }) => {
-          const stats = getCategoryStats(features);
+          const stats = masterCategoryStats[category] || { configured: 0, total: features.length };
           const isExpanded = expandedCategories.includes(category);
 
           return (
