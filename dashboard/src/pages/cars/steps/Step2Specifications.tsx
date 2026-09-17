@@ -319,6 +319,86 @@ const Step2Specifications: React.FC<Step2Props> = ({ variantId, onNext, onBack }
           </Box>
         </Box>
 
+        </Box>
+
+        <Box>
+          <Typography variant="h6" gutterBottom>Fuel Economy</Typography>
+          <Divider sx={{ mb: 2 }} />
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+            <Box>
+              <Controller
+                name="fuel.fuelEconomyCity"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="City Economy"
+                    type="number"
+                    fullWidth
+                    value={field.value ?? ''}
+                    onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
+                  />
+                )}
+              />
+            </Box>
+            <Box>
+              <Controller
+                name="fuel.fuelEconomyHighway"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Highway Economy"
+                    type="number"
+                    fullWidth
+                    value={field.value ?? ''}
+                    onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
+                  />
+                )}
+              />
+            </Box>
+            <Box>
+              <Controller
+                name="fuel.fuelEconomyCombined"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Combined Economy"
+                    type="number"
+                    fullWidth
+                    value={field.value ?? ''}
+                    onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
+                  />
+                )}
+              />
+            </Box>
+            <Box>
+              <Controller
+                name="fuel.economyUnit"
+                control={control}
+                render={({ field }) => (
+                  <FormControl fullWidth>
+                    <InputLabel>Economy Unit</InputLabel>
+                    <Select
+                      {...field}
+                      label="Economy Unit"
+                      value={field.value || ''}
+                      onChange={(e) => field.onChange(e.target.value || null)}
+                    >
+                      <MenuItem value="">Not set</MenuItem>
+                      <MenuItem value="km/l">km/l</MenuItem>
+                      <MenuItem value="l/100km">l/100km</MenuItem>
+                      <MenuItem value="mpg">mpg</MenuItem>
+                      <MenuItem value="kWh/100km">kWh/100km</MenuItem>
+                    </Select>
+                  </FormControl>
+                )}
+              />
+            </Box>
+          </Box>
+        </Box>
+
         <Box>
           <Typography variant="h6" gutterBottom>Safety</Typography>
           <Divider sx={{ mb: 2 }} />

@@ -6,14 +6,16 @@ import {
   TableContainer, TableHead, TableRow, TablePagination, IconButton,
   Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
   CircularProgress, Alert, Chip, Stack, FormControl, InputLabel, Select, MenuItem,
-  Tooltip
+  Tooltip, TextField, InputAdornment
 } from '@mui/material';
 import { type SelectChangeEvent } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import ArticleIcon from '@mui/icons-material/Article';
+import SearchIcon from '@mui/icons-material/Search';
 import { getArticles, deleteArticle } from '../../api/articles.api';
+import { useDebounce } from '../../hooks/useDebounce';
 
 const STATUS_CONFIG: Record<string, { color: 'success' | 'warning' | 'default'; label: string }> = {
   published: { color: 'success', label: 'Published' },
@@ -52,12 +54,15 @@ const ArticleList: React.FC = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 500);
 
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ['articles', page, rowsPerPage, statusFilter],
+    queryKey: ['articles', page, rowsPerPage, statusFilter, debouncedSearch],
     queryFn: () => {
       const params: any = { page: page + 1, limit: rowsPerPage };
       if (statusFilter !== 'all') params.status = statusFilter;
+      if (debouncedSearch) params.search = debouncedSearch;
       return getArticles(params);
     },
   });
@@ -91,7 +96,23 @@ const ArticleList: React.FC = () => {
       {/* Filter */}
       <Paper sx={{ p: 2, mb: 3, borderRadius: 2 }}>
         <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
-          <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>Filter:</Typography>
+          <TextField
+            size="small"
+            placeholder="Search articles..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" color="action" />
+                  </InputAdornment>
+                ),
+              }
+            }}
+            sx={{ minWidth: 260 }}
+          />
+
           <FormControl sx={{ minWidth: 160 }} size="small">
             <InputLabel>Status</InputLabel>
             <Select value={statusFilter} label="Status"

@@ -40,7 +40,7 @@ const modelSchema = z.object({
 type ModelFormData = z.infer<typeof modelSchema>;
 
 export interface ModelFormProps {
-  onSuccess?: (createdId: string) => void;
+  onSuccess?: (createdId: string, createdItem?: any) => void;
   onCancel?: () => void;
   initialData?: {
     brandId?: string;
@@ -113,7 +113,7 @@ const ModelForm: React.FC<ModelFormProps> = ({ onSuccess, onCancel, initialData 
     mutationFn: (data: ModelFormData) => createModel(data),
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ['models'] });
-      if (onSuccess) onSuccess(res.data._id);
+      if (onSuccess) onSuccess(res.data._id, res.data);
       else navigate('/models');
     }
   });

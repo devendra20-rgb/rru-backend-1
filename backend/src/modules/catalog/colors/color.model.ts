@@ -31,6 +31,7 @@ const colorSchema = new Schema<IColor>(
     },
     finishType: {
       type: String,
+      required: [true, 'Finish type is required'],
       trim: true,
     },
     type: {

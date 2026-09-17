@@ -11,13 +11,22 @@ import {
   VariantColorQuery,
 } from './color.types';
 
+function createColorSlug(name: string, finishType?: string): string {
+  const baseSlug = generateSlug(name);
+  if (!finishType || !finishType.trim()) return baseSlug;
+  const finishSlug = generateSlug(finishType.trim());
+  return finishSlug && !baseSlug.endsWith(finishSlug)
+    ? `${baseSlug}-${finishSlug}`
+    : baseSlug;
+}
+
 export class ColorService {
   async createColor(data: CreateColorDTO) {
-    const slug = generateSlug(data.name);
+    const slug = createColorSlug(data.name, data.finishType);
 
     const existingColor = await colorRepository.findBySlug(slug);
     if (existingColor) {
-      throw new AppError('Color with this name already exists', 409);
+      throw new AppError('A color with this name and finish type already exists', 409);
     }
 
     const payload: CreateColorDTO & { slug: string } = {
@@ -25,12 +34,14 @@ export class ColorService {
       slug,
     };
 
-    if (data.colorCode) {
+    if (data.colorCode && data.colorCode.trim()) {
       payload.colorCode = data.colorCode.trim().toUpperCase();
       const existingCode = await colorRepository.findByColorCode(payload.colorCode);
       if (existingCode) {
         throw new AppError(`Color code '${payload.colorCode}' already exists`, 409);
       }
+    } else {
+      delete payload.colorCode;
     }
 
     return colorRepository.create(payload);
@@ -59,22 +70,29 @@ export class ColorService {
   async updateColor(id: string, data: UpdateColorDTO) {
     const color = await this.getColorById(id);
 
+    const newName = data.name !== undefined ? data.name : color.name;
+    const newFinish = data.finishType !== undefined ? data.finishType : color.finishType;
+
     let slug = color.slug;
-    if (data.name && data.name !== color.name) {
-      slug = generateSlug(data.name);
+    if (data.name !== undefined || data.finishType !== undefined) {
+      slug = createColorSlug(newName, newFinish);
       const existingSlug = await colorRepository.findBySlug(slug);
       if (existingSlug && existingSlug._id.toString() !== id) {
-        throw new AppError('Color with this name already exists', 409);
+        throw new AppError('A color with this name and finish type already exists', 409);
       }
     }
 
     const updatePayload: UpdateColorDTO & { slug?: string } = { ...data, slug };
 
     if (data.colorCode !== undefined) {
-      updatePayload.colorCode = data.colorCode.trim().toUpperCase();
-      const existingCode = await colorRepository.findByColorCode(updatePayload.colorCode);
-      if (existingCode && existingCode._id.toString() !== id) {
-        throw new AppError(`Color code '${updatePayload.colorCode}' already exists`, 409);
+      if (data.colorCode && data.colorCode.trim()) {
+        updatePayload.colorCode = data.colorCode.trim().toUpperCase();
+        const existingCode = await colorRepository.findByColorCode(updatePayload.colorCode);
+        if (existingCode && existingCode._id.toString() !== id) {
+          throw new AppError(`Color code '${updatePayload.colorCode}' already exists`, 409);
+        }
+      } else {
+        updatePayload.colorCode = undefined;
       }
     }
 

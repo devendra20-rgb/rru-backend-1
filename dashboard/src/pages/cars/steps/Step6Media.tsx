@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Button, Typography, CircularProgress, Paper, IconButton, TextField } from '@mui/material';
+import {
+  Box, Button, Typography, CircularProgress, Paper, IconButton, TextField,
+  Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions
+} from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import StarIcon from '@mui/icons-material/Star';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
@@ -23,6 +26,7 @@ const Step6Media: React.FC<Step6Props> = ({ variantId, onNext, onBack }) => {
   
   const [localList, setLocalList] = useState<any[]>([]);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const { data: mediaData, isLoading } = useQuery({
     queryKey: ['variant-media', variantId],
@@ -44,12 +48,13 @@ const Step6Media: React.FC<Step6Props> = ({ variantId, onNext, onBack }) => {
 
     setUploading(true);
     try {
-      const uploadPromises = Array.from(files).map(file => 
+      const uploadPromises = Array.from(files).map((file, index) =>
         uploadMedia(file, {
           entityType: 'variant',
           entityId: variantId,
-          isPrimary: mediaList.length === 0 // Make first image primary
-        })
+          // Only the first file of an empty gallery should be primary (avoid race marking all primary)
+          isPrimary: mediaList.length === 0 && index === 0,
+        }),
       );
       await Promise.all(uploadPromises);
       showToast('Media uploaded successfully', 'success');
@@ -63,26 +68,22 @@ const Step6Media: React.FC<Step6Props> = ({ variantId, onNext, onBack }) => {
     }
   };
 
-  const handleDelete = async (mediaId: string) => {
-    if (!window.confirm('Are you sure you want to delete this image?')) return;
+  const confirmDelete = async () => {
+    if (!deleteId) return;
     try {
-      await deleteMedia(mediaId);
+      await deleteMedia(deleteId);
       showToast('Media deleted successfully', 'success');
       queryClient.invalidateQueries({ queryKey: ['variant-media', variantId] });
     } catch (err: any) {
       showToast(getReadableErrorMessage(err), 'error');
+    } finally {
+      setDeleteId(null);
     }
   };
 
   const handleSetPrimary = async (mediaId: string) => {
     try {
-      // Find current primary and unset it
-      const currentPrimary = mediaList.find((m: any) => m.isPrimary);
-      if (currentPrimary && currentPrimary._id !== mediaId) {
-        await updateMedia(currentPrimary._id, { isPrimary: false });
-      }
-      
-      // Set new primary
+      // Backend unsets other primaries when one is set
       await updateMedia(mediaId, { isPrimary: true });
       showToast('Primary image updated', 'success');
       queryClient.invalidateQueries({ queryKey: ['variant-media', variantId] });
@@ -238,7 +239,7 @@ const Step6Media: React.FC<Step6Props> = ({ variantId, onNext, onBack }) => {
                     </Typography>
                   </Box>
 
-                  <IconButton size="small" color="error" onClick={() => handleDelete(media._id)}>
+                  <IconButton size="small" color="error" onClick={() => setDeleteId(media._id)}>
                     <DeleteIcon />
                   </IconButton>
                 </Box>
@@ -256,6 +257,21 @@ const Step6Media: React.FC<Step6Props> = ({ variantId, onNext, onBack }) => {
           Continue to Review
         </Button>
       </Box>
+
+      <Dialog open={!!deleteId} onClose={() => setDeleteId(null)}>
+        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete this image? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteId(null)}>Cancel</Button>
+          <Button onClick={confirmDelete} color="error" variant="contained">
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

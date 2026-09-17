@@ -85,14 +85,16 @@ describe('Colors API', () => {
         .send({
           name: 'Pearl White',
           hexCode: '#F5F5F5',
+          finishType: 'solid',
           type: 'exterior',
         });
 
       expect(response.status).toBe(201);
       expect(response.body.data.name).toBe('Pearl White');
-      expect(response.body.data.slug).toBe('pearl-white');
+      expect(response.body.data.slug).toBe('pearl-white-solid');
       expect(response.body.data.type).toBe('exterior');
       expect(response.body.data.hexCode).toBe('#F5F5F5');
+      expect(response.body.data.finishType).toBe('solid');
       colorId = response.body.data._id || response.body.data.id;
     });
 
@@ -131,6 +133,49 @@ describe('Colors API', () => {
       expect(fromDb!.name).toBe('Alpine Blue');
     });
 
+    it('should allow creating a color without manufacturer color code', async () => {
+      const response = await request(app)
+        .post('/api/v1/colors')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          name: 'Cosmic Red',
+          hexCode: '#FF0055',
+          finishType: 'pearlescent',
+          type: 'exterior',
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body.data.name).toBe('Cosmic Red');
+      expect(response.body.data.colorCode).toBeUndefined();
+      expect(response.body.data.finishType).toBe('pearlescent');
+    });
+
+    it('should allow same hexCode with different finish types', async () => {
+      const res1 = await request(app)
+        .post('/api/v1/colors')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          name: 'Nardo Grey',
+          hexCode: '#8A8D8F',
+          finishType: 'gloss',
+          type: 'exterior',
+        });
+      expect(res1.status).toBe(201);
+      expect(res1.body.data.slug).toBe('nardo-grey-gloss');
+
+      const res2 = await request(app)
+        .post('/api/v1/colors')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          name: 'Nardo Grey',
+          hexCode: '#8A8D8F',
+          finishType: 'matte',
+          type: 'exterior',
+        });
+      expect(res2.status).toBe(201);
+      expect(res2.body.data.slug).toBe('nardo-grey-matte');
+    });
+
     it('should prevent duplicate color codes', async () => {
       const response = await request(app)
         .post('/api/v1/colors')
@@ -139,6 +184,7 @@ describe('Colors API', () => {
           name: 'Another Alpine Blue',
           colorCode: 'AB-300',
           hexCode: '#0000FF',
+          finishType: 'metallic',
           type: 'exterior',
         });
 
@@ -165,20 +211,29 @@ describe('Colors API', () => {
       expect(fromDb!.finishType).toBe('satin');
     });
 
-    it('should prevent duplicate color names', async () => {
+    it('should prevent duplicate color when name and finish type are same', async () => {
       const response = await request(app)
         .post('/api/v1/colors')
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ name: 'Pearl White', type: 'interior' });
+        .send({ name: 'Pearl White', finishType: 'solid', type: 'interior' });
 
       expect(response.status).toBe(409);
+    });
+
+    it('should reject missing finishType', async () => {
+      const response = await request(app)
+        .post('/api/v1/colors')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ name: 'No Finish Color', hexCode: '#123456', type: 'exterior' });
+
+      expect(response.status).toBe(400);
     });
 
     it('should reject an invalid hexCode', async () => {
       const response = await request(app)
         .post('/api/v1/colors')
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ name: 'Bad Color', hexCode: 'not-a-hex', type: 'exterior' });
+        .send({ name: 'Bad Color', hexCode: 'not-a-hex', finishType: 'solid', type: 'exterior' });
 
       expect(response.status).toBe(400);
     });
@@ -187,7 +242,7 @@ describe('Colors API', () => {
       const response = await request(app)
         .post('/api/v1/colors')
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ name: 'No Type Color' });
+        .send({ name: 'No Type Color', finishType: 'solid' });
 
       expect(response.status).toBe(400);
     });
@@ -208,7 +263,7 @@ describe('Colors API', () => {
     });
 
     it('should get a color by slug', async () => {
-      const response = await request(app).get('/api/v1/colors/slug/pearl-white');
+      const response = await request(app).get('/api/v1/colors/slug/pearl-white-solid');
       expect(response.status).toBe(200);
       expect(response.body.data.name).toBe('Pearl White');
     });

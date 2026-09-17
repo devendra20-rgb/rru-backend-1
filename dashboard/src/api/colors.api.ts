@@ -49,7 +49,7 @@ export interface VariantColor {
 }
 
 export const getVariantColors = async (variantId: string): Promise<PaginatedResponse<VariantColor>> => {
-  const response = await api.get('/variant-colors', { params: { variantId, limit: 100 } });
+  const response = await api.get('/variant-colors', { params: { variantId, limit: 1000 } });
   return response.data;
 };
 

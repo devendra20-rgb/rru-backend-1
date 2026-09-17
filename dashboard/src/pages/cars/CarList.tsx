@@ -58,18 +58,18 @@ const CarList: React.FC = () => {
 
   const { data: brandsData } = useQuery({
     queryKey: ['brands', 'all'],
-    queryFn: () => getBrands({ limit: 100 })
+    queryFn: () => getBrands({ limit: 1000 })
   });
 
   const { data: modelsData } = useQuery({
     queryKey: ['models', 'all', selectedBrand],
-    queryFn: () => getModels({ limit: 100, brandId: selectedBrand === 'all' ? undefined : selectedBrand }),
+    queryFn: () => getModels({ limit: 1000, brandId: selectedBrand === 'all' ? undefined : selectedBrand }),
     enabled: selectedBrand !== 'all'
   });
 
   const { data: generationsData } = useQuery({
     queryKey: ['generations', 'all', selectedModel],
-    queryFn: () => getGenerations({ limit: 100, modelId: selectedModel === 'all' ? undefined : selectedModel }),
+    queryFn: () => getGenerations({ limit: 1000, modelId: selectedModel === 'all' ? undefined : selectedModel }),
     enabled: selectedModel !== 'all'
   });
 
@@ -193,7 +193,7 @@ const CarList: React.FC = () => {
               onChange={handleBrandFilterChange}
             >
               <MenuItem value="all">All Brands</MenuItem>
-              {brandsData?.data.map((brand) => (
+              {(brandsData?.data || []).map((brand) => (
                 <MenuItem key={brand._id} value={brand._id}>{brand.name}</MenuItem>
               ))}
             </Select>
@@ -207,7 +207,7 @@ const CarList: React.FC = () => {
               onChange={handleModelFilterChange}
             >
               <MenuItem value="all">All Models</MenuItem>
-              {modelsData?.data.map((model) => (
+              {(modelsData?.data || []).map((model) => (
                 <MenuItem key={model._id} value={model._id}>{model.name}</MenuItem>
               ))}
             </Select>
@@ -221,7 +221,7 @@ const CarList: React.FC = () => {
               onChange={handleGenerationFilterChange}
             >
               <MenuItem value="all">All Generations</MenuItem>
-              {generationsData?.data.map((gen) => (
+              {(generationsData?.data || []).map((gen) => (
                 <MenuItem key={gen._id} value={gen._id}>{gen.name}</MenuItem>
               ))}
             </Select>
@@ -247,6 +247,7 @@ const CarList: React.FC = () => {
                 <TableCell>Variant Name</TableCell>
                 <TableCell>Code</TableCell>
                 <TableCell>Generation</TableCell>
+                <TableCell>Model</TableCell>
                 <TableCell>Model Year</TableCell>
                 <TableCell>Status</TableCell>
                 <TableCell align="right">Actions</TableCell>
@@ -255,7 +256,7 @@ const CarList: React.FC = () => {
             <TableBody>
               {variants.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center">
+                  <TableCell colSpan={7} align="center">
                     No vehicles found.
                   </TableCell>
                 </TableRow>
@@ -266,7 +267,8 @@ const CarList: React.FC = () => {
                       {variant.name}
                     </TableCell>
                     <TableCell>{variant.variantCode}</TableCell>
-                    <TableCell>{variant.generationId?.name || 'Unknown'}</TableCell>
+                    <TableCell>{variant.generationId?.name || '—'}</TableCell>
+                    <TableCell>{variant.modelId?.name || '—'}</TableCell>
                     <TableCell>{variant.modelYear || '-'}</TableCell>
                     <TableCell>
                       <Switch

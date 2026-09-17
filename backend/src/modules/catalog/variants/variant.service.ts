@@ -11,6 +11,22 @@ import {
   PaginationQuery,
 } from '../../../utils/pagination';
 
+const idOf = (value: unknown): string | null => {
+  if (!value) return null;
+  if (typeof value === 'object' && value !== null && '_id' in value) {
+    return String((value as { _id: unknown })._id);
+  }
+  const asString = String(value);
+  return asString && asString !== '[object Object]' ? asString : null;
+};
+
+const resolveModelForVariant = async (variant: any, generation: any) => {
+  // Prefer generation→model when present; otherwise use variant.modelId
+  // (many vehicles are saved without a generation).
+  const modelId = idOf(generation?.modelId) || idOf(variant?.modelId);
+  return modelId ? modelRepository.findById(modelId) : null;
+};
+
 export const variantService = {
   async generateUniqueVariantCode(modelId: string, name: string, modelYear?: number) {
     let baseModelName = 'MDL';
@@ -152,22 +168,14 @@ export const variantService = {
     // `variant.generationId` may be either an ObjectId string or a populated object.
     let generation = null;
     try {
-      const generationId = (variant.generationId as any)?._id
-        ? (variant.generationId as any)._id.toString()
-        : (variant.generationId as any)?.toString();
-
+      const generationId = idOf(variant.generationId);
       generation = generationId ? await generationRepository.findById(generationId) : null;
     } catch (err) {
       // If cast fails or unexpected shape, leave generation as null but do not crash
       generation = null;
     }
 
-    const modelId = generation
-      ? ((generation.modelId as any)?._id
-        ? (generation.modelId as any)._id.toString()
-        : (generation.modelId as any)?.toString())
-      : null;
-    const model = modelId ? await modelRepository.findById(modelId) : null;
+    const model = await resolveModelForVariant(variant, generation);
 
     return {
       ...variant,
@@ -182,21 +190,13 @@ export const variantService = {
 
     let generation = null;
     try {
-      const generationId = (variant.generationId as any)?._id
-        ? (variant.generationId as any)._id.toString()
-        : (variant.generationId as any)?.toString();
-
+      const generationId = idOf(variant.generationId);
       generation = generationId ? await generationRepository.findById(generationId) : null;
     } catch (err) {
       generation = null;
     }
 
-    const modelId = generation
-      ? ((generation.modelId as any)?._id
-        ? (generation.modelId as any)._id.toString()
-        : (generation.modelId as any)?.toString())
-      : null;
-    const model = modelId ? await modelRepository.findById(modelId) : null;
+    const model = await resolveModelForVariant(variant, generation);
 
     return {
       ...variant,

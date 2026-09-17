@@ -17,7 +17,7 @@ const CarDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const { data: variantData, isLoading: load1 } = useQuery({ queryKey: ['variants', id], queryFn: () => getVariant(id!) });
+  const { data: variantData, isLoading: load1 } = useQuery({ queryKey: ['variant', id], queryFn: () => getVariant(id!) });
   const { data: specsData, isLoading: load2 } = useQuery({ queryKey: ['specifications', id], queryFn: () => getVariantSpecifications(id!), retry: false });
   const { data: featuresData, isLoading: load3 } = useQuery({ queryKey: ['variant-features', id], queryFn: () => getVariantFeatures(id!) });
   const { data: colorsData, isLoading: load4 } = useQuery({ queryKey: ['variant-colors', id], queryFn: () => getVariantColors(id!) });
@@ -106,8 +106,16 @@ const CarDetail: React.FC = () => {
             <Divider sx={{ mb: 2 }} />
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', sm: 'repeat(3, 1fr)' }, gap: 2 }}>
               <Box>
+                <Typography variant="body2" color="text.secondary">Brand</Typography>
+                <Typography>{variant.model?.brandId?.name || variant.modelId?.brandId?.name || '-'}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="body2" color="text.secondary">Model</Typography>
+                <Typography>{variant.model?.name || variant.modelId?.name || '-'}</Typography>
+              </Box>
+              <Box>
                 <Typography variant="body2" color="text.secondary">Generation</Typography>
-                <Typography>{variant.generationId?.name || '-'}</Typography>
+                <Typography>{variant.generation?.name || variant.generationId?.name || '—'}</Typography>
               </Box>
               <Box>
                 <Typography variant="body2" color="text.secondary">Variant Code</Typography>
@@ -165,8 +173,16 @@ const CarDetail: React.FC = () => {
                 <Typography variant="body2" color="text.secondary">ABS: <Box component="span" color="text.primary">{spec.safety?.abs ? 'Yes' : 'No'}</Box></Typography>
                 <Typography variant="body2" color="text.secondary">Traction Control: <Box component="span" color="text.primary">{spec.safety?.tractionControl ? 'Yes' : 'No'}</Box></Typography>
                 <Typography variant="body2" color="text.secondary">Stability Control: <Box component="span" color="text.primary">{spec.safety?.stabilityControl ? 'Yes' : 'No'}</Box></Typography>
+                <Typography variant="body2" color="text.secondary">ADAS: <Box component="span" color="text.primary">{spec.safety?.adas ? 'Yes' : 'No'}</Box></Typography>
                 <Typography variant="body2" color="text.secondary">Parking Sensors: <Box component="span" color="text.primary">{spec.safety?.parkingSensors || '-'}</Box></Typography>
                 <Typography variant="body2" color="text.secondary">Camera: <Box component="span" color="text.primary">{spec.safety?.camera || '-'}</Box></Typography>
+              </Box>
+
+              <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>Fuel Economy</Typography>
+              <Box>
+                <Typography variant="body2" color="text.secondary">City: <Box component="span" color="text.primary">{spec.fuel?.fuelEconomyCity ?? '-'}</Box></Typography>
+                <Typography variant="body2" color="text.secondary">Highway: <Box component="span" color="text.primary">{spec.fuel?.fuelEconomyHighway ?? '-'}</Box></Typography>
+                <Typography variant="body2" color="text.secondary">Combined: <Box component="span" color="text.primary">{spec.fuel?.fuelEconomyCombined ?? '-'}{spec.fuel?.economyUnit ? ` ${spec.fuel.economyUnit}` : ''}</Box></Typography>
               </Box>
             </Box>
 

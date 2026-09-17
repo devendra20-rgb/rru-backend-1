@@ -48,7 +48,7 @@ const ReviewList: React.FC = () => {
   });
 
   const reviews: Review[] = Array.isArray(data) ? data : (data as any)?.data ?? [];
-  const total: number = (data as any)?.total ?? reviews.length;
+  const total: number = (data as any)?.meta?.total ?? (data as any)?.total ?? reviews.length;
 
   const getVehicleName = (variantId: Review['variantId']): string => {
     if (!variantId) return '—';

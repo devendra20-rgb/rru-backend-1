@@ -58,7 +58,7 @@ const COUNTRIES = [
 ];
 
 export interface BrandFormProps {
-  onSuccess?: (createdId: string) => void;
+  onSuccess?: (createdId: string, createdItem?: any) => void;
   onCancel?: () => void;
 }
 
@@ -125,7 +125,7 @@ const BrandForm: React.FC<BrandFormProps> = ({ onSuccess, onCancel }) => {
       queryClient.invalidateQueries({ queryKey: ['brands'] });
       showToast('Brand created successfully', 'success');
       if (onSuccess) {
-        onSuccess(res.data._id);
+        onSuccess(res.data._id, res.data);
       } else {
         navigate('/brands');
       }

@@ -30,10 +30,10 @@ const hexCodeRegex = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
 const colorSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  colorCode: z.string().min(1, 'Color Code is required'),
+  colorCode: z.string().trim().max(50).optional(),
   hexCode: z.string().regex(hexCodeRegex, 'Must be a valid hex color (e.g. #FF0000 or #F00)'),
   colorFamily: z.string().optional(),
-  finishType: z.string().max(50).optional(),
+  finishType: z.string().trim().min(1, 'Finish type is required').max(50),
   type: z.enum(['exterior', 'interior']),
   status: z.enum(['active', 'inactive']).default('active'),
 });
@@ -123,9 +123,11 @@ const ColorForm: React.FC<ColorFormProps> = ({ onSuccess, onCancel }) => {
 
   const onSubmit = async (data: ColorFormData) => {
     const trimmedFinish = data.finishType?.trim() || '';
+    const trimmedCode = data.colorCode?.trim() || '';
     const submitData = {
       ...data,
-      finishType: trimmedFinish === '' ? undefined : trimmedFinish,
+      finishType: trimmedFinish,
+      colorCode: trimmedCode === '' ? undefined : trimmedCode,
       colorFamily: data.colorFamily === '' ? undefined : data.colorFamily
     } as any;
     
@@ -156,7 +158,7 @@ const ColorForm: React.FC<ColorFormProps> = ({ onSuccess, onCancel }) => {
     { value: 'interior', label: 'Interior' }
   ];
 
-  const finishSelectValue = useCustomFinish ? CUSTOM_FINISH_VALUE : (finishTypeValue || '');
+  const finishSelectValue = useCustomFinish ? CUSTOM_FINISH_VALUE : (finishTypeValue || 'solid');
 
   return (
     <Box>
@@ -211,7 +213,7 @@ const ColorForm: React.FC<ColorFormProps> = ({ onSuccess, onCancel }) => {
                 render={({ field }) => (
                   <TextField
                     {...field}
-                    label="Manufacturer Color Code *"
+                    label="Manufacturer Color Code"
                     fullWidth
                     placeholder="e.g. 300"
                     error={!!errors.colorCode}
@@ -258,25 +260,23 @@ const ColorForm: React.FC<ColorFormProps> = ({ onSuccess, onCancel }) => {
 
               <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                 <FormControl fullWidth error={!!errors.finishType}>
-                  <InputLabel>Finish Type</InputLabel>
+                  <InputLabel>Finish Type *</InputLabel>
                   <Select
-                    label="Finish Type"
+                    label="Finish Type *"
                     value={finishSelectValue}
                     onChange={(e) => {
                       const next = e.target.value;
                       if (next === CUSTOM_FINISH_VALUE) {
                         setUseCustomFinish(true);
-                        // Clear preset value so user enters a custom one
                         if (isPresetFinishType(finishTypeValue) || !finishTypeValue) {
-                          setValue('finishType', '');
+                          setValue('finishType', '', { shouldValidate: true });
                         }
                       } else {
                         setUseCustomFinish(false);
-                        setValue('finishType', next);
+                        setValue('finishType', next, { shouldValidate: true });
                       }
                     }}
                   >
-                    <MenuItem value="">None</MenuItem>
                     {PRESET_FINISH_TYPES.map((finish) => (
                       <MenuItem key={finish} value={finish} sx={{ textTransform: 'capitalize' }}>
                         {finish}
@@ -297,7 +297,7 @@ const ColorForm: React.FC<ColorFormProps> = ({ onSuccess, onCancel }) => {
                       <TextField
                         {...field}
                         value={field.value || ''}
-                        label="Custom Finish Type"
+                        label="Custom Finish Type *"
                         placeholder="e.g. satin, gloss, chrome"
                         fullWidth
                         autoFocus

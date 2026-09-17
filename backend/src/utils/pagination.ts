@@ -20,7 +20,8 @@ export type PaginationQuery = z.infer<typeof PaginationQuerySchema>;
 
 export const getPaginationOptions = (query: PaginationQuery) => {
   const page = Math.max(1, query.page);
-  const limit = Math.min(100, Math.max(1, query.limit)); // Max 100 limit
+  // Allow up to 1000 so admin dropdowns (brands/models/features/etc.) are not silently truncated
+  const limit = Math.min(1000, Math.max(1, query.limit));
   const skip = (page - 1) * limit;
   const sort: Record<string, 1 | -1> = { [query.sortBy]: query.sortOrder === 'desc' ? -1 : 1 };
 

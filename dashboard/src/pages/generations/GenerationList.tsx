@@ -55,12 +55,12 @@ const GenerationList: React.FC = () => {
 
   const { data: brandsData } = useQuery({
     queryKey: ['brands', 'all'],
-    queryFn: () => getBrands({ limit: 100 })
+    queryFn: () => getBrands({ limit: 1000 })
   });
 
   const { data: modelsData } = useQuery({
     queryKey: ['models', 'all', selectedBrand],
-    queryFn: () => getModels({ limit: 100, brandId: selectedBrand === 'all' ? undefined : selectedBrand }),
+    queryFn: () => getModels({ limit: 1000, brandId: selectedBrand === 'all' ? undefined : selectedBrand }),
     enabled: selectedBrand !== 'all'
   });
 
@@ -175,7 +175,7 @@ const GenerationList: React.FC = () => {
               onChange={handleBrandFilterChange}
             >
               <MenuItem value="all">All Brands</MenuItem>
-              {brandsData?.data.map((brand) => (
+              {(brandsData?.data || []).map((brand) => (
                 <MenuItem key={brand._id} value={brand._id}>{brand.name}</MenuItem>
               ))}
             </Select>
@@ -189,7 +189,7 @@ const GenerationList: React.FC = () => {
               onChange={handleModelFilterChange}
             >
               <MenuItem value="all">All Models</MenuItem>
-              {modelsData?.data.map((model) => (
+              {(modelsData?.data || []).map((model) => (
                 <MenuItem key={model._id} value={model._id}>{model.name}</MenuItem>
               ))}
             </Select>

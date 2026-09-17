@@ -52,7 +52,7 @@ const ModelList: React.FC = () => {
 
   const { data: brandsData } = useQuery({
     queryKey: ['brands', 'all'],
-    queryFn: () => getBrands({ limit: 100 })
+    queryFn: () => getBrands({ limit: 1000 })
   });
 
   const { data, isLoading, isError, error } = useQuery({
@@ -157,7 +157,7 @@ const ModelList: React.FC = () => {
               onChange={handleBrandFilterChange}
             >
               <MenuItem value="all">All Brands</MenuItem>
-              {brandsData?.data.map((brand) => (
+              {(brandsData?.data || []).map((brand) => (
                 <MenuItem key={brand._id} value={brand._id}>{brand.name}</MenuItem>
               ))}
             </Select>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Button, Typography, Paper, Divider, CircularProgress } from '@mui/material';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getVariant } from '../../../api/variants.api';
 import { getVariantSpecifications } from '../../../api/specifications.api';
 import { getVariantFeatures } from '../../../api/features.api';
@@ -17,8 +17,9 @@ interface Step7Props {
 
 const Step7Review: React.FC<Step7Props> = ({ variantId, onBack }) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  const { data: variantData, isLoading: load1 } = useQuery({ queryKey: ['variants', variantId], queryFn: () => getVariant(variantId) });
+  const { data: variantData, isLoading: load1 } = useQuery({ queryKey: ['variant', variantId], queryFn: () => getVariant(variantId) });
   const { data: specsData, isLoading: load2 } = useQuery({ queryKey: ['specifications', variantId], queryFn: () => getVariantSpecifications(variantId), retry: false });
   const { data: featuresData, isLoading: load3 } = useQuery({ queryKey: ['variant-features', variantId], queryFn: () => getVariantFeatures(variantId) });
   const { data: colorsData, isLoading: load4 } = useQuery({ queryKey: ['variant-colors', variantId], queryFn: () => getVariantColors(variantId) });
@@ -63,6 +64,10 @@ const Step7Review: React.FC<Step7Props> = ({ variantId, onBack }) => {
         <Typography variant="h6" gutterBottom>1. Basic Information</Typography>
         <Divider sx={{ mb: 2 }} />
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(4, 1fr)' }, gap: 2 }}>
+          <Box><Typography variant="body2" color="text.secondary">Brand</Typography><Typography>{variant?.model?.brandId?.name || variant?.modelId?.brandId?.name || '-'}</Typography></Box>
+          <Box><Typography variant="body2" color="text.secondary">Model</Typography><Typography>{variant?.model?.name || variant?.modelId?.name || '-'}</Typography></Box>
+          <Box><Typography variant="body2" color="text.secondary">Generation</Typography><Typography>{variant?.generation?.name || variant?.generationId?.name || '—'}</Typography></Box>
+          <Box><Typography variant="body2" color="text.secondary">Slug</Typography><Typography>{variant?.slug || '-'}</Typography></Box>
           <Box><Typography variant="body2" color="text.secondary">Name</Typography><Typography>{variant?.name || '-'}</Typography></Box>
           <Box><Typography variant="body2" color="text.secondary">Code</Typography><Typography>{variant?.variantCode || '-'}</Typography></Box>
           <Box><Typography variant="body2" color="text.secondary">Model Year</Typography><Typography>{variant?.modelYear || '-'}</Typography></Box>
@@ -110,8 +115,14 @@ const Step7Review: React.FC<Step7Props> = ({ variantId, onBack }) => {
              <Box>
                <Typography variant="subtitle2" gutterBottom>Safety</Typography>
                <Typography variant="body2" color="text.secondary">Airbags: <Box component="span" sx={{ color: 'text.primary' }}>{spec.safety?.airbags || '-'}</Box></Typography>
-               <Typography variant="body2" color="text.secondary">Safety Tech: <Box component="span" sx={{ color: 'text.primary' }}>{[spec.safety?.abs && 'ABS', spec.safety?.tractionControl && 'TC', spec.safety?.stabilityControl && 'ESC'].filter(Boolean).join(', ') || '-'}</Box></Typography>
+               <Typography variant="body2" color="text.secondary">Safety Tech: <Box component="span" sx={{ color: 'text.primary' }}>{[spec.safety?.abs && 'ABS', spec.safety?.tractionControl && 'TC', spec.safety?.stabilityControl && 'ESC', spec.safety?.adas && 'ADAS'].filter(Boolean).join(', ') || '-'}</Box></Typography>
                <Typography variant="body2" color="text.secondary">Sensors/Cam: <Box component="span" sx={{ color: 'text.primary' }}>{spec.safety?.parkingSensors || 'None'} / {spec.safety?.camera || 'None'}</Box></Typography>
+             </Box>
+             <Box>
+               <Typography variant="subtitle2" gutterBottom>Fuel Economy</Typography>
+               <Typography variant="body2" color="text.secondary">City: <Box component="span" sx={{ color: 'text.primary' }}>{spec.fuel?.fuelEconomyCity ?? '-'}</Box></Typography>
+               <Typography variant="body2" color="text.secondary">Highway: <Box component="span" sx={{ color: 'text.primary' }}>{spec.fuel?.fuelEconomyHighway ?? '-'}</Box></Typography>
+               <Typography variant="body2" color="text.secondary">Combined: <Box component="span" sx={{ color: 'text.primary' }}>{spec.fuel?.fuelEconomyCombined ?? '-'}{spec.fuel?.economyUnit ? ` ${spec.fuel.economyUnit}` : ''}</Box></Typography>
              </Box>
            </Box>
         ) : (
@@ -131,7 +142,7 @@ const Step7Review: React.FC<Step7Props> = ({ variantId, onBack }) => {
                     <Typography variant="body2" color="text.secondary">{f.featureId?.name || 'Unknown Feature'}</Typography>
                     <Typography variant="body2" sx={{ textTransform: 'capitalize' }}>
                       {(() => {
-                        const avail = f.availability === 'optional' ? 'Not Applicable' : f.availability;
+                        const avail = f.availability;
                         return f.value ? `${f.value} (${avail})` : avail;
                       })()}
                     </Typography>
@@ -223,7 +234,14 @@ const Step7Review: React.FC<Step7Props> = ({ variantId, onBack }) => {
         <Button onClick={onBack} variant="outlined">
           Back
         </Button>
-        <Button onClick={() => navigate('/cars')} variant="contained" color="success">
+        <Button
+          onClick={() => {
+            queryClient.invalidateQueries({ queryKey: ['variants'] });
+            navigate('/cars');
+          }}
+          variant="contained"
+          color="success"
+        >
           Complete & Return to List
         </Button>
       </Box>

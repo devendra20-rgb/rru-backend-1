@@ -16,7 +16,7 @@ const Step5Markets: React.FC<Step5Props> = ({ variantId, onNext, onBack }) => {
   // Fetch all master markets
   const { data: masterMarketsData, isLoading: isLoadingMaster } = useQuery({
     queryKey: ['markets', 'all'],
-    queryFn: () => getMarkets({ limit: 100, status: 'active' })
+    queryFn: () => getMarkets({ limit: 1000, status: 'active' })
   });
 
   // Fetch mapped markets for this variant
@@ -32,6 +32,9 @@ const Step5Markets: React.FC<Step5Props> = ({ variantId, onNext, onBack }) => {
 
   useEffect(() => {
     if (masterMarketsData?.data && mappedMarketsData?.data) {
+      // Don't wipe in-progress edits when a background refetch arrives
+      if (dirtyMappings.size > 0) return;
+
       const initialMappings: Record<string, Partial<VariantMarket>> = {};
       
       masterMarketsData.data.forEach(market => {
@@ -39,18 +42,24 @@ const Step5Markets: React.FC<Step5Props> = ({ variantId, onNext, onBack }) => {
           (m.marketId as any)?._id === market._id || m.marketId === market._id
         );
         
-        initialMappings[market._id] = existing || {
-          variantId,
-          marketId: market._id,
-          availabilityStatus: 'unavailable',
-          status: 'active',
-          isFeatured: false,
-          pricing: {
-            amount: 0,
-            currencyCode: market.currencyCode || 'USD',
-            priceType: 'starting'
-          }
-        };
+        initialMappings[market._id] = existing
+          ? {
+              ...existing,
+              marketId: market._id,
+              variantId,
+            }
+          : {
+              variantId,
+              marketId: market._id,
+              availabilityStatus: 'unavailable',
+              status: 'active',
+              isFeatured: false,
+              pricing: {
+                amount: 0,
+                currencyCode: market.currencyCode || 'USD',
+                priceType: 'starting'
+              }
+            };
 
         if (!initialMappings[market._id].pricing) {
           initialMappings[market._id].pricing = {
@@ -63,7 +72,7 @@ const Step5Markets: React.FC<Step5Props> = ({ variantId, onNext, onBack }) => {
       
       setMappings(initialMappings);
     }
-  }, [masterMarketsData, mappedMarketsData, variantId]);
+  }, [masterMarketsData, mappedMarketsData, variantId, dirtyMappings.size]);
 
   const handleMappingChange = (marketId: string, field: keyof VariantMarket | string, value: any) => {
     setMappings(prev => {
@@ -98,7 +107,7 @@ const Step5Markets: React.FC<Step5Props> = ({ variantId, onNext, onBack }) => {
         .map((mapping) => {
           const item: any = {
             marketId: (mapping.marketId as any)?._id ?? mapping.marketId,
-            availabilityStatus: mapping.availabilityStatus ?? 'upcoming',
+            availabilityStatus: mapping.availabilityStatus ?? 'unavailable',
             status: mapping.status ?? 'active',
             isFeatured: mapping.isFeatured ?? false,
           };
@@ -116,10 +125,11 @@ const Step5Markets: React.FC<Step5Props> = ({ variantId, onNext, onBack }) => {
         await bulkSaveVariantMarkets(variantId, items);
       }
 
+      setDirtyMappings(new Set());
       queryClient.invalidateQueries({ queryKey: ['variant-markets', variantId] });
       onNext();
     } catch (err: any) {
-      setError(err.message || 'Failed to save market mappings');
+      setError(err?.response?.data?.message || err.message || 'Failed to save market mappings');
     } finally {
       setIsSaving(false);
     }

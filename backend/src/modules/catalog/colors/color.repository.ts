@@ -64,6 +64,15 @@ class ColorRepository {
 
   async update(id: string, data: UpdateColorDTO & { slug?: string }): Promise<IColor | null> {
     if (!Types.ObjectId.isValid(id)) return null;
+    if (data.colorCode === undefined && 'colorCode' in data) {
+      const updateQuery: any = { ...data };
+      delete updateQuery.colorCode;
+      return Color.findByIdAndUpdate(
+        id,
+        { $set: updateQuery, $unset: { colorCode: 1 } },
+        { new: true, runValidators: true },
+      );
+    }
     return Color.findByIdAndUpdate(id, data, { new: true, runValidators: true });
   }
 

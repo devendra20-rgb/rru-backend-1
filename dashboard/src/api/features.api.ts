@@ -47,7 +47,7 @@ export interface VariantFeature {
 }
 
 export const getVariantFeatures = async (variantId: string): Promise<PaginatedResponse<VariantFeature>> => {
-  const response = await api.get('/variant-features', { params: { variantId, limit: 200 } });
+  const response = await api.get('/variant-features', { params: { variantId, limit: 1000 } });
   return response.data;
 };
 

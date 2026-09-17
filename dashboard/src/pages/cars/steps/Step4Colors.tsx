@@ -40,7 +40,7 @@ const Step4Colors: React.FC<Step4Props> = ({ variantId, onNext, onBack }) => {
 
   const { data: masterColorsData, isLoading: isLoadingMaster } = useQuery({
     queryKey: ['colors', 'all'],
-    queryFn: () => getColors({ limit: 200, status: 'active' }),
+    queryFn: () => getColors({ limit: 1000, status: 'active' }),
   });
 
   const { data: mappedColorsData, isLoading: isLoadingMapped } = useQuery({
@@ -399,7 +399,7 @@ const Step4Colors: React.FC<Step4Props> = ({ variantId, onNext, onBack }) => {
             // Refetch then add the new color to selection
             const refreshed = await queryClient.fetchQuery({
               queryKey: ['colors', 'all'],
-              queryFn: () => getColors({ limit: 200, status: 'active' }),
+              queryFn: () => getColors({ limit: 1000, status: 'active' }),
             });
             const created = (refreshed?.data?.colors || []).find((c: Color) => c._id === createdId);
             if (created) {

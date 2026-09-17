@@ -59,7 +59,7 @@ export interface VariantMarket {
 }
 
 export const getVariantMarkets = async (variantId: string): Promise<PaginatedResponse<VariantMarket>> => {
-  const response = await api.get(`/variants/${variantId}/markets`, { params: { limit: 100 } });
+  const response = await api.get(`/variants/${variantId}/markets`, { params: { limit: 1000 } });
   return response.data;
 };
 

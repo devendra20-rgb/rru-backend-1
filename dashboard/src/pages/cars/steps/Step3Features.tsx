@@ -65,7 +65,7 @@ const Step3Features: React.FC<Step3Props> = ({ variantId, onNext, onBack }) => {
 
   const { data: masterFeaturesData, isLoading: isLoadingMaster } = useQuery({
     queryKey: ['features', 'all'],
-    queryFn: () => getFeatures({ limit: 200, status: 'active' }),
+    queryFn: () => getFeatures({ limit: 1000, status: 'active' }),
   });
 
   const { data: mappedFeaturesData, isLoading: isLoadingMapped } = useQuery({
@@ -262,6 +262,7 @@ const Step3Features: React.FC<Step3Props> = ({ variantId, onNext, onBack }) => {
         await bulkSaveVariantFeatures(variantId, items);
       }
 
+      setDirtyMappings(new Set());
       queryClient.invalidateQueries({ queryKey: ['variant-features', variantId] });
       onNext();
     } catch (err: any) {

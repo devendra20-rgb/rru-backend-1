@@ -40,7 +40,7 @@ const generationSchema = z.object({
 type GenerationFormData = z.infer<typeof generationSchema>;
 
 export interface GenerationFormProps {
-  onSuccess?: (createdId: string) => void;
+  onSuccess?: (createdId: string, createdItem?: any) => void;
   onCancel?: () => void;
   initialData?: {
     brandId?: string;
@@ -127,7 +127,7 @@ const GenerationForm: React.FC<GenerationFormProps> = ({ onSuccess, onCancel, in
     mutationFn: (data: GenerationFormData) => createGeneration(data),
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ['generations'] });
-      if (onSuccess) onSuccess(res.data._id);
+      if (onSuccess) onSuccess(res.data._id, res.data);
       else navigate('/generations');
     }
   });

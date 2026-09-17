@@ -162,18 +162,18 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
   // Fetch dropdown options
   const { data: brandsData } = useQuery({
     queryKey: ['brands', 'all'],
-    queryFn: () => getBrands({ limit: 100 })
+    queryFn: () => getBrands({ limit: 1000 })
   });
 
   const { data: modelsData } = useQuery({
     queryKey: ['models', 'all', selectedBrand],
-    queryFn: () => getModels({ limit: 100, brandId: selectedBrand || undefined }),
+    queryFn: () => getModels({ limit: 1000, brandId: selectedBrand || undefined }),
     enabled: !!selectedBrand
   });
 
   const { data: generationsData } = useQuery({
     queryKey: ['generations', 'all', selectedModel],
-    queryFn: () => getGenerations({ limit: 100, modelId: selectedModel || undefined }),
+    queryFn: () => getGenerations({ limit: 1000, modelId: selectedModel || undefined }),
     enabled: !!selectedModel
   });
 
@@ -216,7 +216,12 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
         name: variant.name,
         variantCode: variant.variantCode || '',
         slug: variant.slug || '',
-        brandId: variant.model?.brandId?._id || variant.model?.brandId || '',
+        brandId:
+          variant.model?.brandId?._id ||
+          variant.model?.brandId ||
+          variant.modelId?.brandId?._id ||
+          variant.modelId?.brandId ||
+          '',
         modelId: variant.model?._id || variant.modelId?._id || variant.modelId || '',
         generationId: variant.generationId?._id || variant.generationId || '',
         modelYear: variant.modelYear,
@@ -705,6 +710,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
                     options={brandsData?.data || []}
                     getOptionLabel={(option: any) => option.name || ''}
                     value={selectedOption}
+                    noOptionsText="No brands found. Click + to add one."
                     onChange={(_, newValue) => {
                       field.onChange(newValue ? newValue._id : '');
                       setValue('modelId', '');
@@ -741,8 +747,9 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
                 return (
                   <Autocomplete
                     options={modelsData?.data || []}
-                    getOptionLabel={(option: any) => option.name || ''}
+                    getOptionLabel={(option: any) => option.name ? `${option.name}${option.status === 'draft' ? ' (Draft)' : ''}` : ''}
                     value={selectedOption}
+                    noOptionsText={selectedBrand ? "No models for this brand yet. Click + to add one." : "Select a brand first"}
                     onChange={(_, newValue) => {
                       field.onChange(newValue ? newValue._id : '');
                       setValue('generationId', '');
@@ -771,7 +778,6 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
 
           {(() => {
             const generations = generationsData?.data || [];
-            const hasGenerations = generations.length > 0 || !!selectedGeneration;
             if (!selectedModel) {
               return (
                 <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start', flex: 1 }}>
@@ -781,18 +787,6 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
                     disabled
                     helperText="Select a model first"
                   />
-                </Box>
-              );
-            }
-            if (!hasGenerations) {
-              return (
-                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flex: 1 }}>
-                  <Alert severity="info" sx={{ flex: 1, py: 0.5 }}>
-                    No generations for this model — leave blank, or add one.
-                  </Alert>
-                  <IconButton color="primary" onClick={() => setGenerationModalOpen(true)}>
-                    <AddIcon />
-                  </IconButton>
                 </Box>
               );
             }
@@ -806,8 +800,9 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
                     return (
                       <Autocomplete
                         options={generations}
-                        getOptionLabel={(option: any) => option.name || ''}
+                        getOptionLabel={(option: any) => option.name ? `${option.name}${option.status === 'draft' ? ' (Draft)' : ''}` : ''}
                         value={selectedOption}
+                        noOptionsText="No generations for this model (optional). Click + to add one."
                         onChange={(_, newValue) => {
                           field.onChange(newValue ? newValue._id : '');
                           lastTemplateKeyRef.current = '';
@@ -817,7 +812,12 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
                             {...params} 
                             label="Generation (Optional)" 
                             error={!!errors.generationId} 
-                            helperText={errors.generationId?.message || 'Model generation/year range — not a vehicle to copy from'} 
+                            helperText={
+                              errors.generationId?.message || 
+                              (generations.length === 0
+                                ? 'No generations for this model — leave blank or click +'
+                                : 'Model generation/year range (optional)')
+                            } 
                           />
                         )}
                         sx={{ '& .MuiAutocomplete-listbox': { maxHeight: 250 } }}
@@ -1157,7 +1157,14 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
 
       <QuickAddModal open={brandModalOpen} onClose={() => setBrandModalOpen(false)} title="Quick Add Brand">
         <BrandForm 
-          onSuccess={(id) => {
+          onSuccess={(id, brand) => {
+            if (brand) {
+              queryClient.setQueryData(['brands', 'all'], (old: any) => {
+                if (!old?.data) return old;
+                return { ...old, data: [...old.data, brand] };
+              });
+            }
+            queryClient.invalidateQueries({ queryKey: ['brands'] });
             setValue('brandId', id, { shouldValidate: true });
             setValue('modelId', '');
             setValue('generationId', '');
@@ -1171,7 +1178,14 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
       <QuickAddModal open={modelModalOpen} onClose={() => setModelModalOpen(false)} title="Quick Add Model">
         <ModelForm
           initialData={{ brandId: selectedBrand || undefined }}
-          onSuccess={(id) => {
+          onSuccess={(id, model) => {
+            if (model) {
+              queryClient.setQueryData(['models', 'all', selectedBrand], (old: any) => {
+                if (!old?.data) return old;
+                return { ...old, data: [...old.data, model] };
+              });
+            }
+            queryClient.invalidateQueries({ queryKey: ['models'] });
             setValue('modelId', id, { shouldValidate: true });
             setValue('generationId', '');
             lastTemplateKeyRef.current = '';
@@ -1184,7 +1198,14 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
       <QuickAddModal open={generationModalOpen} onClose={() => setGenerationModalOpen(false)} title="Quick Add Generation">
         <GenerationForm
           initialData={{ brandId: selectedBrand || undefined, modelId: selectedModel || undefined }}
-          onSuccess={(id) => {
+          onSuccess={(id, gen) => {
+            if (gen) {
+              queryClient.setQueryData(['generations', 'all', selectedModel], (old: any) => {
+                if (!old?.data) return old;
+                return { ...old, data: [...old.data, gen] };
+              });
+            }
+            queryClient.invalidateQueries({ queryKey: ['generations'] });
             setValue('generationId', id, { shouldValidate: true });
             lastTemplateKeyRef.current = '';
             setGenerationModalOpen(false);

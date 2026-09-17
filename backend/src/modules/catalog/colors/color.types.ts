@@ -17,7 +17,7 @@ export interface IColor extends Document {
   colorCode?: string;
   hexCode?: string;
   colorFamily?: string;
-  finishType?: ColorFinishType;
+  finishType: ColorFinishType;
   type: ColorType;
   status: ColorStatus;
   createdAt: Date;
@@ -41,7 +41,7 @@ export interface CreateColorDTO {
   colorCode?: string;
   hexCode?: string;
   colorFamily?: string;
-  finishType?: ColorFinishType;
+  finishType: ColorFinishType;
   type: ColorType;
   status?: ColorStatus;
 }

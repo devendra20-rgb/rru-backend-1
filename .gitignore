@@ -49,6 +49,9 @@ next-env.d.ts
 # OS files
 Thumbs.db
 
+# Microsoft Office lock / temp files (created while a workbook is open)
+~$*
+
 # specific sub-directory builds if any
 backend/dist/
 backend/build/
