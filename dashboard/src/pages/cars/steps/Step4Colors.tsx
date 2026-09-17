@@ -175,7 +175,7 @@ const Step4Colors: React.FC<Step4Props> = ({ variantId, onNext, onBack }) => {
         .map((mapping) => ({
           colorId: mapping.colorId as string,
           availability: (mapping.availability ?? 'standard') as 'standard' | 'optional' | 'unavailable',
-          status: (mapping.status ?? 'active') as 'active' | 'inactive',
+          status: 'active' as const,
         }));
 
       if (items.length > 0) {
@@ -183,6 +183,7 @@ const Step4Colors: React.FC<Step4Props> = ({ variantId, onNext, onBack }) => {
         await bulkSaveVariantColors(variantId, items);
       }
 
+      setDirtyMappings(new Set());
       queryClient.invalidateQueries({ queryKey: ['variant-colors', variantId] });
       onNext();
     } catch (err: any) {

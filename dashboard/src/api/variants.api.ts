@@ -1,9 +1,20 @@
 import api from '../lib/axios';
 import type { PaginatedResponse, SingleResponse } from './brands.api';
 
+export interface PopulatedRef {
+  _id: string;
+  name?: string;
+  brandId?: string | PopulatedRef;
+}
+
 export interface Variant {
   _id: string;
-  generationId: string | any;
+  modelId?: string | PopulatedRef;
+  generationId?: string | PopulatedRef | null;
+  /** Populated parent model (from GET /variants/:id) */
+  model?: PopulatedRef;
+  /** Populated generation (from GET /variants/:id) */
+  generation?: PopulatedRef | null;
   variantCode: string;
   name: string;
   slug: string;
@@ -26,6 +37,34 @@ export interface Variant {
   createdAt: string;
   updatedAt: string;
 }
+
+/** Safe display name from a string id or populated `{ name }` object */
+export const refName = (value: unknown, fallback = '—'): string => {
+  if (!value) return fallback;
+  if (typeof value === 'string') return fallback;
+  if (typeof value === 'object' && value !== null && 'name' in value) {
+    const name = (value as { name?: unknown }).name;
+    return typeof name === 'string' && name.trim() ? name : fallback;
+  }
+  return fallback;
+};
+
+export const brandNameFromVariant = (variant?: Variant | null): string => {
+  if (!variant) return '—';
+  const fromModel = variant.model?.brandId;
+  const fromModelId = typeof variant.modelId === 'object' ? variant.modelId?.brandId : undefined;
+  return refName(fromModel, '') || refName(fromModelId, '') || '—';
+};
+
+export const modelNameFromVariant = (variant?: Variant | null): string => {
+  if (!variant) return '—';
+  return refName(variant.model, '') || refName(variant.modelId, '') || '—';
+};
+
+export const generationNameFromVariant = (variant?: Variant | null): string => {
+  if (!variant) return '—';
+  return refName(variant.generation, '') || refName(variant.generationId, '') || '—';
+};
 
 export const getVariants = async (params?: Record<string, any>): Promise<PaginatedResponse<Variant>> => {
   const response = await api.get('/variants', { params });

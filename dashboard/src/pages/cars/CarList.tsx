@@ -36,7 +36,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import { getVariants, deleteVariant, updateVariant } from '../../api/variants.api';
+import { getVariants, deleteVariant, updateVariant, refName } from '../../api/variants.api';
 import { getBrands } from '../../api/brands.api';
 import { getModels } from '../../api/models.api';
 import { getGenerations } from '../../api/generations.api';
@@ -267,8 +267,8 @@ const CarList: React.FC = () => {
                       {variant.name}
                     </TableCell>
                     <TableCell>{variant.variantCode}</TableCell>
-                    <TableCell>{variant.generationId?.name || '—'}</TableCell>
-                    <TableCell>{variant.modelId?.name || '—'}</TableCell>
+                    <TableCell>{refName(variant.generationId)}</TableCell>
+                    <TableCell>{refName(variant.modelId)}</TableCell>
                     <TableCell>{variant.modelYear || '-'}</TableCell>
                     <TableCell>
                       <Switch

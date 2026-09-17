@@ -93,9 +93,14 @@ class VariantMarketRepository {
       if (item.launchDate) setData.launchDate = item.launchDate;
       if (item.discontinuedDate) setData.discontinuedDate = item.discontinuedDate;
 
-      // Only set pricing if a non-zero amount is provided
-      if (item.pricing && item.pricing.amount && item.pricing.amount > 0) {
+      // Pricing: set when amount > 0; explicitly unset when cleared to 0/empty
+      if (item.pricing && typeof item.pricing.amount === 'number' && item.pricing.amount > 0) {
         setData.pricing = item.pricing;
+      }
+
+      const update: Record<string, any> = { $set: setData };
+      if (item.pricing && (!item.pricing.amount || item.pricing.amount <= 0)) {
+        update.$unset = { pricing: 1 };
       }
 
       return {
@@ -104,7 +109,7 @@ class VariantMarketRepository {
             variantId: new Types.ObjectId(variantId as string),
             marketId: new Types.ObjectId(item.marketId as string),
           },
-          update: { $set: setData },
+          update,
           upsert: true,
         },
       };

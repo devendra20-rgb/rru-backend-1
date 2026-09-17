@@ -319,8 +319,6 @@ const Step2Specifications: React.FC<Step2Props> = ({ variantId, onNext, onBack }
           </Box>
         </Box>
 
-        </Box>
-
         <Box>
           <Typography variant="h6" gutterBottom>Fuel Economy</Typography>
           <Divider sx={{ mb: 2 }} />

@@ -108,13 +108,15 @@ const Step5Markets: React.FC<Step5Props> = ({ variantId, onNext, onBack }) => {
           const item: any = {
             marketId: (mapping.marketId as any)?._id ?? mapping.marketId,
             availabilityStatus: mapping.availabilityStatus ?? 'unavailable',
-            status: mapping.status ?? 'active',
+            status: 'active',
             isFeatured: mapping.isFeatured ?? false,
           };
-          // Only include pricing if amount is valid and non-zero
-          if (mapping.pricing?.amount && mapping.pricing.amount > 0) {
-            item.pricing = mapping.pricing;
-          }
+          // Always send pricing so clearing to 0 can unset on the server
+          item.pricing = {
+            amount: Number(mapping.pricing?.amount) || 0,
+            currencyCode: mapping.pricing?.currencyCode || 'USD',
+            priceType: mapping.pricing?.priceType || 'starting',
+          };
           if (mapping.launchDate) item.launchDate = mapping.launchDate;
           if (mapping.discontinuedDate) item.discontinuedDate = mapping.discontinuedDate;
           return item;

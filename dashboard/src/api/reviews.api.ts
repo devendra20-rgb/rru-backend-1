@@ -13,9 +13,14 @@ export interface Review {
   updatedAt: string;
 }
 
-export const getReviews = async (params?: Record<string, any>): Promise<{ data: Review[]; total: number }> => {
+export const getReviews = async (
+  params?: Record<string, any>,
+): Promise<{ data: Review[]; total: number; meta?: { total?: number } }> => {
   const response = await api.get('/reviews', { params });
-  return response.data?.data ?? response.data;
+  const envelope = response.data;
+  const list = Array.isArray(envelope?.data) ? envelope.data : [];
+  const total = envelope?.meta?.total ?? list.length;
+  return { data: list, total, meta: envelope?.meta };
 };
 
 export const getReview = async (id: string): Promise<SingleResponse<Review>> => {

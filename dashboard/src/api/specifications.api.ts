@@ -36,6 +36,7 @@ export interface Safety {
   abs?: boolean;
   tractionControl?: boolean;
   stabilityControl?: boolean;
+  adas?: boolean;
   parkingSensors?: string;
   camera?: string;
 }

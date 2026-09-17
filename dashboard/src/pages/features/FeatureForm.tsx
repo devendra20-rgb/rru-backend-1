@@ -24,7 +24,7 @@ import { getFeature, createFeature, updateFeature } from '../../api/features.api
 
 // Validation Schema
 const featureSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
+  name: z.string().min(2, 'Name must be at least 2 characters'),
   category: z.string().min(1, 'Category is required'),
   description: z.string().optional(),
   status: z.enum(['active', 'inactive']).default('active'),

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Button, Typography, Paper, Divider, CircularProgress } from '@mui/material';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getVariant } from '../../../api/variants.api';
+import { getVariant, brandNameFromVariant, modelNameFromVariant, generationNameFromVariant } from '../../../api/variants.api';
 import { getVariantSpecifications } from '../../../api/specifications.api';
 import { getVariantFeatures } from '../../../api/features.api';
 import { getVariantColors } from '../../../api/colors.api';
@@ -64,9 +64,9 @@ const Step7Review: React.FC<Step7Props> = ({ variantId, onBack }) => {
         <Typography variant="h6" gutterBottom>1. Basic Information</Typography>
         <Divider sx={{ mb: 2 }} />
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(4, 1fr)' }, gap: 2 }}>
-          <Box><Typography variant="body2" color="text.secondary">Brand</Typography><Typography>{variant?.model?.brandId?.name || variant?.modelId?.brandId?.name || '-'}</Typography></Box>
-          <Box><Typography variant="body2" color="text.secondary">Model</Typography><Typography>{variant?.model?.name || variant?.modelId?.name || '-'}</Typography></Box>
-          <Box><Typography variant="body2" color="text.secondary">Generation</Typography><Typography>{variant?.generation?.name || variant?.generationId?.name || '—'}</Typography></Box>
+          <Box><Typography variant="body2" color="text.secondary">Brand</Typography><Typography>{brandNameFromVariant(variant)}</Typography></Box>
+          <Box><Typography variant="body2" color="text.secondary">Model</Typography><Typography>{modelNameFromVariant(variant)}</Typography></Box>
+          <Box><Typography variant="body2" color="text.secondary">Generation</Typography><Typography>{generationNameFromVariant(variant)}</Typography></Box>
           <Box><Typography variant="body2" color="text.secondary">Slug</Typography><Typography>{variant?.slug || '-'}</Typography></Box>
           <Box><Typography variant="body2" color="text.secondary">Name</Typography><Typography>{variant?.name || '-'}</Typography></Box>
           <Box><Typography variant="body2" color="text.secondary">Code</Typography><Typography>{variant?.variantCode || '-'}</Typography></Box>

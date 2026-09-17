@@ -30,6 +30,9 @@ const Login: React.FC = () => {
     },
     onSuccess: (data) => {
       localStorage.setItem('accessToken', data.data.accessToken);
+      if (data.data.refreshToken) {
+        localStorage.setItem('refreshToken', data.data.refreshToken);
+      }
       api.defaults.headers.common.Authorization = `Bearer ${data.data.accessToken}`;
       setUser(data.data.user);
       navigate('/');

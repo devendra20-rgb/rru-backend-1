@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
 
-import { getVariant } from '../../api/variants.api';
+import { getVariant, brandNameFromVariant, modelNameFromVariant, generationNameFromVariant } from '../../api/variants.api';
 import { getVariantSpecifications } from '../../api/specifications.api';
 import { getVariantFeatures } from '../../api/features.api';
 import { getVariantColors } from '../../api/colors.api';
@@ -107,15 +107,15 @@ const CarDetail: React.FC = () => {
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', sm: 'repeat(3, 1fr)' }, gap: 2 }}>
               <Box>
                 <Typography variant="body2" color="text.secondary">Brand</Typography>
-                <Typography>{variant.model?.brandId?.name || variant.modelId?.brandId?.name || '-'}</Typography>
+                <Typography>{brandNameFromVariant(variant)}</Typography>
               </Box>
               <Box>
                 <Typography variant="body2" color="text.secondary">Model</Typography>
-                <Typography>{variant.model?.name || variant.modelId?.name || '-'}</Typography>
+                <Typography>{modelNameFromVariant(variant)}</Typography>
               </Box>
               <Box>
                 <Typography variant="body2" color="text.secondary">Generation</Typography>
-                <Typography>{variant.generation?.name || variant.generationId?.name || '—'}</Typography>
+                <Typography>{generationNameFromVariant(variant)}</Typography>
               </Box>
               <Box>
                 <Typography variant="body2" color="text.secondary">Variant Code</Typography>

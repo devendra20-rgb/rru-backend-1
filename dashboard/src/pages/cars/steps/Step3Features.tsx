@@ -252,7 +252,7 @@ const Step3Features: React.FC<Step3Props> = ({ variantId, onNext, onBack }) => {
               | 'optional'
               | 'unavailable',
             value: mapping.value ?? '',
-            status: (mapping.status ?? 'active') as 'active' | 'inactive',
+            status: 'active' as const,
           };
         })
         .filter((item): item is NonNullable<typeof item> => Boolean(item));

@@ -29,7 +29,7 @@ const CUSTOM_FINISH_VALUE = '__custom__';
 const hexCodeRegex = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
 const colorSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
+  name: z.string().min(2, 'Name must be at least 2 characters'),
   colorCode: z.string().trim().max(50).optional(),
   hexCode: z.string().regex(hexCodeRegex, 'Must be a valid hex color (e.g. #FF0000 or #F00)'),
   colorFamily: z.string().optional(),
