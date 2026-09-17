@@ -36,7 +36,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import { getVariants, deleteVariant, updateVariant, refName } from '../../api/variants.api';
+import { getVariants, deleteVariant, updateVariant, refName, brandNameFromVariant } from '../../api/variants.api';
 import { getBrands } from '../../api/brands.api';
 import { getModels } from '../../api/models.api';
 import { getGenerations } from '../../api/generations.api';
@@ -170,7 +170,7 @@ const CarList: React.FC = () => {
         <Stack direction="row" spacing={2}>
           <TextField
             size="small"
-            placeholder="Search vehicles..."
+            placeholder="Search by name, brand, model, generation…"
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(0); }}
             slotProps={{
@@ -245,9 +245,9 @@ const CarList: React.FC = () => {
             <TableHead>
               <TableRow>
                 <TableCell>Variant Name</TableCell>
-                <TableCell>Code</TableCell>
-                <TableCell>Generation</TableCell>
+                <TableCell>Brand</TableCell>
                 <TableCell>Model</TableCell>
+                <TableCell>Generation</TableCell>
                 <TableCell>Model Year</TableCell>
                 <TableCell>Status</TableCell>
                 <TableCell align="right">Actions</TableCell>
@@ -266,9 +266,9 @@ const CarList: React.FC = () => {
                     <TableCell component="th" scope="row">
                       {variant.name}
                     </TableCell>
-                    <TableCell>{variant.variantCode}</TableCell>
-                    <TableCell>{refName(variant.generationId)}</TableCell>
+                    <TableCell>{brandNameFromVariant(variant)}</TableCell>
                     <TableCell>{refName(variant.modelId)}</TableCell>
+                    <TableCell>{refName(variant.generationId)}</TableCell>
                     <TableCell>{variant.modelYear || '-'}</TableCell>
                     <TableCell>
                       <Switch

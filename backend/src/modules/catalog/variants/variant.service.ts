@@ -2,6 +2,7 @@ import { variantRepository } from './variant.repository';
 import { IVariant } from './variant.types';
 import { generationRepository } from '../generations/generation.repository';
 import { modelRepository } from '../models/model.repository';
+import { brandRepository } from '../brands/brand.repository';
 import { AppError } from '../../../middlewares/error.middleware';
 import { Types } from 'mongoose';
 import { generateSlug } from '../../../utils/slug';
@@ -125,9 +126,41 @@ export const variantService = {
     const filter: Record<string, any> = {};
 
     if (query.search) {
+      const searchRx = { $regex: query.search, $options: 'i' };
+
+      // Resolve model IDs matching the search term (by model name)
+      const matchingModels = await modelRepository.findMany({ name: searchRx }, 0, 10000, { _id: 1 });
+      const matchingModelIds = matchingModels.map((m) => m._id);
+
+      // Resolve generation IDs matching the search term (by generation name)
+      const matchingGenerations = await generationRepository.findMany(
+        { name: searchRx },
+        0,
+        10000,
+        { _id: 1 },
+      );
+      const matchingGenerationIds = matchingGenerations.map((g) => g._id);
+
+      // Resolve model IDs for brands whose name matches the search term
+      const matchingBrands = await brandRepository.findMany({ name: searchRx }, 0, 10000, { _id: 1 });
+      const matchingBrandIds = matchingBrands.map((b) => b._id);
+      const modelsForBrands =
+        matchingBrandIds.length > 0
+          ? await modelRepository.findMany({ brandId: { $in: matchingBrandIds } }, 0, 10000, { _id: 1 })
+          : [];
+
+      // Combine all resolved model IDs (de-duplicated)
+      const allModelIdStrings = [
+        ...matchingModelIds.map(String),
+        ...modelsForBrands.map((m) => String(m._id)),
+      ];
+      const uniqueModelIds = [...new Set(allModelIdStrings)];
+
       filter.$or = [
-        { name: { $regex: query.search, $options: 'i' } },
-        { variantCode: { $regex: query.search, $options: 'i' } },
+        { name: searchRx },
+        { variantCode: searchRx },
+        ...(uniqueModelIds.length > 0 ? [{ modelId: { $in: uniqueModelIds } }] : []),
+        ...(matchingGenerationIds.length > 0 ? [{ generationId: { $in: matchingGenerationIds } }] : []),
       ];
     }
     if (query.status) filter.status = query.status;

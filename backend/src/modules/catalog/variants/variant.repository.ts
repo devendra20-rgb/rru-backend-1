@@ -54,7 +54,7 @@ export const variantRepository = {
   ) {
     return Variant.find(filter)
       .populate('generationId')
-      .populate('modelId')
+      .populate({ path: 'modelId', populate: { path: 'brandId', select: 'name slug' } })
       .sort(sort as any)
       .skip(skip)
       .limit(limit)

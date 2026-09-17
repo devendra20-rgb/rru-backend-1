@@ -1,7 +1,30 @@
 @import "tailwindcss";
 
-@layer base {
-  body {
-    @apply bg-slate-50 text-slate-900;
-  }
+/* ── Smooth rendering ────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Subtle custom scrollbar (webkit) ───────────────────────────────────── */
+::-webkit-scrollbar {
+  width:  8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: rgba(100, 130, 145, 0.35);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(100, 130, 145, 0.6);
+}
+
+/* ── Page-level transitions when switching dark/light ────────────────────── */
+body {
+  transition: background-color 220ms ease, color 220ms ease;
 }

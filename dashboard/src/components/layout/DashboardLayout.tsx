@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { Navigate, Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
+import { useTheme } from '@mui/material/styles';
 import {
   Box,
   Drawer,
@@ -19,110 +20,176 @@ import {
   Divider,
   Avatar,
   Chip,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import PeopleIcon from '@mui/icons-material/People';
-import SettingsIcon from '@mui/icons-material/Settings';
-import PaletteIcon from '@mui/icons-material/Palette';
-import PublicIcon from '@mui/icons-material/Public';
-import StarIcon from '@mui/icons-material/Star';
-import FolderIcon from '@mui/icons-material/Folder';
-import CategoryIcon from '@mui/icons-material/Category';
-import ExpandLess from '@mui/icons-material/ExpandLess';
-import ExpandMore from '@mui/icons-material/ExpandMore';
-import TuneIcon from '@mui/icons-material/Tune';
-import ArticleIcon from '@mui/icons-material/Article';
-import MemoryIcon from '@mui/icons-material/Memory';
-import LogoutIcon from '@mui/icons-material/Logout';
+import DashboardIcon    from '@mui/icons-material/Dashboard';
+import PeopleIcon       from '@mui/icons-material/People';
+import SettingsIcon     from '@mui/icons-material/Settings';
+import PaletteIcon      from '@mui/icons-material/Palette';
+import PublicIcon       from '@mui/icons-material/Public';
+import StarIcon         from '@mui/icons-material/Star';
+import FolderIcon       from '@mui/icons-material/Folder';
+import CategoryIcon     from '@mui/icons-material/Category';
+import ExpandLess       from '@mui/icons-material/ExpandLess';
+import ExpandMore       from '@mui/icons-material/ExpandMore';
+import TuneIcon         from '@mui/icons-material/Tune';
+import ArticleIcon      from '@mui/icons-material/Article';
+import MemoryIcon       from '@mui/icons-material/Memory';
+import LogoutIcon       from '@mui/icons-material/Logout';
 import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
+import DarkModeIcon     from '@mui/icons-material/DarkMode';
+import LightModeIcon    from '@mui/icons-material/LightMode';
+
+import { ColorModeContext } from '../../context/ColorModeContext';
 
 const drawerWidth = 260;
 
 const DashboardLayout: React.FC = () => {
   const { isAuthenticated, logout, user } = useAuthStore();
-  const location = useLocation();
+  const location  = useLocation();
+  const theme     = useTheme();
+  const colorMode = useContext(ColorModeContext);
+  const isDark    = theme.palette.mode === 'dark';
 
   // Collapsible states
-  const [openCatalog, setOpenCatalog] = useState(true);
+  const [openCatalog,     setOpenCatalog]     = useState(true);
   const [openVehicleData, setOpenVehicleData] = useState(true);
-  const [openContent, setOpenContent] = useState(true);
+  const [openContent,     setOpenContent]     = useState(true);
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  const handleLogout = () => {
-    logout();
-  };
+  const handleLogout = () => { logout(); };
 
   const isActive = (path: string) => {
     if (path === '/dashboard') return location.pathname === '/dashboard';
     return location.pathname.startsWith(path);
   };
 
-  const getItemStyle = (path: string) => ({
-    borderRadius: '8px',
-    mx: 1,
-    my: 0.3,
-    transition: 'all 150ms ease',
-    backgroundColor: isActive(path) ? 'rgba(13, 59, 73, 0.08)' : 'transparent',
-    color: isActive(path) ? '#0D3B49' : '#16313A',
-    fontWeight: isActive(path) ? 700 : 500,
-    borderLeft: isActive(path) ? '3px solid #E8942B' : '3px solid transparent',
-    '&:hover': {
-      backgroundColor: 'rgba(13, 59, 73, 0.04)',
-    },
-    '& .MuiListItemIcon-root': {
-      color: isActive(path) ? '#0D3B49' : '#66777D',
-      minWidth: 38,
-    },
-    '& .MuiTypography-root': {
-      fontSize: '0.86rem',
-      fontWeight: isActive(path) ? 700 : 500,
-    },
-  });
+  // Theme-aware item styles ───────────────────────────────────────────────────
+  const getItemStyle = (path: string) => {
+    const active = isActive(path);
+    return {
+      borderRadius: '8px',
+      mx: 1,
+      my: 0.3,
+      transition: 'all 160ms ease',
+      backgroundColor: active
+        ? theme.palette.action.selected
+        : 'transparent',
+      color: active
+        ? theme.palette.primary.main
+        : theme.palette.text.primary,
+      fontWeight: active ? 700 : 500,
+      borderLeft: active
+        ? `3px solid ${theme.palette.secondary.main}`
+        : '3px solid transparent',
+      '&:hover': {
+        backgroundColor: theme.palette.action.hover,
+      },
+      '& .MuiListItemIcon-root': {
+        color: active ? theme.palette.primary.main : theme.palette.text.secondary,
+        minWidth: 38,
+      },
+      '& .MuiTypography-root': {
+        fontSize: '0.86rem',
+        fontWeight: active ? 700 : 500,
+      },
+    };
+  };
+
+  // Shared subheader style ────────────────────────────────────────────────────
+  const subheaderSx = {
+    position: 'static' as const,
+    bgcolor: theme.palette.background.paper,
+    fontSize: '0.72rem',
+    fontWeight: 800,
+    letterSpacing: '1px',
+    textTransform: 'uppercase' as const,
+    color: theme.palette.text.secondary,
+    px: 2.5,
+    py: 0.5,
+    lineHeight: '24px',
+  };
 
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
+
+      {/* ── AppBar ─────────────────────────────────────────────────────────── */}
       <AppBar
         position="fixed"
         sx={{
-          zIndex: (theme) => theme.zIndex.drawer + 1,
-          bgcolor: '#FFFFFF',
-          color: '#072830',
-          borderBottom: '1px solid #DCE3E6',
-          boxShadow: '0 1px 4px rgba(7, 40, 48, 0.04)',
+          zIndex: (t) => t.zIndex.drawer + 1,
+          bgcolor: theme.palette.background.paper,
+          color:   theme.palette.text.primary,
+          borderBottom: `1px solid ${theme.palette.divider}`,
+          boxShadow: isDark
+            ? '0 1px 4px rgba(0,0,0,0.3)'
+            : '0 1px 4px rgba(7,40,48,0.04)',
         }}
       >
         <Toolbar sx={{ minHeight: 64, px: 3 }}>
+          {/* Brand ---------------------------------------------------------- */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexGrow: 1 }}>
             <Box
               sx={{
                 width: 34,
                 height: 34,
                 borderRadius: '8px',
-                bgcolor: '#0D3B49',
+                background: 'linear-gradient(135deg, #0D3B49 0%, #1A5A6E 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: '#E8942B',
+                flexShrink: 0,
               }}
             >
               <DirectionsCarIcon fontSize="small" />
             </Box>
-            <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 800, letterSpacing: '-0.5px' }}>
-              RideRoundUp <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#E8942B', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Admin</span>
+            <Typography
+              variant="h6"
+              noWrap
+              component="div"
+              sx={{ fontWeight: 800, letterSpacing: '-0.5px', color: theme.palette.text.primary }}
+            >
+              RideRoundUp{' '}
+              <span
+                style={{
+                  fontSize: '0.78rem',
+                  fontWeight: 600,
+                  color: '#E8942B',
+                  letterSpacing: '0.5px',
+                  textTransform: 'uppercase',
+                }}
+              >
+                Admin
+              </span>
             </Typography>
           </Box>
 
+          {/* User pill ------------------------------------------------------ */}
           {user && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mr: 2 }}>
-              <Avatar sx={{ width: 32, height: 32, bgcolor: '#0D3B49', fontSize: '0.85rem', fontWeight: 700, color: '#FFFFFF' }}>
+              <Avatar
+                sx={{
+                  width: 32,
+                  height: 32,
+                  background: 'linear-gradient(135deg, #0D3B49 0%, #1A5A6E 100%)',
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  color: '#FFFFFF',
+                }}
+              >
                 {user.firstName ? user.firstName[0].toUpperCase() : 'A'}
               </Avatar>
               <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
-                <Typography variant="body2" sx={{ fontWeight: 700, color: '#072830', lineHeight: 1.1 }}>
+                <Typography
+                  variant="body2"
+                  sx={{ fontWeight: 700, color: theme.palette.text.primary, lineHeight: 1.1 }}
+                >
                   {user.firstName} {user.lastName || ''}
                 </Typography>
                 <Chip
@@ -141,18 +208,35 @@ const DashboardLayout: React.FC = () => {
             </Box>
           )}
 
+          {/* Dark / Light toggle ------------------------------------------- */}
+          <Tooltip title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}>
+            <IconButton
+              onClick={colorMode.toggleColorMode}
+              size="small"
+              sx={{
+                mr: 1.5,
+                color: theme.palette.text.secondary,
+                transition: 'color 200ms ease',
+                '&:hover': { color: theme.palette.primary.main },
+              }}
+            >
+              {isDark ? <LightModeIcon fontSize="small" /> : <DarkModeIcon fontSize="small" />}
+            </IconButton>
+          </Tooltip>
+
+          {/* Logout --------------------------------------------------------- */}
           <Button
             variant="outlined"
             size="small"
             onClick={handleLogout}
             startIcon={<LogoutIcon fontSize="small" />}
             sx={{
-              borderColor: '#DCE3E6',
-              color: '#66777D',
+              borderColor: theme.palette.divider,
+              color:       theme.palette.text.secondary,
               '&:hover': {
-                borderColor: '#C4451D',
-                color: '#C4451D',
-                backgroundColor: 'rgba(196, 69, 29, 0.04)',
+                borderColor:     '#C4451D',
+                color:           '#C4451D',
+                backgroundColor: 'rgba(196, 69, 29, 0.06)',
               },
             }}
           >
@@ -161,6 +245,7 @@ const DashboardLayout: React.FC = () => {
         </Toolbar>
       </AppBar>
 
+      {/* ── Sidebar ────────────────────────────────────────────────────────── */}
       <Drawer
         variant="permanent"
         sx={{
@@ -169,8 +254,8 @@ const DashboardLayout: React.FC = () => {
           [`& .MuiDrawer-paper`]: {
             width: drawerWidth,
             boxSizing: 'border-box',
-            borderColor: '#DCE3E6',
-            backgroundColor: '#FFFFFF',
+            borderColor:     theme.palette.divider,
+            backgroundColor: theme.palette.background.paper,
           },
         }}
       >
@@ -191,17 +276,21 @@ const DashboardLayout: React.FC = () => {
             </ListItem>
           </List>
 
-          <Divider sx={{ my: 1.5, borderColor: '#EDF0F1' }} />
+          <Divider sx={{ my: 1.5, borderColor: theme.palette.divider }} />
 
+          {/* Catalog ─────────────────────────────────────────────────────── */}
           <List
             subheader={
-              <ListSubheader disableSticky sx={{ position: 'static', bgcolor: '#FFFFFF', fontSize: '0.72rem', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase', color: '#66777D', px: 2.5, py: 0.5, lineHeight: '24px' }}>
-                Catalog
-              </ListSubheader>
+              <ListSubheader disableSticky sx={subheaderSx}>Catalog</ListSubheader>
             }
           >
-            <ListItemButton onClick={() => setOpenCatalog(!openCatalog)} sx={{ mx: 1, borderRadius: '8px' }}>
-              <ListItemIcon sx={{ minWidth: 38, color: '#0D3B49' }}><CategoryIcon fontSize="small" /></ListItemIcon>
+            <ListItemButton
+              onClick={() => setOpenCatalog(!openCatalog)}
+              sx={{ mx: 1, borderRadius: '8px' }}
+            >
+              <ListItemIcon sx={{ minWidth: 38, color: theme.palette.primary.main }}>
+                <CategoryIcon fontSize="small" />
+              </ListItemIcon>
               <ListItemText primary="Catalog" />
               {openCatalog ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
             </ListItemButton>
@@ -223,17 +312,21 @@ const DashboardLayout: React.FC = () => {
             </Collapse>
           </List>
 
-          <Divider sx={{ my: 1.5, borderColor: '#EDF0F1' }} />
+          <Divider sx={{ my: 1.5, borderColor: theme.palette.divider }} />
 
+          {/* Vehicle Data ─────────────────────────────────────────────────── */}
           <List
             subheader={
-              <ListSubheader disableSticky sx={{ position: 'static', bgcolor: '#FFFFFF', fontSize: '0.72rem', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase', color: '#66777D', px: 2.5, py: 0.5, lineHeight: '24px' }}>
-                Vehicle Data
-              </ListSubheader>
+              <ListSubheader disableSticky sx={subheaderSx}>Vehicle Data</ListSubheader>
             }
           >
-            <ListItemButton onClick={() => setOpenVehicleData(!openVehicleData)} sx={{ mx: 1, borderRadius: '8px' }}>
-              <ListItemIcon sx={{ minWidth: 38, color: '#0D3B49' }}><MemoryIcon fontSize="small" /></ListItemIcon>
+            <ListItemButton
+              onClick={() => setOpenVehicleData(!openVehicleData)}
+              sx={{ mx: 1, borderRadius: '8px' }}
+            >
+              <ListItemIcon sx={{ minWidth: 38, color: theme.palette.primary.main }}>
+                <MemoryIcon fontSize="small" />
+              </ListItemIcon>
               <ListItemText primary="Vehicle Data" />
               {openVehicleData ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
             </ListItemButton>
@@ -259,17 +352,21 @@ const DashboardLayout: React.FC = () => {
             </Collapse>
           </List>
 
-          <Divider sx={{ my: 1.5, borderColor: '#EDF0F1' }} />
+          <Divider sx={{ my: 1.5, borderColor: theme.palette.divider }} />
 
+          {/* Content ─────────────────────────────────────────────────────── */}
           <List
             subheader={
-              <ListSubheader disableSticky sx={{ position: 'static', bgcolor: '#FFFFFF', fontSize: '0.72rem', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase', color: '#66777D', px: 2.5, py: 0.5, lineHeight: '24px' }}>
-                Content & Editorial
-              </ListSubheader>
+              <ListSubheader disableSticky sx={subheaderSx}>Content & Editorial</ListSubheader>
             }
           >
-            <ListItemButton onClick={() => setOpenContent(!openContent)} sx={{ mx: 1, borderRadius: '8px' }}>
-              <ListItemIcon sx={{ minWidth: 38, color: '#0D3B49' }}><ArticleIcon fontSize="small" /></ListItemIcon>
+            <ListItemButton
+              onClick={() => setOpenContent(!openContent)}
+              sx={{ mx: 1, borderRadius: '8px' }}
+            >
+              <ListItemIcon sx={{ minWidth: 38, color: theme.palette.primary.main }}>
+                <ArticleIcon fontSize="small" />
+              </ListItemIcon>
               <ListItemText primary="Content" />
               {openContent ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
             </ListItemButton>
@@ -285,7 +382,7 @@ const DashboardLayout: React.FC = () => {
             </Collapse>
           </List>
 
-          <Divider sx={{ my: 1.5, borderColor: '#EDF0F1' }} />
+          <Divider sx={{ my: 1.5, borderColor: theme.palette.divider }} />
 
           <List>
             <ListItem disablePadding>
@@ -304,7 +401,16 @@ const DashboardLayout: React.FC = () => {
         </Box>
       </Drawer>
 
-      <Box component="main" sx={{ flexGrow: 1, p: 3.5, bgcolor: '#F4F6F7', minHeight: '100vh' }}>
+      {/* ── Main content ───────────────────────────────────────────────────── */}
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: 3.5,
+          bgcolor: 'background.default',
+          minHeight: '100vh',
+        }}
+      >
         <Toolbar sx={{ minHeight: 64 }} />
         <Outlet />
       </Box>
