@@ -51,6 +51,7 @@ const CarList: React.FC = () => {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 500);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   
   const [selectedBrand, setSelectedBrand] = useState<string>('all');
   const [selectedModel, setSelectedModel] = useState<string>('all');
@@ -98,7 +99,13 @@ const CarList: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['variants'] });
       setDeleteId(null);
-    }
+      setDeleteError(null);
+    },
+    onError: (err: any) => {
+      setDeleteError(
+        err?.response?.data?.message || err?.message || 'Failed to delete vehicle. Please try again.'
+      );
+    },
   });
 
   const toggleStatusMutation = useMutation({
@@ -308,15 +315,21 @@ const CarList: React.FC = () => {
       </TableContainer>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={!!deleteId} onClose={() => setDeleteId(null)}>
+      <Dialog open={!!deleteId} onClose={() => { setDeleteId(null); setDeleteError(null); }}>
         <DialogTitle>Delete Vehicle</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to delete this vehicle variant? This action cannot be undone.
+            Are you sure you want to delete this vehicle? This will permanently remove the vehicle
+            and all its specifications, features, colors, markets, and media. This action cannot be undone.
           </DialogContentText>
+          {deleteError && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {deleteError}
+            </Alert>
+          )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteId(null)}>Cancel</Button>
+          <Button onClick={() => { setDeleteId(null); setDeleteError(null); }}>Cancel</Button>
           <Button 
             onClick={confirmDelete} 
             color="error" 

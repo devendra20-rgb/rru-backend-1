@@ -3,6 +3,11 @@ import { IVariant } from './variant.types';
 import { generationRepository } from '../generations/generation.repository';
 import { modelRepository } from '../models/model.repository';
 import { brandRepository } from '../brands/brand.repository';
+import { Specification } from '../specifications/specification.model';
+import { VariantFeature } from '../features/feature.model';
+import { VariantColor } from '../colors/color.model';
+import { VariantMarket } from '../variant-markets/variant-market.model';
+import { Media } from '../../media/media.model';
 import { AppError } from '../../../middlewares/error.middleware';
 import { Types } from 'mongoose';
 import { generateSlug } from '../../../utils/slug';
@@ -299,7 +304,16 @@ export const variantService = {
     const variant = await variantRepository.findById(id);
     if (!variant) throw new AppError('Variant not found', 404);
 
-    // Dependency check for future modules will go here.
-    return variantRepository.updateStatus(id, 'inactive');
+    // Cascade-delete all child records, then remove the variant itself.
+    await Promise.all([
+      Specification.deleteMany({ variantId: id }),
+      VariantFeature.deleteMany({ variantId: id }),
+      VariantColor.deleteMany({ variantId: id }),
+      VariantMarket.deleteMany({ variantId: id }),
+      // Media: soft-deactivate so uploaded files can be cleaned up separately
+      Media.updateMany({ entityId: id }, { status: 'inactive' }),
+    ]);
+
+    return variantRepository.deleteById(id);
   },
 };
