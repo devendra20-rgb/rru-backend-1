@@ -238,5 +238,65 @@ describe('Specifications API', () => {
     const getInactive = await request(app).get(`/api/v1/specifications/variant/${legacyVariantId}`);
     expect(getInactive.status).toBe(404);
   });
+
+  it('should create and retrieve electric (EV) specifications', async () => {
+    const gen = (await Generation.findOne({}))!;
+    const evVariant = await Variant.create({
+      modelId: gen.modelId,
+      generationId: gen._id,
+      variantCode: 'EV-VAR-001',
+      name: 'EV Taycan Turbo',
+      slug: 'ev-taycan-turbo',
+      fuelType: 'electric',
+      transmissionType: 'single_speed_automatic',
+      status: 'active',
+      engine: { powerHp: 617, torqueNm: 850 },
+    });
+    const evVariantId = evVariant._id.toString();
+
+    const createRes = await request(app)
+      .post('/api/v1/specifications')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        variantId: evVariantId,
+        performance: {
+          topSpeedKph: 260,
+          acceleration0To100Kph: 2.8,
+        },
+        dimensions: {
+          lengthMm: 4963,
+          widthMm: 1966,
+          heightMm: 1381,
+        },
+        electric: {
+          batteryCapacity: 105,
+          usableBatteryCapacity: 97,
+          motorType: 'Permanent Magnet Synchronous Motor',
+          motorConfiguration: 'Dual Motor',
+          wltpRange: 630,
+          acChargingPower: 11,
+          dcChargingPower: 320,
+          chargingPort: 'CCS2',
+          chargingTime10To80: 18,
+          energyConsumption: 16.7,
+          regenerativeBraking: true,
+          heatPump: true,
+        },
+      });
+
+    expect(createRes.status).toBe(201);
+    expect(createRes.body.success).toBe(true);
+    expect(createRes.body.data.electric.batteryCapacity).toBe(105);
+    expect(createRes.body.data.electric.chargingPort).toBe('CCS2');
+    expect(createRes.body.data.electric.regenerativeBraking).toBe(true);
+
+    // Verify car detail endpoint includes electric specs
+    const detailRes = await request(app).get('/api/v1/cars/ev-taycan-turbo');
+    expect(detailRes.status).toBe(200);
+    expect(detailRes.body.success).toBe(true);
+    expect(detailRes.body.data.fuelType).toBe('electric');
+    expect(detailRes.body.data.specifications.electric.batteryCapacity).toBe(105);
+    expect(detailRes.body.data.specifications.electric.dcChargingPower).toBe(320);
+  });
 });
 

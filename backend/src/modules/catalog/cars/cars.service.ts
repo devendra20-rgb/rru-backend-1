@@ -613,6 +613,7 @@ export class CarsService {
             weight: '$specs.weight',
             fuel: '$specs.fuel',
             safety: '$specs.safety',
+            electric: '$specs.electric',
           },
           features: 1,
           colors: 1,

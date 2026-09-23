@@ -40,6 +40,30 @@ export interface ISafety {
   camera?: string;
 }
 
+export interface IElectricSpecification {
+  batteryCapacity?: number;
+  usableBatteryCapacity?: number;
+  motorType?: string;
+  motorConfiguration?: string;
+  wltpRange?: number;
+  drivingRange?: number;
+  cityRange?: number;
+  highwayRange?: number;
+  batteryVoltage?: number;
+  acChargingPower?: number;
+  dcChargingPower?: number;
+  acChargingTime?: number;
+  dcChargingTime?: number;
+  chargingPort?: string;
+  chargingTime10To80?: number;
+  energyConsumption?: number;
+  regenerativeBraking?: boolean;
+  onboardCharger?: string;
+  vehicleToLoad?: boolean;
+  vehicleToGrid?: boolean;
+  heatPump?: boolean;
+}
+
 export interface ISpecification extends Document {
   variantId: string | any; // Mongoose ObjectId
   performance?: IPerformance;
@@ -48,6 +72,7 @@ export interface ISpecification extends Document {
   weight?: IWeight;
   fuel?: IFuel;
   safety?: ISafety;
+  electric?: IElectricSpecification;
   customAttributes?: Record<string, any>;
   status: 'active' | 'inactive';
   createdAt: Date;
@@ -62,6 +87,7 @@ export interface ISpecificationCreate {
   weight?: IWeight;
   fuel?: IFuel;
   safety?: ISafety;
+  electric?: IElectricSpecification;
   customAttributes?: Record<string, any>;
   status?: 'active' | 'inactive';
 }
@@ -73,6 +99,7 @@ export interface ISpecificationUpdate {
   weight?: IWeight;
   fuel?: IFuel;
   safety?: ISafety;
+  electric?: IElectricSpecification;
   customAttributes?: Record<string, any>;
   status?: 'active' | 'inactive';
 }

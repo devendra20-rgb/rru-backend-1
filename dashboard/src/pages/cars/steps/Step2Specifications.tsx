@@ -22,6 +22,7 @@ import {
 } from '@mui/material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getVariantSpecifications, createVariantSpecification, updateSpecification } from '../../../api/specifications.api';
+import { getVariant } from '../../../api/variants.api';
 import type { CustomAttribute } from '../../../api/custom-attributes.api';
 import { getCustomAttributes } from '../../../api/custom-attributes.api';
 
@@ -60,6 +61,29 @@ const specSchema = z.object({
     parkingSensors: z.string().optional().nullable(),
     camera: z.string().optional().nullable(),
   }).optional(),
+  electric: z.object({
+    batteryCapacity: z.number().optional().nullable(),
+    usableBatteryCapacity: z.number().optional().nullable(),
+    motorType: z.string().optional().nullable(),
+    motorConfiguration: z.string().optional().nullable(),
+    wltpRange: z.number().optional().nullable(),
+    drivingRange: z.number().optional().nullable(),
+    cityRange: z.number().optional().nullable(),
+    highwayRange: z.number().optional().nullable(),
+    batteryVoltage: z.number().optional().nullable(),
+    acChargingPower: z.number().optional().nullable(),
+    dcChargingPower: z.number().optional().nullable(),
+    acChargingTime: z.number().optional().nullable(),
+    dcChargingTime: z.number().optional().nullable(),
+    chargingPort: z.string().optional().nullable(),
+    chargingTime10To80: z.number().optional().nullable(),
+    energyConsumption: z.number().optional().nullable(),
+    regenerativeBraking: z.boolean().optional(),
+    onboardCharger: z.string().optional().nullable(),
+    vehicleToLoad: z.boolean().optional(),
+    vehicleToGrid: z.boolean().optional(),
+    heatPump: z.boolean().optional(),
+  }).optional(),
   customAttributes: z.record(z.string(), z.any()).optional(),
 });
 
@@ -88,9 +112,27 @@ const Step2Specifications: React.FC<Step2Props> = ({ variantId, onNext, onBack }
       capacity: {},
       weight: {},
       fuel: {},
-      safety: { abs: false, tractionControl: false, stabilityControl: false, adas: false }
+      safety: { abs: false, tractionControl: false, stabilityControl: false, adas: false },
+      electric: {
+        regenerativeBraking: false,
+        vehicleToLoad: false,
+        vehicleToGrid: false,
+        heatPump: false,
+      }
     }
   });
+
+  const { data: variantData } = useQuery({
+    queryKey: ['variant', variantId],
+    queryFn: () => getVariant(variantId),
+    enabled: !!variantId,
+  });
+
+  const fuelType = variantData?.data?.fuelType;
+  const isEV = fuelType === 'electric';
+  const isPlugInHybrid = fuelType === 'plug_in_hybrid';
+  const isHybrid = fuelType === 'hybrid' || isPlugInHybrid;
+  const isElectricOrHybrid = isEV || isHybrid;
 
   const { data, isLoading, error: fetchError } = useQuery({
     queryKey: ['specifications', variantId],
@@ -126,6 +168,29 @@ const Step2Specifications: React.FC<Step2Props> = ({ variantId, onNext, onBack }
           adas: spec.safety?.adas || false,
           parkingSensors: spec.safety?.parkingSensors,
           camera: spec.safety?.camera,
+        },
+        electric: {
+          batteryCapacity: spec.electric?.batteryCapacity,
+          usableBatteryCapacity: spec.electric?.usableBatteryCapacity,
+          motorType: spec.electric?.motorType,
+          motorConfiguration: spec.electric?.motorConfiguration,
+          wltpRange: spec.electric?.wltpRange,
+          drivingRange: spec.electric?.drivingRange,
+          cityRange: spec.electric?.cityRange,
+          highwayRange: spec.electric?.highwayRange,
+          batteryVoltage: spec.electric?.batteryVoltage,
+          acChargingPower: spec.electric?.acChargingPower,
+          dcChargingPower: spec.electric?.dcChargingPower,
+          acChargingTime: spec.electric?.acChargingTime,
+          dcChargingTime: spec.electric?.dcChargingTime,
+          chargingPort: spec.electric?.chargingPort,
+          chargingTime10To80: spec.electric?.chargingTime10To80,
+          energyConsumption: spec.electric?.energyConsumption,
+          regenerativeBraking: spec.electric?.regenerativeBraking || false,
+          onboardCharger: spec.electric?.onboardCharger,
+          vehicleToLoad: spec.electric?.vehicleToLoad || false,
+          vehicleToGrid: spec.electric?.vehicleToGrid || false,
+          heatPump: spec.electric?.heatPump || false,
         },
         customAttributes: spec.customAttributes || {},
       });
@@ -185,6 +250,7 @@ const Step2Specifications: React.FC<Step2Props> = ({ variantId, onNext, onBack }
       
       <Stack spacing={4}>
         
+        {/* Performance Section */}
         <Box>
           <Typography variant="h6" gutterBottom>Performance</Typography>
           <Divider sx={{ mb: 2 }} />
@@ -224,6 +290,7 @@ const Step2Specifications: React.FC<Step2Props> = ({ variantId, onNext, onBack }
           </Box>
         </Box>
 
+        {/* Dimensions Section */}
         <Box>
           <Typography variant="h6" gutterBottom>Dimensions</Typography>
           <Divider sx={{ mb: 2 }} />
@@ -276,6 +343,7 @@ const Step2Specifications: React.FC<Step2Props> = ({ variantId, onNext, onBack }
           </Box>
         </Box>
 
+        {/* Capacities & Weights Section */}
         <Box>
           <Typography variant="h6" gutterBottom>Capacities & Weights</Typography>
           <Divider sx={{ mb: 2 }} />
@@ -289,15 +357,17 @@ const Step2Specifications: React.FC<Step2Props> = ({ variantId, onNext, onBack }
                 )}
               />
             </Box>
-            <Box>
-              <Controller
-                name="capacity.fuelTankLitres"
-                control={control}
-                render={({ field }) => (
-                  <TextField {...field} label="Fuel Tank (L)" type="number" fullWidth value={field.value || ''} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)} />
-                )}
-              />
-            </Box>
+            {!isEV && (
+              <Box>
+                <Controller
+                  name="capacity.fuelTankLitres"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField {...field} label="Fuel Tank (L)" type="number" fullWidth value={field.value || ''} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)} />
+                  )}
+                />
+              </Box>
+            )}
             <Box>
               <Controller
                 name="weight.kerbWeightKg"
@@ -319,84 +389,450 @@ const Step2Specifications: React.FC<Step2Props> = ({ variantId, onNext, onBack }
           </Box>
         </Box>
 
-        <Box>
-          <Typography variant="h6" gutterBottom>Fuel Economy</Typography>
-          <Divider sx={{ mb: 2 }} />
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
-            <Box>
-              <Controller
-                name="fuel.fuelEconomyCity"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    label="City Economy"
-                    type="number"
-                    fullWidth
-                    value={field.value ?? ''}
-                    onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
-                  />
-                )}
-              />
-            </Box>
-            <Box>
-              <Controller
-                name="fuel.fuelEconomyHighway"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    label="Highway Economy"
-                    type="number"
-                    fullWidth
-                    value={field.value ?? ''}
-                    onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
-                  />
-                )}
-              />
-            </Box>
-            <Box>
-              <Controller
-                name="fuel.fuelEconomyCombined"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    label="Combined Economy"
-                    type="number"
-                    fullWidth
-                    value={field.value ?? ''}
-                    onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
-                  />
-                )}
-              />
-            </Box>
-            <Box>
-              <Controller
-                name="fuel.economyUnit"
-                control={control}
-                render={({ field }) => (
-                  <FormControl fullWidth>
-                    <InputLabel>Economy Unit</InputLabel>
-                    <Select
+        {/* Fuel Economy Section (Hide for pure EV) */}
+        {!isEV && (
+          <Box>
+            <Typography variant="h6" gutterBottom>Fuel Economy</Typography>
+            <Divider sx={{ mb: 2 }} />
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+              <Box>
+                <Controller
+                  name="fuel.fuelEconomyCity"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
                       {...field}
-                      label="Economy Unit"
-                      value={field.value || ''}
-                      onChange={(e) => field.onChange(e.target.value || null)}
-                    >
-                      <MenuItem value="">Not set</MenuItem>
-                      <MenuItem value="km/l">km/l</MenuItem>
-                      <MenuItem value="l/100km">l/100km</MenuItem>
-                      <MenuItem value="mpg">mpg</MenuItem>
-                      <MenuItem value="kWh/100km">kWh/100km</MenuItem>
-                    </Select>
-                  </FormControl>
-                )}
-              />
+                      label="City Economy"
+                      type="number"
+                      fullWidth
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
+                    />
+                  )}
+                />
+              </Box>
+              <Box>
+                <Controller
+                  name="fuel.fuelEconomyHighway"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="Highway Economy"
+                      type="number"
+                      fullWidth
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
+                    />
+                  )}
+                />
+              </Box>
+              <Box>
+                <Controller
+                  name="fuel.fuelEconomyCombined"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="Combined Economy"
+                      type="number"
+                      fullWidth
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
+                    />
+                  )}
+                />
+              </Box>
+              <Box>
+                <Controller
+                  name="fuel.economyUnit"
+                  control={control}
+                  render={({ field }) => (
+                    <FormControl fullWidth>
+                      <InputLabel>Economy Unit</InputLabel>
+                      <Select
+                        {...field}
+                        label="Economy Unit"
+                        value={field.value || ''}
+                        onChange={(e) => field.onChange(e.target.value || null)}
+                      >
+                        <MenuItem value="">Not set</MenuItem>
+                        <MenuItem value="km/l">km/l</MenuItem>
+                        <MenuItem value="l/100km">l/100km</MenuItem>
+                        <MenuItem value="mpg">mpg</MenuItem>
+                      </Select>
+                    </FormControl>
+                  )}
+                />
+              </Box>
             </Box>
           </Box>
-        </Box>
+        )}
 
+        {/* Battery & Range Section (EV and Hybrid/Plug-in Hybrid) */}
+        {isElectricOrHybrid && (
+          <Box>
+            <Typography variant="h6" gutterBottom>Battery & Range</Typography>
+            <Divider sx={{ mb: 2 }} />
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+              <Box>
+                <Controller
+                  name="electric.batteryCapacity"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="Battery Capacity (kWh)"
+                      type="number"
+                      fullWidth
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
+                    />
+                  )}
+                />
+              </Box>
+              <Box>
+                <Controller
+                  name="electric.usableBatteryCapacity"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="Usable Battery Capacity (kWh)"
+                      type="number"
+                      fullWidth
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
+                    />
+                  )}
+                />
+              </Box>
+              <Box>
+                <Controller
+                  name="electric.batteryVoltage"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="Battery Voltage (V)"
+                      type="number"
+                      fullWidth
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
+                    />
+                  )}
+                />
+              </Box>
+              <Box>
+                <Controller
+                  name="electric.wltpRange"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="WLTP Range (km)"
+                      type="number"
+                      fullWidth
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
+                    />
+                  )}
+                />
+              </Box>
+              <Box>
+                <Controller
+                  name="electric.drivingRange"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="Driving Range (km)"
+                      type="number"
+                      fullWidth
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
+                    />
+                  )}
+                />
+              </Box>
+              <Box>
+                <Controller
+                  name="electric.cityRange"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="City Range (km)"
+                      type="number"
+                      fullWidth
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
+                    />
+                  )}
+                />
+              </Box>
+              <Box>
+                <Controller
+                  name="electric.highwayRange"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="Highway Range (km)"
+                      type="number"
+                      fullWidth
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
+                    />
+                  )}
+                />
+              </Box>
+              <Box>
+                <Controller
+                  name="electric.energyConsumption"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="Energy Consumption (kWh/100 km)"
+                      type="number"
+                      fullWidth
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
+                    />
+                  )}
+                />
+              </Box>
+            </Box>
+          </Box>
+        )}
+
+        {/* Charging Section (EV and Plug-in Hybrid) */}
+        {(isEV || isPlugInHybrid) && (
+          <Box>
+            <Typography variant="h6" gutterBottom>Charging</Typography>
+            <Divider sx={{ mb: 2 }} />
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+              <Box>
+                <Controller
+                  name="electric.chargingPort"
+                  control={control}
+                  render={({ field }) => (
+                    <Autocomplete
+                      {...field}
+                      freeSolo
+                      options={['CCS2', 'Type 2', 'NACS', 'CHAdeMO', 'GB/T']}
+                      value={field.value || ''}
+                      onChange={(_, value) => field.onChange(value)}
+                      onInputChange={(_, value) => field.onChange(value)}
+                      renderInput={(params) => (
+                        <TextField {...params} label="Charging Port" placeholder="e.g. CCS2" fullWidth />
+                      )}
+                    />
+                  )}
+                />
+              </Box>
+              <Box>
+                <Controller
+                  name="electric.acChargingPower"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="AC Charging Power (kW)"
+                      type="number"
+                      fullWidth
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
+                    />
+                  )}
+                />
+              </Box>
+              <Box>
+                <Controller
+                  name="electric.dcChargingPower"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="DC Fast Charging Power (kW)"
+                      type="number"
+                      fullWidth
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
+                    />
+                  )}
+                />
+              </Box>
+              <Box>
+                <Controller
+                  name="electric.acChargingTime"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="AC Charging Time (minutes)"
+                      type="number"
+                      fullWidth
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
+                    />
+                  )}
+                />
+              </Box>
+              <Box>
+                <Controller
+                  name="electric.dcChargingTime"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="DC Fast Charging Time (minutes)"
+                      type="number"
+                      fullWidth
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
+                    />
+                  )}
+                />
+              </Box>
+              <Box>
+                <Controller
+                  name="electric.chargingTime10To80"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="10–80% Charging Time (minutes)"
+                      type="number"
+                      fullWidth
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
+                    />
+                  )}
+                />
+              </Box>
+              <Box>
+                <Controller
+                  name="electric.onboardCharger"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="On-board Charger"
+                      placeholder="e.g. 11 kW"
+                      fullWidth
+                      value={field.value || ''}
+                    />
+                  )}
+                />
+              </Box>
+            </Box>
+          </Box>
+        )}
+
+        {/* EV Powertrain & Technology Section */}
+        {isElectricOrHybrid && (
+          <Box>
+            <Typography variant="h6" gutterBottom>EV Motor & Technology</Typography>
+            <Divider sx={{ mb: 2 }} />
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+              <Box>
+                <Controller
+                  name="electric.motorType"
+                  control={control}
+                  render={({ field }) => (
+                    <Autocomplete
+                      {...field}
+                      freeSolo
+                      options={[
+                        'Permanent Magnet Synchronous Motor',
+                        'AC Induction Motor',
+                        'Separately Excited Synchronous Motor',
+                        'Switched Reluctance Motor',
+                      ]}
+                      value={field.value || ''}
+                      onChange={(_, value) => field.onChange(value)}
+                      onInputChange={(_, value) => field.onChange(value)}
+                      renderInput={(params) => (
+                        <TextField {...params} label="Motor Type" placeholder="e.g. Permanent Magnet Synchronous" fullWidth />
+                      )}
+                    />
+                  )}
+                />
+              </Box>
+              <Box>
+                <Controller
+                  name="electric.motorConfiguration"
+                  control={control}
+                  render={({ field }) => (
+                    <Autocomplete
+                      {...field}
+                      freeSolo
+                      options={['Single Motor', 'Dual Motor', 'Tri Motor', 'Quad Motor']}
+                      value={field.value || ''}
+                      onChange={(_, value) => field.onChange(value)}
+                      onInputChange={(_, value) => field.onChange(value)}
+                      renderInput={(params) => (
+                        <TextField {...params} label="Motor Configuration" placeholder="e.g. Dual Motor" fullWidth />
+                      )}
+                    />
+                  )}
+                />
+              </Box>
+              <Box>
+                <Controller
+                  name="electric.regenerativeBraking"
+                  control={control}
+                  render={({ field }) => (
+                    <FormControlLabel
+                      control={<Checkbox checked={!!field.value} onChange={(e) => field.onChange(e.target.checked)} />}
+                      label="Regenerative Braking"
+                    />
+                  )}
+                />
+              </Box>
+              <Box>
+                <Controller
+                  name="electric.vehicleToLoad"
+                  control={control}
+                  render={({ field }) => (
+                    <FormControlLabel
+                      control={<Checkbox checked={!!field.value} onChange={(e) => field.onChange(e.target.checked)} />}
+                      label="Vehicle-to-Load (V2L)"
+                    />
+                  )}
+                />
+              </Box>
+              <Box>
+                <Controller
+                  name="electric.vehicleToGrid"
+                  control={control}
+                  render={({ field }) => (
+                    <FormControlLabel
+                      control={<Checkbox checked={!!field.value} onChange={(e) => field.onChange(e.target.checked)} />}
+                      label="Vehicle-to-Grid (V2G)"
+                    />
+                  )}
+                />
+              </Box>
+              <Box>
+                <Controller
+                  name="electric.heatPump"
+                  control={control}
+                  render={({ field }) => (
+                    <FormControlLabel
+                      control={<Checkbox checked={!!field.value} onChange={(e) => field.onChange(e.target.checked)} />}
+                      label="Heat Pump"
+                    />
+                  )}
+                />
+              </Box>
+            </Box>
+          </Box>
+        )}
+
+        {/* Safety Section */}
         <Box>
           <Typography variant="h6" gutterBottom>Safety</Typography>
           <Divider sx={{ mb: 2 }} />

@@ -1019,8 +1019,8 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
                 }}
               >
                 <MenuItem value="">None</MenuItem>
-                {['manual', 'automatic', 'cvt', 'dct', 'amt'].map(v => (
-                  <MenuItem key={v} value={v}>{v.toUpperCase()}</MenuItem>
+                {['manual', 'automatic', 'cvt', 'dct', 'amt', 'single_speed_automatic', 'single_speed_reduction_gear'].map(v => (
+                  <MenuItem key={v} value={v}>{v.replace(/_/g, ' ').toUpperCase()}</MenuItem>
                 ))}
                 <MenuItem value="custom">CUSTOM</MenuItem>
               </Select>
@@ -1087,29 +1087,32 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
           )}
         </Box>
 
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <Controller
-            name="engine.displacementCc"
-            control={control}
-            render={({ field }) => (
-              <TextField {...field} label="Displacement (CC)" type="number" fullWidth onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)} value={field.value ?? ''} />
-            )}
-          />
-          <Controller
-            name="engine.cylinders"
-            control={control}
-            render={({ field }) => (
-              <TextField {...field} label="Cylinders" type="number" fullWidth onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)} value={field.value ?? ''} />
-            )}
-          />
-          <Controller
-            name="engine.aspiration"
-            control={control}
-            render={({ field }) => (
-              <TextField {...field} label="Aspiration" placeholder="e.g. Turbocharged" fullWidth value={field.value || ''} />
-            )}
-          />
-        </Box>
+        {/* Engine / Powertrain Fields */}
+        {watch('fuelType') !== 'electric' && (
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Controller
+              name="engine.displacementCc"
+              control={control}
+              render={({ field }) => (
+                <TextField {...field} label="Displacement (CC)" type="number" fullWidth onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)} value={field.value ?? ''} />
+              )}
+            />
+            <Controller
+              name="engine.cylinders"
+              control={control}
+              render={({ field }) => (
+                <TextField {...field} label="Cylinders" type="number" fullWidth onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)} value={field.value ?? ''} />
+              )}
+            />
+            <Controller
+              name="engine.aspiration"
+              control={control}
+              render={({ field }) => (
+                <TextField {...field} label="Aspiration" placeholder="e.g. Turbocharged" fullWidth value={field.value || ''} />
+              )}
+            />
+          </Box>
+        )}
 
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Controller

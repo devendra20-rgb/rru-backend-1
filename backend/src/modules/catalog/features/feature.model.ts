@@ -12,7 +12,6 @@ const featureSchema = new Schema<IFeature>(
     slug: {
       type: String,
       required: true,
-      unique: true,
       lowercase: true,
       trim: true,
     },
@@ -50,11 +49,19 @@ const featureSchema = new Schema<IFeature>(
   },
 );
 
+featureSchema.index({ name: 1 }, { unique: true, collation: { locale: 'en', strength: 2 } });
 featureSchema.index({ category: 1 });
 featureSchema.index({ status: 1 });
 featureSchema.index({ name: 'text', description: 'text' });
 
 export const Feature = model<IFeature>('Feature', featureSchema);
+
+// Safely attempt dropping legacy unique index on slug if present
+Feature.on('index', () => {
+  Feature.collection.dropIndex('slug_1').catch(() => {
+    // Ignore error if index slug_1 does not exist
+  });
+});
 
 // VariantFeature Schema
 const variantFeatureSchema = new Schema<IVariantFeature>(

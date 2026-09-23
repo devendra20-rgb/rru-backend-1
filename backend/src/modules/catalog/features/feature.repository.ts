@@ -28,7 +28,24 @@ class FeatureRepository {
   }
 
   async findByName(name: string): Promise<IFeature | null> {
-    return Feature.findOne({ name: { $regex: new RegExp(`^${name}$`, 'i') } });
+    const trimmed = name.trim();
+    const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return Feature.findOne({ name: { $regex: new RegExp(`^${escaped}$`, 'i') } });
+  }
+
+  async generateUniqueSlug(name: string, excludeId?: string): Promise<string> {
+    const baseSlug = generateSlug(name) || 'feature';
+    let candidate = baseSlug;
+    let counter = 1;
+
+    while (true) {
+      const existing = await Feature.findOne({ slug: candidate });
+      if (!existing || (excludeId && existing._id.toString() === excludeId)) {
+        return candidate;
+      }
+      candidate = `${baseSlug}-${counter}`;
+      counter++;
+    }
   }
 
   async count(filter: Record<string, any>): Promise<number> {

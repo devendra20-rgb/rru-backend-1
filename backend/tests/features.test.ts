@@ -49,6 +49,7 @@ describe('Features API', () => {
     });
 
     const variant = await Variant.create({
+      modelId: model._id,
       generationId: generation._id,
       variantCode: 'FEAT-VAR',
       name: 'Feat Variant',
@@ -56,7 +57,7 @@ describe('Features API', () => {
     });
 
     variantId = variant._id.toString();
-  });
+  }, 30000);
 
   afterAll(async () => {
     await VariantFeature.deleteMany({});
@@ -66,7 +67,7 @@ describe('Features API', () => {
     await Model.deleteMany({});
     await Brand.deleteMany({});
     await disconnectDB();
-  });
+  }, 30000);
 
   // Feature Tests
   describe('POST /api/v1/features', () => {
@@ -102,6 +103,79 @@ describe('Features API', () => {
 
       expect(response.status).toBe(409);
     });
+
+    it('CASE 1: Allow creating "Bluetooth Connectivity" when "Dual Bluetooth Device Pairing" exists', async () => {
+      // Create initial feature "Dual Bluetooth Device Pairing"
+      const res1 = await request(app)
+        .post('/api/v1/features')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          name: 'Dual Bluetooth Device Pairing',
+          category: 'infotainment',
+          description: 'Pair two devices simultaneously',
+        });
+      expect(res1.status).toBe(201);
+      expect(res1.body.data.slug).toBe('dual-bluetooth-device-pairing');
+
+      // Create new feature "Bluetooth Connectivity" which derives base slug "bluetooth-connectivity"
+      const res2 = await request(app)
+        .post('/api/v1/features')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          name: 'Bluetooth Connectivity',
+          category: 'infotainment',
+          description: 'Standard bluetooth connectivity',
+        });
+
+      expect(res2.status).toBe(201);
+      expect(res2.body.data.name).toBe('Bluetooth Connectivity');
+      expect(res2.body.data.slug).toBe('bluetooth-connectivity');
+    });
+
+    it('CASE 2: Reject exact name duplicate "Dual Bluetooth Device Pairing"', async () => {
+      const response = await request(app)
+        .post('/api/v1/features')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          name: 'Dual Bluetooth Device Pairing',
+          category: 'infotainment',
+        });
+
+      expect(response.status).toBe(409);
+    });
+
+    it('CASE 3 & 5: Allow "Bluetooth Device Connectivity" (distinct name)', async () => {
+      const response = await request(app)
+        .post('/api/v1/features')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          name: 'Bluetooth Device Connectivity',
+          category: 'infotainment',
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body.data.name).toBe('Bluetooth Device Connectivity');
+    });
+
+    it('CASE 4: Reject duplicate name "Bluetooth Connectivity" case-insensitively and with whitespace', async () => {
+      const resCase = await request(app)
+        .post('/api/v1/features')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          name: 'BLUETOOTH CONNECTIVITY',
+          category: 'infotainment',
+        });
+      expect(resCase.status).toBe(409);
+
+      const resSpace = await request(app)
+        .post('/api/v1/features')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          name: '   Bluetooth Connectivity   ',
+          category: 'infotainment',
+        });
+      expect(resSpace.status).toBe(409);
+    });
   });
 
   describe('GET /api/v1/features', () => {
@@ -126,7 +200,7 @@ describe('Features API', () => {
   });
 
   describe('PATCH /api/v1/features/:id', () => {
-    it('should update a feature', async () => {
+    it('should update a feature without changing name', async () => {
       const response = await request(app)
         .patch(`/api/v1/features/${featureId}`)
         .set('Authorization', `Bearer ${adminToken}`)
@@ -134,6 +208,15 @@ describe('Features API', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.data.description).toBe('Updated description');
+    });
+
+    it('should reject updating feature to an existing feature name', async () => {
+      const response = await request(app)
+        .patch(`/api/v1/features/${featureId}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ name: 'Bluetooth Connectivity' });
+
+      expect(response.status).toBe(409);
     });
   });
 

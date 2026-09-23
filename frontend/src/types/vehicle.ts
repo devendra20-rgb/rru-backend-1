@@ -83,11 +83,34 @@ export interface VehicleFeature {
 
 export interface VehicleSpecifications {
   performance?: { topSpeedKph?: number; acceleration0To100Kph?: number };
-  dimensions?: { lengthMm?: number; widthMm?: number; heightMm?: number; wheelbaseMm?: number };
+  dimensions?: { lengthMm?: number; widthMm?: number; heightMm?: number; wheelbaseMm?: number; groundClearanceMm?: number };
   capacity?: { bootSpaceLitres?: number; fuelTankLitres?: number };
-  weight?: { kerbWeightKg?: number };
+  weight?: { kerbWeightKg?: number; grossWeightKg?: number };
   fuel?: { fuelEconomyCombined?: number; fuelEconomyCity?: number; fuelEconomyHighway?: number; economyUnit?: string };
-  safety?: { airbags?: number; abs?: boolean; tractionControl?: boolean; stabilityControl?: boolean };
+  safety?: { airbags?: number; abs?: boolean; tractionControl?: boolean; stabilityControl?: boolean; adas?: boolean; parkingSensors?: string; camera?: string };
+  electric?: {
+    batteryCapacity?: number;
+    usableBatteryCapacity?: number;
+    motorType?: string;
+    motorConfiguration?: string;
+    wltpRange?: number;
+    drivingRange?: number;
+    cityRange?: number;
+    highwayRange?: number;
+    batteryVoltage?: number;
+    acChargingPower?: number;
+    dcChargingPower?: number;
+    acChargingTime?: number;
+    dcChargingTime?: number;
+    chargingPort?: string;
+    chargingTime10To80?: number;
+    energyConsumption?: number;
+    regenerativeBraking?: boolean;
+    onboardCharger?: string;
+    vehicleToLoad?: boolean;
+    vehicleToGrid?: boolean;
+    heatPump?: boolean;
+  };
 }
 
 export interface VehicleBadge {

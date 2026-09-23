@@ -13,9 +13,9 @@ import {
 
 export class FeatureService {
   async createFeature(data: CreateFeatureDTO) {
-    const slug = generateSlug(data.name);
+    const trimmedName = data.name.trim();
 
-    const existingFeature = await featureRepository.findBySlug(slug);
+    const existingFeature = await featureRepository.findByName(trimmedName);
     if (existingFeature) {
       throw new AppError(
         `Feature with this name already exists as "${existingFeature.name}"`,
@@ -23,7 +23,9 @@ export class FeatureService {
       );
     }
 
-    return featureRepository.create({ ...data, slug });
+    const slug = await featureRepository.generateUniqueSlug(trimmedName);
+
+    return featureRepository.create({ ...data, name: trimmedName, slug });
   }
 
   async getFeatures(query: FeatureQuery) {
@@ -50,18 +52,28 @@ export class FeatureService {
     const feature = await this.getFeatureById(id);
 
     let slug = feature.slug;
-    if (data.name && data.name !== feature.name) {
-      slug = generateSlug(data.name);
-      const existingSlug = await featureRepository.findBySlug(slug);
-      if (existingSlug && existingSlug._id.toString() !== id) {
-        throw new AppError(
-          `Feature with this name already exists as "${existingSlug.name}"`,
-          409,
-        );
+    let name = feature.name;
+
+    if (data.name !== undefined) {
+      const trimmedName = data.name.trim();
+      if (trimmedName.toLowerCase() !== feature.name.trim().toLowerCase()) {
+        const existingName = await featureRepository.findByName(trimmedName);
+        if (existingName && existingName._id.toString() !== id) {
+          throw new AppError(
+            `Feature with this name already exists as "${existingName.name}"`,
+            409,
+          );
+        }
+        name = trimmedName;
+        slug = await featureRepository.generateUniqueSlug(trimmedName, id);
       }
     }
 
-    const updatedFeature = await featureRepository.update(id, { ...data, slug });
+    const updatedFeature = await featureRepository.update(id, {
+      ...data,
+      ...(data.name !== undefined ? { name } : {}),
+      slug,
+    });
     if (!updatedFeature) {
       throw new AppError('Feature not found', 404);
     }

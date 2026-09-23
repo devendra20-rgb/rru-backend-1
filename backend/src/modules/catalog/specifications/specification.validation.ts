@@ -45,6 +45,30 @@ const safetySchema = z.object({
   camera: z.string().trim().optional(),
 });
 
+const electricSchema = z.object({
+  batteryCapacity: z.number().positive('Battery capacity must be positive').optional().nullable(),
+  usableBatteryCapacity: z.number().positive('Usable battery capacity must be positive').optional().nullable(),
+  motorType: z.string().trim().optional().nullable(),
+  motorConfiguration: z.string().trim().optional().nullable(),
+  wltpRange: z.number().positive('WLTP range must be positive').optional().nullable(),
+  drivingRange: z.number().positive('Driving range must be positive').optional().nullable(),
+  cityRange: z.number().positive('City range must be positive').optional().nullable(),
+  highwayRange: z.number().positive('Highway range must be positive').optional().nullable(),
+  batteryVoltage: z.number().positive('Battery voltage must be positive').optional().nullable(),
+  acChargingPower: z.number().positive('AC charging power must be positive').optional().nullable(),
+  dcChargingPower: z.number().positive('DC charging power must be positive').optional().nullable(),
+  acChargingTime: z.number().positive('AC charging time must be positive').optional().nullable(),
+  dcChargingTime: z.number().positive('DC charging time must be positive').optional().nullable(),
+  chargingPort: z.string().trim().optional().nullable(),
+  chargingTime10To80: z.number().positive('10-80% charging time must be positive').optional().nullable(),
+  energyConsumption: z.number().positive('Energy consumption must be positive').optional().nullable(),
+  regenerativeBraking: z.boolean().optional().nullable(),
+  onboardCharger: z.string().trim().optional().nullable(),
+  vehicleToLoad: z.boolean().optional().nullable(),
+  vehicleToGrid: z.boolean().optional().nullable(),
+  heatPump: z.boolean().optional().nullable(),
+});
+
 export const createSpecificationSchema = z.object({
   body: z.object({
     variantId: objectIdSchema,
@@ -54,6 +78,7 @@ export const createSpecificationSchema = z.object({
     weight: weightSchema.optional(),
     fuel: fuelSchema.optional(),
     safety: safetySchema.optional(),
+    electric: electricSchema.optional(),
     customAttributes: z.record(z.string(), z.any()).optional(),
     status: z.enum(['active', 'inactive']).optional(),
   }),
@@ -70,6 +95,7 @@ export const updateSpecificationSchema = z.object({
     weight: weightSchema.optional(),
     fuel: fuelSchema.optional(),
     safety: safetySchema.optional(),
+    electric: electricSchema.optional(),
     customAttributes: z.record(z.string(), z.any()).optional(),
     status: z.enum(['active', 'inactive']).optional(),
   }),

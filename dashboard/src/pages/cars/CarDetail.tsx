@@ -137,10 +137,17 @@ const CarDetail: React.FC = () => {
                 <Typography variant="body2" color="text.secondary">Drivetrain</Typography>
                 <Typography sx={{ textTransform: 'uppercase' }}>{variant.drivetrain || '-'}</Typography>
               </Box>
-              <Box>
-                <Typography variant="body2" color="text.secondary">Engine Capacity</Typography>
-                <Typography>{variant.engine?.displacementCc ? `${variant.engine.displacementCc} cc` : '-'}</Typography>
-              </Box>
+              {variant.fuelType !== 'electric' ? (
+                <Box>
+                  <Typography variant="body2" color="text.secondary">Engine Capacity</Typography>
+                  <Typography>{variant.engine?.displacementCc ? `${variant.engine.displacementCc} cc` : '-'}</Typography>
+                </Box>
+              ) : (
+                <Box>
+                  <Typography variant="body2" color="text.secondary">Motor Config</Typography>
+                  <Typography>{spec?.electric?.motorConfiguration || spec?.electric?.motorType || 'Electric Motor'}</Typography>
+                </Box>
+              )}
               <Box>
                 <Typography variant="body2" color="text.secondary">Power / Torque</Typography>
                 <Typography>{variant.engine?.powerHp ? `${variant.engine.powerHp} HP` : '-'} / {variant.engine?.torqueNm ? `${variant.engine.torqueNm} Nm` : '-'}</Typography>
@@ -168,7 +175,7 @@ const CarDetail: React.FC = () => {
               </Box>
 
               <Typography variant="subtitle2" gutterBottom>Safety</Typography>
-              <Box>
+              <Box sx={{ mb: 2 }}>
                 <Typography variant="body2" color="text.secondary">Airbags: <Box component="span" color="text.primary">{spec.safety?.airbags || '-'}</Box></Typography>
                 <Typography variant="body2" color="text.secondary">ABS: <Box component="span" color="text.primary">{spec.safety?.abs ? 'Yes' : 'No'}</Box></Typography>
                 <Typography variant="body2" color="text.secondary">Traction Control: <Box component="span" color="text.primary">{spec.safety?.tractionControl ? 'Yes' : 'No'}</Box></Typography>
@@ -178,12 +185,16 @@ const CarDetail: React.FC = () => {
                 <Typography variant="body2" color="text.secondary">Camera: <Box component="span" color="text.primary">{spec.safety?.camera || '-'}</Box></Typography>
               </Box>
 
-              <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>Fuel Economy</Typography>
-              <Box>
-                <Typography variant="body2" color="text.secondary">City: <Box component="span" color="text.primary">{spec.fuel?.fuelEconomyCity ?? '-'}</Box></Typography>
-                <Typography variant="body2" color="text.secondary">Highway: <Box component="span" color="text.primary">{spec.fuel?.fuelEconomyHighway ?? '-'}</Box></Typography>
-                <Typography variant="body2" color="text.secondary">Combined: <Box component="span" color="text.primary">{spec.fuel?.fuelEconomyCombined ?? '-'}{spec.fuel?.economyUnit ? ` ${spec.fuel.economyUnit}` : ''}</Box></Typography>
-              </Box>
+              {variant.fuelType !== 'electric' && (
+                <>
+                  <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>Fuel Economy</Typography>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">City: <Box component="span" color="text.primary">{spec.fuel?.fuelEconomyCity ?? '-'}</Box></Typography>
+                    <Typography variant="body2" color="text.secondary">Highway: <Box component="span" color="text.primary">{spec.fuel?.fuelEconomyHighway ?? '-'}</Box></Typography>
+                    <Typography variant="body2" color="text.secondary">Combined: <Box component="span" color="text.primary">{spec.fuel?.fuelEconomyCombined ?? '-'}{spec.fuel?.economyUnit ? ` ${spec.fuel.economyUnit}` : ''}</Box></Typography>
+                  </Box>
+                </>
+              )}
             </Box>
 
             <Box>
@@ -195,16 +206,47 @@ const CarDetail: React.FC = () => {
                 <Typography variant="body2" color="text.secondary">Wheelbase: <Box component="span" color="text.primary">{spec.dimensions?.wheelbaseMm ? `${spec.dimensions.wheelbaseMm} mm` : '-'}</Box></Typography>
                 <Typography variant="body2" color="text.secondary">Ground Clearance: <Box component="span" color="text.primary">{spec.dimensions?.groundClearanceMm ? `${spec.dimensions.groundClearanceMm} mm` : '-'}</Box></Typography>
               </Box>
+
+              {variant.fuelType === 'electric' && spec.electric && (
+                <>
+                  <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>Battery & Charging</Typography>
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="body2" color="text.secondary">Battery Capacity: <Box component="span" color="text.primary">{spec.electric.batteryCapacity ? `${spec.electric.batteryCapacity} kWh` : '-'}{spec.electric.usableBatteryCapacity ? ` (${spec.electric.usableBatteryCapacity} kWh usable)` : ''}</Box></Typography>
+                    <Typography variant="body2" color="text.secondary">WLTP Range: <Box component="span" color="text.primary">{spec.electric.wltpRange ? `${spec.electric.wltpRange} km` : '-'}</Box></Typography>
+                    <Typography variant="body2" color="text.secondary">Driving Range: <Box component="span" color="text.primary">{spec.electric.drivingRange ? `${spec.electric.drivingRange} km` : '-'}</Box></Typography>
+                    <Typography variant="body2" color="text.secondary">Port: <Box component="span" color="text.primary">{spec.electric.chargingPort || '-'}</Box></Typography>
+                    <Typography variant="body2" color="text.secondary">AC Charging: <Box component="span" color="text.primary">{spec.electric.acChargingPower ? `${spec.electric.acChargingPower} kW` : '-'}</Box></Typography>
+                    <Typography variant="body2" color="text.secondary">DC Fast Charging: <Box component="span" color="text.primary">{spec.electric.dcChargingPower ? `${spec.electric.dcChargingPower} kW` : '-'}</Box></Typography>
+                    <Typography variant="body2" color="text.secondary">10–80% Time: <Box component="span" color="text.primary">{spec.electric.chargingTime10To80 ? `${spec.electric.chargingTime10To80} min` : '-'}</Box></Typography>
+                  </Box>
+                </>
+              )}
             </Box>
 
             <Box>
               <Typography variant="subtitle2" gutterBottom>Capacities & Weight</Typography>
               <Box sx={{ mb: 2 }}>
                 <Typography variant="body2" color="text.secondary">Boot Space: <Box component="span" color="text.primary">{spec.capacity?.bootSpaceLitres ? `${spec.capacity.bootSpaceLitres} L` : '-'}</Box></Typography>
-                <Typography variant="body2" color="text.secondary">Fuel Tank: <Box component="span" color="text.primary">{spec.capacity?.fuelTankLitres ? `${spec.capacity.fuelTankLitres} L` : '-'}</Box></Typography>
+                {variant.fuelType !== 'electric' && (
+                  <Typography variant="body2" color="text.secondary">Fuel Tank: <Box component="span" color="text.primary">{spec.capacity?.fuelTankLitres ? `${spec.capacity.fuelTankLitres} L` : '-'}</Box></Typography>
+                )}
                 <Typography variant="body2" color="text.secondary">Kerb Weight: <Box component="span" color="text.primary">{spec.weight?.kerbWeightKg ? `${spec.weight.kerbWeightKg} kg` : '-'}</Box></Typography>
                 <Typography variant="body2" color="text.secondary">Gross Weight: <Box component="span" color="text.primary">{spec.weight?.grossWeightKg ? `${spec.weight.grossWeightKg} kg` : '-'}</Box></Typography>
               </Box>
+
+              {variant.fuelType === 'electric' && spec.electric && (
+                <>
+                  <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>EV Motor & Technology</Typography>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">Motor Type: <Box component="span" color="text.primary">{spec.electric.motorType || '-'}</Box></Typography>
+                    <Typography variant="body2" color="text.secondary">Motor Config: <Box component="span" color="text.primary">{spec.electric.motorConfiguration || '-'}</Box></Typography>
+                    <Typography variant="body2" color="text.secondary">Consumption: <Box component="span" color="text.primary">{spec.electric.energyConsumption ? `${spec.electric.energyConsumption} kWh/100 km` : '-'}</Box></Typography>
+                    <Typography variant="body2" color="text.secondary">Regen Braking: <Box component="span" color="text.primary">{spec.electric.regenerativeBraking ? 'Yes' : 'No'}</Box></Typography>
+                    <Typography variant="body2" color="text.secondary">V2L: <Box component="span" color="text.primary">{spec.electric.vehicleToLoad ? 'Yes' : 'No'}</Box></Typography>
+                    <Typography variant="body2" color="text.secondary">Heat Pump: <Box component="span" color="text.primary">{spec.electric.heatPump ? 'Yes' : 'No'}</Box></Typography>
+                  </Box>
+                </>
+              )}
             </Box>
           </Box>
         ) : (
