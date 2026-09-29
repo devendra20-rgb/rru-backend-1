@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ChevronRight } from 'lucide-react';
@@ -9,7 +9,8 @@ import { vehiclesService } from '@/services/vehicles.service';
 import type { Brand } from '@/types/brand';
 import type { Vehicle } from '@/types/vehicle';
 import { getBrandLogoUrl } from '@/lib/brandLogos';
-import VehicleCard from '@/components/ui/VehicleCard';
+import ModelCard from '@/components/ui/ModelCard';
+import { groupVehiclesByModel } from '@/lib/modelGroup';
 import styles from '@/app/brands/brands.module.css';
 
 export default function BrandDetailPage() {
@@ -19,6 +20,10 @@ export default function BrandDetailPage() {
   const [brand, setBrand] = useState<Brand | null>(null);
   const [brandVehicles, setBrandVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const modelGroups = useMemo(() => {
+    return groupVehiclesByModel(brandVehicles);
+  }, [brandVehicles]);
 
   useEffect(() => {
     if (!slug) return;
@@ -118,13 +123,13 @@ export default function BrandDetailPage() {
 
       {/* Models Grid */}
       <h2 style={{ fontSize: 'var(--font-size-2xl)', marginBottom: 20 }}>
-        {brand.name} Models ({brandVehicles.length})
+        {brand.name} Models ({modelGroups.length})
       </h2>
 
-      {brandVehicles.length > 0 ? (
+      {modelGroups.length > 0 ? (
         <div className={styles.modelsGrid}>
-          {brandVehicles.map((vehicle) => (
-            <VehicleCard key={vehicle._id} vehicle={vehicle} />
+          {modelGroups.map((mg) => (
+            <ModelCard key={mg.modelKey} modelGroup={mg} />
           ))}
         </div>
       ) : (

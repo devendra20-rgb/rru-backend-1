@@ -60,13 +60,13 @@ const GenerationForm: React.FC<GenerationFormProps> = ({ onSuccess, onCancel, in
   const [selectedBrandId, setSelectedBrandId] = useState<string>(initialData?.brandId || '');
 
   const { data: brandsData, isLoading: isLoadingBrands } = useQuery({
-    queryKey: ['brands', 'all'],
-    queryFn: () => getBrands({ limit: 1000 })
+    queryKey: ['brands', 'all', 'active'],
+    queryFn: () => getBrands({ limit: 1000, status: 'active' })
   });
 
   const { data: modelsData, isLoading: isLoadingModels } = useQuery({
-    queryKey: ['models', 'all', selectedBrandId],
-    queryFn: () => getModels({ limit: 1000, brandId: selectedBrandId }),
+    queryKey: ['models', 'all', selectedBrandId, 'active'],
+    queryFn: () => getModels({ limit: 1000, brandId: selectedBrandId, status: 'active' }),
     enabled: !!selectedBrandId
   });
 

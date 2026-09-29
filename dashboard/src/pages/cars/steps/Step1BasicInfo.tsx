@@ -161,19 +161,18 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
 
   // Fetch dropdown options
   const { data: brandsData } = useQuery({
-    queryKey: ['brands', 'all'],
-    queryFn: () => getBrands({ limit: 1000 })
+    queryKey: ['brands', 'all', 'active'],
+    queryFn: () => getBrands({ limit: 1000, status: 'active' })
   });
-
   const { data: modelsData } = useQuery({
-    queryKey: ['models', 'all', selectedBrand],
-    queryFn: () => getModels({ limit: 1000, brandId: selectedBrand || undefined }),
+    queryKey: ['models', 'all', selectedBrand, 'active'],
+    queryFn: () => getModels({ limit: 1000, brandId: selectedBrand || undefined, status: 'active' }),
     enabled: !!selectedBrand
   });
 
   const { data: generationsData } = useQuery({
-    queryKey: ['generations', 'all', selectedModel],
-    queryFn: () => getGenerations({ limit: 1000, modelId: selectedModel || undefined }),
+    queryKey: ['generations', 'all', selectedModel, 'active'],
+    queryFn: () => getGenerations({ limit: 1000, modelId: selectedModel || undefined, status: 'active' }),
     enabled: !!selectedModel
   });
 
@@ -401,7 +400,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
             setAutoPopulateSeverity('info');
             setAutoPopulateMessage(
               result.message ||
-                `Found ${candidates.length} existing vehicles for this selection. Choose which one to populate from.`,
+              `Found ${candidates.length} existing vehicles for this selection. Choose which one to populate from.`,
             );
           } else {
             const chosen = candidates[0];
@@ -421,7 +420,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
           setAutoPopulateSeverity('success');
           setAutoPopulateMessage(
             result.message ||
-              `Loaded template from "${result.sourceVariant._sourceName || 'existing vehicle'}". All steps will be pre-filled; you can still edit everything.`,
+            `Loaded template from "${result.sourceVariant._sourceName || 'existing vehicle'}". All steps will be pre-filled; you can still edit everything.`,
           );
         } else {
           setSourceVariantId(null);
@@ -429,7 +428,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
           setAutoPopulateSeverity('warning');
           setAutoPopulateMessage(
             result?.message ||
-              'No existing vehicle found for this Brand, Model, and Generation. Continue with manual entry.',
+            'No existing vehicle found for this Brand, Model, and Generation. Continue with manual entry.',
           );
         }
       } catch (err: any) {
@@ -439,7 +438,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
         setAutoPopulateSeverity('warning');
         setAutoPopulateMessage(
           err?.response?.data?.message ||
-            'Could not look up an existing vehicle. You can continue entering data manually.',
+          'Could not look up an existing vehicle. You can continue entering data manually.',
         );
       } finally {
         if (!cancelled) setIsLookingUpTemplate(false);
@@ -514,7 +513,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
 
   const onSubmit = async (formData: any) => {
     const submitData = { ...formData };
-    
+
     // Process & validate slug
     let candidateSlug = (submitData.slug || '').trim();
     if (!candidateSlug) {
@@ -575,7 +574,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
     } else {
       delete submitData.drivetrain;
     }
-    
+
     if (submitData.engine) {
       if (submitData.engine.aspiration === '') delete submitData.engine.aspiration;
     }
@@ -718,11 +717,11 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
                       lastTemplateKeyRef.current = '';
                     }}
                     renderInput={(params) => (
-                      <TextField 
-                        {...params} 
-                        label="Brand *" 
-                        error={!!errors.brandId} 
-                        helperText={errors.brandId?.message} 
+                      <TextField
+                        {...params}
+                        label="Brand *"
+                        error={!!errors.brandId}
+                        helperText={errors.brandId?.message}
                       />
                     )}
                     sx={{ '& .MuiAutocomplete-listbox': { maxHeight: 250 } }}
@@ -747,9 +746,9 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
                 return (
                   <Autocomplete
                     options={modelsData?.data || []}
-                    getOptionLabel={(option: any) => option.name ? `${option.name}${option.status === 'draft' ? ' (Draft)' : ''}` : ''}
+                    getOptionLabel={(option: any) => option.name || ''}
                     value={selectedOption}
-                    noOptionsText={selectedBrand ? "No models for this brand yet. Click + to add one." : "Select a brand first"}
+                    noOptionsText={selectedBrand ? "No active models for this brand yet. Click + to add one." : "Select a brand first"}
                     onChange={(_, newValue) => {
                       field.onChange(newValue ? newValue._id : '');
                       setValue('generationId', '');
@@ -757,11 +756,11 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
                     }}
                     disabled={!selectedBrand}
                     renderInput={(params) => (
-                      <TextField 
-                        {...params} 
-                        label="Model *" 
-                        error={!!errors.modelId} 
-                        helperText={errors.modelId?.message} 
+                      <TextField
+                        {...params}
+                        label="Model *"
+                        error={!!errors.modelId}
+                        helperText={errors.modelId?.message}
                       />
                     )}
                     sx={{ '& .MuiAutocomplete-listbox': { maxHeight: 250 } }}
@@ -800,24 +799,24 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
                     return (
                       <Autocomplete
                         options={generations}
-                        getOptionLabel={(option: any) => option.name ? `${option.name}${option.status === 'draft' ? ' (Draft)' : ''}` : ''}
+                        getOptionLabel={(option: any) => option.name || ''}
                         value={selectedOption}
-                        noOptionsText="No generations for this model (optional). Click + to add one."
+                        noOptionsText="No active generations for this model (optional). Click + to add one."
                         onChange={(_, newValue) => {
                           field.onChange(newValue ? newValue._id : '');
                           lastTemplateKeyRef.current = '';
                         }}
                         renderInput={(params) => (
-                          <TextField 
-                            {...params} 
-                            label="Generation (Optional)" 
-                            error={!!errors.generationId} 
+                          <TextField
+                            {...params}
+                            label="Generation (Optional)"
+                            error={!!errors.generationId}
                             helperText={
-                              errors.generationId?.message || 
+                              errors.generationId?.message ||
                               (generations.length === 0
                                 ? 'No generations for this model — leave blank or click +'
                                 : 'Model generation/year range (optional)')
-                            } 
+                            }
                           />
                         )}
                         sx={{ '& .MuiAutocomplete-listbox': { maxHeight: 250 } }}
@@ -1159,10 +1158,10 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
       </Stack>
 
       <QuickAddModal open={brandModalOpen} onClose={() => setBrandModalOpen(false)} title="Quick Add Brand">
-        <BrandForm 
+        <BrandForm
           onSuccess={(id, brand) => {
             if (brand) {
-              queryClient.setQueryData(['brands', 'all'], (old: any) => {
+              queryClient.setQueryData(['brands', 'all', 'active'], (old: any) => {
                 if (!old?.data) return old;
                 return { ...old, data: [...old.data, brand] };
               });
@@ -1183,7 +1182,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
           initialData={{ brandId: selectedBrand || undefined }}
           onSuccess={(id, model) => {
             if (model) {
-              queryClient.setQueryData(['models', 'all', selectedBrand], (old: any) => {
+              queryClient.setQueryData(['models', 'all', selectedBrand, 'active'], (old: any) => {
                 if (!old?.data) return old;
                 return { ...old, data: [...old.data, model] };
               });
@@ -1203,7 +1202,7 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
           initialData={{ brandId: selectedBrand || undefined, modelId: selectedModel || undefined }}
           onSuccess={(id, gen) => {
             if (gen) {
-              queryClient.setQueryData(['generations', 'all', selectedModel], (old: any) => {
+              queryClient.setQueryData(['generations', 'all', selectedModel, 'active'], (old: any) => {
                 if (!old?.data) return old;
                 return { ...old, data: [...old.data, gen] };
               });

@@ -52,35 +52,49 @@
   border-bottom: 1px solid var(--line);
 }
 
-.modeTabs {
-  display: flex;
-  gap: 8px;
-}
-
-.modeBtn {
+.galleryInfo {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 14px;
-  border-radius: var(--radius-full);
-  border: 1px solid var(--line);
-  background: var(--white);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
-  color: var(--text);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.modeBtn:hover {
-  border-color: var(--petrol);
   color: var(--petrol);
 }
 
-.modeBtnActive {
-  background: var(--petrol);
-  color: var(--white);
-  border-color: var(--petrol);
+.galleryNavBtnPrev,
+.galleryNavBtnNext {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--line);
+  color: var(--petrol);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  backdrop-filter: blur(4px);
+  z-index: 2;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.galleryNavBtnPrev:hover,
+.galleryNavBtnNext:hover {
+  background: var(--white);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  transform: translateY(-50%) scale(1.06);
+}
+
+.galleryNavBtnPrev {
+  left: 14px;
+}
+
+.galleryNavBtnNext {
+  right: 14px;
 }
 
 .galleryBadgesHeader {
@@ -265,7 +279,96 @@
 .infoVariant {
   font-size: var(--font-size-md);
   color: var(--muted);
-  margin-bottom: 16px;
+  margin-bottom: 12px;
+}
+
+/* Variant Switcher Box */
+.variantSwitcherBox {
+  background: var(--mist);
+  border: 1px solid rgba(13, 59, 73, 0.12);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  margin-bottom: 20px;
+}
+
+.variantSwitcherHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.variantSwitcherTitle {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--petrol);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.variantSwitcherHint {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.variantSwitcherList {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+
+.variantBtn {
+  flex: 1;
+  min-width: 120px;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  background: var(--white);
+  border: 1.5px solid var(--line);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.variantBtn:hover {
+  border-color: var(--petrol);
+  background: rgba(13, 59, 73, 0.02);
+}
+
+.variantBtnActive {
+  border-color: var(--petrol);
+  background: var(--petrol);
+  color: var(--white);
+  box-shadow: 0 2px 8px rgba(13, 59, 73, 0.2);
+}
+
+.variantBtnName {
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.variantBtnActive .variantBtnName {
+  color: var(--white);
+}
+
+.variantBtnPrice {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--amber-dark);
+}
+
+.variantBtnActive .variantBtnPrice {
+  color: #ffda85;
 }
 
 /* Key specs strip */
@@ -399,44 +502,53 @@
   font-weight: 700;
 }
 
-/* --- Tabbed Content --- */
+/* --- Tabbed Content Navigation --- */
 .tabsSection {
   margin-top: 10px;
 }
 
-.vdpTabs {
+.tabNav {
   display: flex;
-  gap: 0;
-  border-bottom: 1px solid var(--line);
+  gap: 8px;
+  background: var(--mist);
+  padding: 6px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--line);
+  margin-top: 15px;
+  margin-bottom: 24px;
   overflow-x: auto;
 }
 
-.vdpTab {
-  padding: 14px 24px;
+.tabBtn {
+  padding: 10px 20px;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--muted);
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  border-bottom: 2px solid transparent;
-  transition: all var(--transition-fast);
-  background: none;
+  transition: all 0.2s ease;
   white-space: nowrap;
-  border-top: none;
-  border-left: none;
-  border-right: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.vdpTab:hover {
-  color: var(--petrol);
+.tabBtn:hover {
+  color: var(--deep);
+  background: rgba(255, 255, 255, 0.6);
 }
 
-.vdpTabActive {
+.tabBtnActive {
   color: var(--petrol);
-  border-bottom-color: var(--petrol);
+  background: var(--white);
+  box-shadow: 0 2px 8px rgba(13, 59, 73, 0.12);
+  font-weight: 800;
 }
 
 .tabContent {
-  padding: 28px 0;
+  padding: 10px 0 28px;
 }
 
 /* --- Overview Tab --- */
@@ -942,6 +1054,10 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
+  .specsTable {
+    grid-template-columns: 1fr;
+  }
+
   .featuresGrid {
     grid-template-columns: 1fr;
   }
@@ -974,4 +1090,71 @@
   .similarGrid {
     grid-template-columns: 1fr;
   }
+}
+
+/* --- Technical Specifications Showcase --- */
+.specsTable {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  margin-top: 10px;
+}
+
+.specsGroup {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+}
+
+.specsGroupHeader {
+  background: var(--mist);
+  padding: 14px 18px;
+  font-size: var(--font-size-sm);
+  font-weight: 800;
+  color: var(--petrol);
+  border-bottom: 1px solid var(--line);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.specsRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 18px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  font-size: var(--font-size-sm);
+  transition: background 0.15s ease;
+}
+
+.specsRow:last-child {
+  border-bottom: none;
+}
+
+.specsRow:nth-child(even) {
+  background: #fcfdfe;
+}
+
+.specsRow:hover {
+  background: rgba(13, 59, 73, 0.03);
+}
+
+.specsRow span:first-child {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.specsRow span:last-child {
+  color: var(--deep);
+  font-weight: 800;
+  font-size: 13px;
+  text-align: right;
 }

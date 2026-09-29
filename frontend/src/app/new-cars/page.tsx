@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ChevronRight, SlidersHorizontal, Search } from 'lucide-react';
+import { ChevronRight, SlidersHorizontal, Search, LayoutGrid, List } from 'lucide-react';
 import { vehiclesService } from '@/services/vehicles.service';
 import { brandsService } from '@/services/brands.service';
 import type { Vehicle } from '@/types/vehicle';
@@ -14,6 +14,8 @@ import {
   transmissionMatchesFilter,
 } from '@/lib/vehicleNormalize';
 import VehicleCard from '@/components/ui/VehicleCard';
+import ModelCard from '@/components/ui/ModelCard';
+import { groupVehiclesByModel } from '@/lib/modelGroup';
 import styles from './newcars.module.css';
 
 type SortOption = 'popular' | 'price-low' | 'price-high' | 'cost-low' | 'newest';
@@ -49,6 +51,7 @@ function NewCarsContent() {
   const [maxPrice, setMaxPrice] = useState<string>('');
   const [sortBy, setSortBy] = useState<SortOption>('popular');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [viewMode, setViewMode] = useState<'model' | 'variant'>('model');
 
   useEffect(() => {
     let cancelled = false;
@@ -222,8 +225,11 @@ function NewCarsContent() {
     selectedSeats,
     minPrice,
     maxPrice,
-    sortBy,
   ]);
+
+  const modelGroups = useMemo(() => {
+    return groupVehiclesByModel(filteredVehicles);
+  }, [filteredVehicles]);
 
   const activeFilterTags: { label: string; clear: () => void }[] = [];
 
@@ -431,10 +437,30 @@ function NewCarsContent() {
 
           <div className={styles.resultsHeader}>
             <div className={styles.resultsCount}>
-              Showing <strong>{filteredVehicles.length}</strong> cars
+              Showing <strong>{modelGroups.length}</strong> models ({filteredVehicles.length} variants)
             </div>
-            <div className={styles.resultsSort}>
-              <span className={styles.resultsSortLabel}>Sort:</span>
+            <div className={styles.resultsControls}>
+              <div className={styles.viewModeToggle}>
+                <button
+                  type="button"
+                  className={`${styles.viewModeBtn} ${viewMode === 'model' ? styles.viewModeBtnActive : ''}`}
+                  onClick={() => setViewMode('model')}
+                  title="Group by Brand Model"
+                >
+                  <LayoutGrid size={13} />
+                  <span>Models</span>
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.viewModeBtn} ${viewMode === 'variant' ? styles.viewModeBtnActive : ''}`}
+                  onClick={() => setViewMode('variant')}
+                  title="Show all individual variants"
+                >
+                  <List size={13} />
+                  <span>All Variants</span>
+                </button>
+              </div>
+
               <select
                 className={styles.resultsSortSelect}
                 value={sortBy}
@@ -455,9 +481,15 @@ function NewCarsContent() {
                 Loading vehicles...
               </div>
             ) : filteredVehicles.length > 0 ? (
-              filteredVehicles.map((vehicle) => (
-                <VehicleCard key={vehicle._id} vehicle={vehicle} />
-              ))
+              viewMode === 'model' ? (
+                modelGroups.map((mg) => (
+                  <ModelCard key={mg.modelKey} modelGroup={mg} />
+                ))
+              ) : (
+                filteredVehicles.map((vehicle) => (
+                  <VehicleCard key={vehicle._id} vehicle={vehicle} />
+                ))
+              )
             ) : (
               <div className={styles.emptyState}>
                 <div className={styles.emptyStateIcon}>

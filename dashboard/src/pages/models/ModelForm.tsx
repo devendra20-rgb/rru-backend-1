@@ -57,8 +57,8 @@ const ModelForm: React.FC<ModelFormProps> = ({ onSuccess, onCancel, initialData 
 
   // Fetch Brands for dependent dropdown
   const { data: brandsData, isLoading: isLoadingBrands } = useQuery({
-    queryKey: ['brands', 'all'],
-    queryFn: () => getBrands({ limit: 1000 })
+    queryKey: ['brands', 'all', 'active'],
+    queryFn: () => getBrands({ limit: 1000, status: 'active' })
   });
 
   const {

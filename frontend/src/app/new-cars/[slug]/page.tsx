@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import {
   ChevronRight,
+  ChevronLeft,
   Car,
   Shield,
   Gauge,
@@ -15,9 +16,9 @@ import {
   XCircle,
   Palette,
   Sparkles,
-  RotateCw,
   Camera,
   Search,
+  Layers,
 } from 'lucide-react';
 import { vehiclesService } from '@/services/vehicles.service';
 import { costToOwnService } from '@/services/costToOwn.service';
@@ -31,11 +32,9 @@ import {
 import Badge from '@/components/ui/Badge';
 import { useCompare } from '@/hooks/useCompare';
 import VehicleCard from '@/components/ui/VehicleCard';
-import Car360Viewer from '@/components/ui/Car360Viewer';
 import styles from './vdp.module.css';
 
 type VdpTab = 'overview' | 'features' | 'cost-to-own' | 'specifications';
-type ViewMode = '360' | 'photos';
 type FeatureAvailFilter = 'all' | 'standard' | 'optional';
 
 function SpecRow({ label, value }: { label: string; value?: string | number | boolean | null }) {
@@ -57,11 +56,11 @@ export default function VehicleDetailPage() {
 
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [allVehicles, setAllVehicles] = useState<Vehicle[]>([]);
+  const [modelVariants, setModelVariants] = useState<Vehicle[]>([]);
   const [cost, setCost] = useState<CostToOwnBreakdown | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<VdpTab>('overview');
 
-  const [viewMode, setViewMode] = useState<ViewMode>('360');
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const [selectedColorId, setSelectedColorId] = useState<string | null>(null);
 
@@ -92,6 +91,23 @@ export default function VehicleDetailPage() {
               })
               .catch(console.error);
           }
+
+          // Fetch all vehicles to extract variants for this specific model
+          vehiclesService.getAllPages().then((list) => {
+            if (cancelled) return;
+            setAllVehicles(list);
+            const matches = list.filter(
+              (item) =>
+                (item.brandSlug === v.brandSlug || item.brand.toLowerCase() === v.brand.toLowerCase()) &&
+                (item.modelSlug === v.modelSlug || item.model.toLowerCase() === v.model.toLowerCase()),
+            );
+            if (matches.length > 0) {
+              matches.sort((a, b) => (a.priceFrom || 0) - (b.priceFrom || 0));
+              setModelVariants(matches);
+            } else {
+              setModelVariants([v]);
+            }
+          }).catch(console.error);
         } else {
           setVehicle(null);
         }
@@ -101,28 +117,36 @@ export default function VehicleDetailPage() {
         if (!cancelled) setLoading(false);
       });
 
-    vehiclesService.getAllPages().then((list) => {
-      if (!cancelled) setAllVehicles(list);
-    }).catch(console.error);
-
     return () => {
       cancelled = true;
     };
   }, [slug]);
 
-  const frames360 = useMemo(() => {
-    if (!vehicle?.mediaItems) return [];
-    let items = vehicle.mediaItems.filter((m) => m.angleTag === '360-frame');
-    if (selectedColorId) {
-      const colorSpecific = items.filter((m) => m.colorId === selectedColorId);
-      if (colorSpecific.length > 0) items = colorSpecific;
+  const handleSelectVariant = (selectedVariant: Vehicle) => {
+    setVehicle(selectedVariant);
+    setActivePhotoIndex(0);
+    setSelectedColorId(null);
+
+    if (selectedVariant.priceFrom) {
+      costToOwnService
+        .calculate({
+          vehiclePrice: selectedVariant.priceFrom,
+          annualMileageKm: 15000,
+          ownershipYears: 3,
+          fuelType: selectedVariant.fuelType?.toLowerCase().replace(/[\s-]+/g, '_') || 'petrol',
+        })
+        .then(setCost)
+        .catch(console.error);
+    } else {
+      setCost(null);
     }
-    return items.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)).map((m) => m.url);
-  }, [vehicle, selectedColorId]);
+
+    window.history.replaceState(null, '', `/new-cars/${selectedVariant.slug}`);
+  };
 
   const photoGallery = useMemo(() => {
     if (!vehicle) return [];
-    let items = (vehicle.mediaItems || []).filter((m) => m.angleTag !== '360-frame');
+    let items = (vehicle.mediaItems || []).slice();
     if (selectedColorId) {
       const colorFiltered = items.filter((m) => !m.colorId || m.colorId === selectedColorId);
       if (colorFiltered.length > 0) items = colorFiltered;
@@ -130,7 +154,11 @@ export default function VehicleDetailPage() {
     if (items.length === 0 && vehicle.imageUrl) {
       return [{ url: vehicle.imageUrl, altText: `${vehicle.brand} ${vehicle.model}` }];
     }
-    return items;
+    return items.sort((a, b) => {
+      if (a.isPrimary && !b.isPrimary) return -1;
+      if (!a.isPrimary && b.isPrimary) return 1;
+      return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+    });
   }, [vehicle, selectedColorId]);
 
   const similarVehicles = useMemo(() => {
@@ -305,23 +333,9 @@ export default function VehicleDetailPage() {
       <div className={styles.vdpTop}>
         <div className={styles.gallery}>
           <div className={styles.galleryHeader}>
-            <div className={styles.modeTabs}>
-              <button
-                type="button"
-                className={`${styles.modeBtn} ${viewMode === '360' ? styles.modeBtnActive : ''}`}
-                onClick={() => setViewMode('360')}
-              >
-                <RotateCw size={14} style={{ color: 'var(--amber)' }} />
-                <span>360° View</span>
-              </button>
-              <button
-                type="button"
-                className={`${styles.modeBtn} ${viewMode === 'photos' ? styles.modeBtnActive : ''}`}
-                onClick={() => setViewMode('photos')}
-              >
-                <Camera size={14} />
-                <span>Photos ({photoGallery.length})</span>
-              </button>
+            <div className={styles.galleryInfo}>
+              <Camera size={15} />
+              <span>Photos ({photoGallery.length})</span>
             </div>
             {vehicle.badges && vehicle.badges.length > 0 && (
               <div className={styles.galleryBadgesHeader}>
@@ -333,47 +347,64 @@ export default function VehicleDetailPage() {
           </div>
 
           <div className={styles.galleryMainBox}>
-            {viewMode === '360' ? (
-              <Car360Viewer
-                frames={frames360.length > 0 ? frames360 : [vehicle.imageUrl || '']}
-                vehicleName={`${vehicle.brand} ${vehicle.model}`}
-                height={400}
-              />
-            ) : (
-              <div className={styles.photoViewport}>
-                {currentPhoto ? (
-                  <img
-                    key={currentPhoto.url}
-                    src={currentPhoto.url}
-                    alt={currentPhoto.altText || `${vehicle.brand} ${vehicle.model}`}
-                    className={styles.mainPhotoImage}
-                  />
-                ) : (
-                  <div className={styles.galleryPlaceholder}>
-                    <Car size={48} />
-                    <span>VEHICLE IMAGE</span>
-                  </div>
-                )}
-                {currentPhoto?.angleTag && (
-                  <div className={styles.photoAnglePill}>
-                    {currentPhoto.angleTag.replace('-', ' ')}
-                  </div>
-                )}
-              </div>
-            )}
+            <div className={styles.photoViewport}>
+              {currentPhoto ? (
+                <img
+                  key={currentPhoto.url}
+                  src={currentPhoto.url}
+                  alt={currentPhoto.altText || `${vehicle.brand} ${vehicle.model}`}
+                  className={styles.mainPhotoImage}
+                />
+              ) : (
+                <div className={styles.galleryPlaceholder}>
+                  <Car size={48} />
+                  <span>VEHICLE IMAGE</span>
+                </div>
+              )}
+              {currentPhoto?.angleTag && (
+                <div className={styles.photoAnglePill}>
+                  {currentPhoto.angleTag.replace('-', ' ')}
+                </div>
+              )}
+              {photoGallery.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    className={styles.galleryNavBtnPrev}
+                    onClick={() =>
+                      setActivePhotoIndex((prev) =>
+                        prev === 0 ? photoGallery.length - 1 : prev - 1
+                      )
+                    }
+                    aria-label="Previous photo"
+                  >
+                    <ChevronLeft size={20} />
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.galleryNavBtnNext}
+                    onClick={() =>
+                      setActivePhotoIndex((prev) =>
+                        prev === photoGallery.length - 1 ? 0 : prev + 1
+                      )
+                    }
+                    aria-label="Next photo"
+                  >
+                    <ChevronRight size={20} />
+                  </button>
+                </>
+              )}
+            </div>
           </div>
 
           {photoGallery.length > 1 && (
             <div className={styles.thumbnailRow}>
-              {photoGallery.slice(0, 8).map((img, idx) => (
+              {photoGallery.slice(0, 10).map((img, idx) => (
                 <button
                   key={idx}
                   type="button"
-                  className={`${styles.thumbBtn} ${viewMode === 'photos' && activePhotoIndex === idx ? styles.thumbBtnActive : ''}`}
-                  onClick={() => {
-                    setViewMode('photos');
-                    setActivePhotoIndex(idx);
-                  }}
+                  className={`${styles.thumbBtn} ${activePhotoIndex === idx ? styles.thumbBtnActive : ''}`}
+                  onClick={() => setActivePhotoIndex(idx)}
                 >
                   <img src={img.url} alt={img.altText || `Thumb ${idx + 1}`} />
                 </button>
@@ -431,6 +462,38 @@ export default function VehicleDetailPage() {
             {vehicle.variant} · {vehicle.year}
             {vehicle.bodyType ? ` · ${vehicle.bodyType}` : ''}
           </div>
+
+          {/* Variant Switcher Section */}
+          {modelVariants.length > 1 && (
+            <div className={styles.variantSwitcherBox}>
+              <div className={styles.variantSwitcherHeader}>
+                <span className={styles.variantSwitcherTitle}>
+                  <Layers size={13} /> Select Trim / Variant ({modelVariants.length})
+                </span>
+                <span className={styles.variantSwitcherHint}>All specs update live below</span>
+              </div>
+              <div className={styles.variantSwitcherList}>
+                {modelVariants.map((v) => {
+                  const isActive = v.slug === vehicle.slug || v._id === vehicle._id;
+                  return (
+                    <button
+                      key={v._id || v.slug}
+                      type="button"
+                      className={`${styles.variantBtn} ${isActive ? styles.variantBtnActive : ''}`}
+                      onClick={() => handleSelectVariant(v)}
+                    >
+                      <span className={styles.variantBtnName}>{v.variant || 'Standard'}</span>
+                      <span className={styles.variantBtnPrice}>
+                        {v.priceFrom != null && v.priceFrom > 0
+                          ? formatPrice(v.priceFrom)
+                          : 'On Request'}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           {(vehicle.shortDescription || vehicle.description) && (
             <p className={styles.infoDesc}>
               {vehicle.shortDescription || vehicle.description}
