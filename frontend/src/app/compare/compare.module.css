@@ -651,7 +651,7 @@
 
 .galleryImageWrap {
   position: relative;
-  aspect-ratio: 16 / 10;
+  aspect-ratio: 16 / 9;
   background: linear-gradient(180deg, #eef2f4 0%, #e4eaee 100%);
   overflow: hidden;
   display: flex;
@@ -662,6 +662,7 @@
 .galleryPhoto {
   width: 100%;
   height: 100%;
+  aspect-ratio: 16 / 9;
   object-fit: contain;
   object-position: center;
   padding: 8px;
@@ -716,7 +717,8 @@
 .thumbBtn img {
   width: 100%;
   height: 48px;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center;
   display: block;
 }
 

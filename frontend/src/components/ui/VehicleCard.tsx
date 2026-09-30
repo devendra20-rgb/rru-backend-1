@@ -33,7 +33,7 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
           <img
             src={vehicle.imageUrl}
             alt={`${vehicle.brand} ${vehicle.model}`}
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            className={styles.vehicleCardImage}
           />
         ) : (
           <Car size={32} />

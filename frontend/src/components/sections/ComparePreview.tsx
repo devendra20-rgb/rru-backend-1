@@ -58,7 +58,7 @@ export default function ComparePreview() {
           {carA ? (
             <Link href={`/new-cars/${carA.slug}`} className={styles.compareCar} style={{ textDecoration: 'none', color: 'inherit', display: 'block', marginTop: '12px' }}>
               <div className={styles.compareImg}>
-                {carA.imageUrl ? <img src={resolveMediaUrl(carA.imageUrl)} alt={carA.model} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} /> : <Car size={32} />}
+                {carA.imageUrl ? <img src={resolveMediaUrl(carA.imageUrl)} alt={carA.model} style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center', borderRadius: 8 }} /> : <Car size={32} />}
               </div>
               <h3 className={styles.compareCarName}>{carA.brand} {carA.model}</h3>
               <span style={{ fontSize: 12, color: 'var(--muted)' }}>{carA.variant}</span>
@@ -85,7 +85,7 @@ export default function ComparePreview() {
           {carB ? (
             <Link href={`/new-cars/${carB.slug}`} className={styles.compareCar} style={{ textDecoration: 'none', color: 'inherit', display: 'block', marginTop: '12px' }}>
               <div className={styles.compareImg}>
-                {carB.imageUrl ? <img src={resolveMediaUrl(carB.imageUrl)} alt={carB.model} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} /> : <Car size={32} />}
+                {carB.imageUrl ? <img src={resolveMediaUrl(carB.imageUrl)} alt={carB.model} style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center', borderRadius: 8 }} /> : <Car size={32} />}
               </div>
               <h3 className={styles.compareCarName}>{carB.brand} {carB.model}</h3>
               <span style={{ fontSize: 12, color: 'var(--muted)' }}>{carB.variant}</span>
