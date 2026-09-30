@@ -208,7 +208,7 @@ function NewCarsContent() {
         );
         break;
       case 'newest':
-        result = [...result].sort((a, b) => b.year - a.year);
+        result = [...result].sort((a, b) => (b.year || 0) - (a.year || 0));
         break;
       default:
         break;
@@ -225,11 +225,32 @@ function NewCarsContent() {
     selectedSeats,
     minPrice,
     maxPrice,
+    sortBy,
   ]);
 
   const modelGroups = useMemo(() => {
-    return groupVehiclesByModel(filteredVehicles);
-  }, [filteredVehicles]);
+    const groups = groupVehiclesByModel(filteredVehicles);
+    switch (sortBy) {
+      case 'price-low':
+        return [...groups].sort(
+          (a, b) => (a.minPrice || Number.POSITIVE_INFINITY) - (b.minPrice || Number.POSITIVE_INFINITY),
+        );
+      case 'price-high':
+        return [...groups].sort(
+          (a, b) => (b.maxPrice || b.minPrice || 0) - (a.maxPrice || a.minPrice || 0),
+        );
+      case 'cost-low':
+        return [...groups].sort(
+          (a, b) =>
+            (a.minMonthlyCost || Number.POSITIVE_INFINITY) -
+            (b.minMonthlyCost || Number.POSITIVE_INFINITY),
+        );
+      case 'newest':
+        return [...groups].sort((a, b) => b.year - a.year);
+      default:
+        return groups;
+    }
+  }, [filteredVehicles, sortBy]);
 
   const activeFilterTags: { label: string; clear: () => void }[] = [];
 

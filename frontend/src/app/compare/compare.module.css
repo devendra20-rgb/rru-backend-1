@@ -652,7 +652,7 @@
 .galleryImageWrap {
   position: relative;
   aspect-ratio: 16 / 9;
-  background: linear-gradient(180deg, #eef2f4 0%, #e4eaee 100%);
+  background: #ffffff;
   overflow: hidden;
   display: flex;
   align-items: center;

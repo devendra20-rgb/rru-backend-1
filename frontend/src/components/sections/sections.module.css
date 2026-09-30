@@ -118,7 +118,7 @@
 
 .carImg {
   height: 175px;
-  background: linear-gradient(135deg, #dfe6e8, #c8d4d8);
+  background: #ffffff;
   display: grid;
   place-items: center;
   color: #728187;
@@ -232,6 +232,12 @@
   margin-top: 18px;
   padding-bottom: 0;
   overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.brandTabs::-webkit-scrollbar {
+  display: none;
 }
 
 .brandTab {
@@ -504,7 +510,7 @@
   width: 100%;
   aspect-ratio: 16 / 9;
   height: auto;
-  background: linear-gradient(135deg, #dfe6e8, #c8d4d8);
+  background: #ffffff;
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
