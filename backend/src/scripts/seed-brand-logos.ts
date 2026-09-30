@@ -5,7 +5,18 @@ import mongoose from 'mongoose';
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 async function seedLogos() {
-  const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/rideroundup';
+  const uri = process.env.MONGODB_URI;
+
+  if (!uri) {
+    console.error('❌ [SAFETY ABORT] MONGODB_URI environment variable is missing! Aborting.');
+    process.exit(1);
+  }
+
+  if (uri.includes('/rideroundup?') || uri.endsWith('/rideroundup')) {
+    console.error('❌ [SAFETY GUARD ABORT] MONGODB_URI points to production database "rideroundup". Operations against production are strictly prohibited!');
+    process.exit(1);
+  }
+
   await mongoose.connect(uri);
   const db = mongoose.connection.db;
   if (!db) {

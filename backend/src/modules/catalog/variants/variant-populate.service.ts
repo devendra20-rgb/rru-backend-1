@@ -8,8 +8,6 @@ import { variantMarketRepository } from '../variant-markets/variant-market.repos
 import { mediaService } from '../../media/media.service';
 import { mediaRepository } from '../../media/media.repository';
 import { Specification } from '../specifications/specification.model';
-import { VariantFeature } from '../features/feature.model';
-import { VariantColor } from '../colors/color.model';
 import { VariantMarket } from '../variant-markets/variant-market.model';
 
 const deepClone = <T>(value: T): T => JSON.parse(JSON.stringify(value));
@@ -34,10 +32,8 @@ const countFilled = (value: unknown): number => {
 };
 
 const scoreVariantCompleteness = async (variantId: string, variant: any): Promise<number> => {
-  const [spec, features, colors, markets, media] = await Promise.all([
+  const [spec, markets, media] = await Promise.all([
     Specification.findOne({ variantId }).lean(),
-    VariantFeature.find({ variantId, status: 'active' }).lean(),
-    VariantColor.find({ variantId, status: 'active' }).lean(),
     VariantMarket.find({ variantId, status: { $ne: 'inactive' } }).lean(),
     mediaRepository.findByEntity('variant', variantId),
   ]);
@@ -68,8 +64,12 @@ const scoreVariantCompleteness = async (variantId: string, variant: any): Promis
     });
   }
 
-  score += features.filter((f: any) => f.availability !== 'unavailable').length * 2;
-  score += colors.filter((c: any) => c.availability !== 'unavailable').length * 2;
+  const stdCount = variant.features?.standard?.length || 0;
+  const optCount = variant.features?.optional?.length || 0;
+  const colorCount = variant.colors?.length || 0;
+
+  score += (stdCount + optCount) * 2;
+  score += colorCount * 2;
   score += markets.filter((m: any) => m.pricing?.amount != null).length * 3;
   score += media.length * 5;
   if (variant.status === 'active') score += 10;

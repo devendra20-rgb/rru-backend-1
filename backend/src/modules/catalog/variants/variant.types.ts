@@ -15,6 +15,19 @@ export interface IEngine {
   torqueNm?: number;
 }
 
+export interface IVariantEmbeddedColor {
+  colorId: Types.ObjectId;
+  imageUrl?: string | null;
+  isBaseColor?: boolean;
+  extraPrice?: number;
+  status?: string;
+}
+
+export interface IVariantEmbeddedFeatures {
+  standard: Types.ObjectId[];
+  optional: Types.ObjectId[];
+}
+
 export interface IVariant extends Document {
   modelId: Types.ObjectId;
   generationId?: Types.ObjectId | null;
@@ -37,6 +50,9 @@ export interface IVariant extends Document {
   doors?: number;
 
   status: 'draft' | 'active' | 'inactive';
+
+  features?: IVariantEmbeddedFeatures;
+  colors?: IVariantEmbeddedColor[];
 
   createdAt: Date;
   updatedAt: Date;

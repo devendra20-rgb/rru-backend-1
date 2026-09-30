@@ -31,7 +31,19 @@ async function setPrimary(variantSlug, targetPattern) {
 }
 
 async function main() {
-  await mongoose.connect('mongodb+srv://pandeydevendra20devops_db_user:1Devendrapandey0@deliverly.4lvw8v3.mongodb.net/rideroundup?retryWrites=true&w=majority');
+  const uri = process.env.MONGODB_URI;
+
+  if (!uri) {
+    console.error('❌ [SAFETY ABORT] MONGODB_URI environment variable is missing! Aborting.');
+    process.exit(1);
+  }
+
+  if (uri.includes('/rideroundup?') || uri.endsWith('/rideroundup')) {
+    console.error('❌ [SAFETY GUARD ABORT] MONGODB_URI points to production database "rideroundup". Operations against production are strictly prohibited!');
+    process.exit(1);
+  }
+
+  await mongoose.connect(uri);
   
   console.log('--- Updating Primary Images for Audi Models ---');
   // Audi Q7 -> 3.png (front 3/4 hero)

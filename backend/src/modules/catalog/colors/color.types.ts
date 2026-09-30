@@ -60,11 +60,17 @@ export interface CreateVariantColorDTO {
   variantId: string;
   colorId: string;
   availability: VariantColorAvailability;
+  imageUrl?: string;
+  isBaseColor?: boolean;
+  extraPrice?: number;
   status?: VariantColorStatus;
 }
 
 export interface UpdateVariantColorDTO {
   availability?: VariantColorAvailability;
+  imageUrl?: string;
+  isBaseColor?: boolean;
+  extraPrice?: number;
   status?: VariantColorStatus;
 }
 

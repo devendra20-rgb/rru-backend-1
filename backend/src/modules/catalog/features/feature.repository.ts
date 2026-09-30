@@ -1,6 +1,7 @@
 import { Types } from 'mongoose';
 import { generateSlug } from '../../../utils/slug';
 import { Feature, VariantFeature } from './feature.model';
+import { Variant } from '../variants/variant.model';
 import {
   IFeature,
   IVariantFeature,
@@ -98,13 +99,50 @@ class FeatureRepository {
 
 class VariantFeatureRepository {
   async create(data: CreateVariantFeatureDTO): Promise<IVariantFeature> {
-    const variantFeature = new VariantFeature(data);
-    return variantFeature.save();
+    const variantIdObj = new Types.ObjectId(data.variantId);
+    const featureIdObj = new Types.ObjectId(data.featureId);
+
+    if (data.availability === 'standard') {
+      await Variant.findByIdAndUpdate(variantIdObj, {
+        $addToSet: { 'features.standard': featureIdObj },
+        $pull: { 'features.optional': featureIdObj },
+      });
+    } else if (data.availability === 'optional') {
+      await Variant.findByIdAndUpdate(variantIdObj, {
+        $addToSet: { 'features.optional': featureIdObj },
+        $pull: { 'features.standard': featureIdObj },
+      });
+    } else if (data.availability === 'unavailable') {
+      await Variant.findByIdAndUpdate(variantIdObj, {
+        $pull: {
+          'features.standard': featureIdObj,
+          'features.optional': featureIdObj,
+        },
+      });
+    }
+
+    const featureDoc = await Feature.findById(data.featureId).lean();
+
+    return {
+      _id: featureDoc?._id || featureIdObj,
+      variantId: variantIdObj,
+      featureId: featureDoc || (featureIdObj as any),
+      availability: data.availability,
+      status: 'active',
+    } as any;
   }
 
   async findById(id: string): Promise<IVariantFeature | null> {
     if (!Types.ObjectId.isValid(id)) return null;
-    return VariantFeature.findById(id).populate('featureId');
+    const featureDoc = await Feature.findById(id).lean();
+    if (!featureDoc) return null;
+    return {
+      _id: featureDoc._id,
+      variantId: new Types.ObjectId(),
+      featureId: featureDoc,
+      availability: 'standard',
+      status: 'active',
+    } as any;
   }
 
   async findByVariantAndFeature(
@@ -112,57 +150,140 @@ class VariantFeatureRepository {
     featureId: string,
   ): Promise<IVariantFeature | null> {
     if (!Types.ObjectId.isValid(variantId) || !Types.ObjectId.isValid(featureId)) return null;
-    return VariantFeature.findOne({ variantId, featureId }).populate('featureId');
+    const variant = await Variant.findById(variantId).lean();
+    if (!variant) return null;
+
+    const stdSet = new Set((variant.features?.standard || []).map((id: any) => id.toString()));
+    const optSet = new Set((variant.features?.optional || []).map((id: any) => id.toString()));
+    const fIdStr = featureId.toString();
+
+    let availability: 'standard' | 'optional' | 'unavailable' = 'unavailable';
+    if (stdSet.has(fIdStr)) availability = 'standard';
+    else if (optSet.has(fIdStr)) availability = 'optional';
+
+    const featureDoc = await Feature.findById(featureId).lean();
+    if (!featureDoc) return null;
+
+    return {
+      _id: featureDoc._id,
+      variantId: new Types.ObjectId(variantId),
+      featureId: featureDoc,
+      availability,
+      status: 'active',
+    } as any;
   }
 
   async count(filter: Record<string, any>): Promise<number> {
-    return VariantFeature.countDocuments(filter);
+    return Feature.countDocuments(filter);
   }
 
   async findAll(query: VariantFeatureQuery): Promise<{ data: IVariantFeature[]; total: number }> {
-    const { page = 1, limit = 10, variantId, featureId, availability, status } = query;
+    const { page = 1, limit = 10, variantId, availability } = query;
+    if (variantId) {
+      const allVariantFeatures = await this.findByVariantId(variantId);
+      const filtered = availability
+        ? allVariantFeatures.filter((f) => f.availability === availability)
+        : allVariantFeatures;
+      const skip = (page - 1) * limit;
+      return {
+        data: filtered.slice(skip, skip + limit),
+        total: filtered.length,
+      };
+    }
+
     const skip = (page - 1) * limit;
+    const variants = await Variant.find({
+      $or: [
+        { 'features.standard.0': { $exists: true } },
+        { 'features.optional.0': { $exists: true } },
+      ],
+    }).lean();
 
-    const filter: Record<string, any> = {};
+    let all: IVariantFeature[] = [];
+    for (const v of variants) {
+      const vfList = await this.findByVariantId(v._id.toString());
+      all.push(...vfList);
+    }
 
-    if (variantId) filter.variantId = variantId;
-    if (featureId) filter.featureId = featureId;
-    if (availability) filter.availability = availability;
-    if (status) filter.status = status;
+    if (query.availability) {
+      all = all.filter((f) => f.availability === query.availability);
+    }
 
-    const [data, total] = await Promise.all([
-      VariantFeature.find(filter)
-        .populate('featureId')
-        .skip(skip)
-        .limit(limit)
-        .sort({ createdAt: -1 }),
-      this.count(filter),
-    ]);
-
-    return { data, total };
+    return {
+      data: all.slice(skip, skip + limit),
+      total: all.length,
+    };
   }
 
   async findByVariantId(variantId: string): Promise<IVariantFeature[]> {
     if (!Types.ObjectId.isValid(variantId)) return [];
-    return VariantFeature.find({ variantId, status: 'active' })
-      .populate('featureId')
-      .sort({ createdAt: -1 });
+
+    const [variant, masterFeatures] = await Promise.all([
+      Variant.findById(variantId).lean(),
+      Feature.find({ status: 'active' }).lean(),
+    ]);
+
+    if (!variant) return [];
+
+    const stdSet = new Set((variant.features?.standard || []).map((id: any) => id.toString()));
+    const optSet = new Set((variant.features?.optional || []).map((id: any) => id.toString()));
+
+    const result: IVariantFeature[] = masterFeatures.map((fDoc: any) => {
+      const fIdStr = fDoc._id.toString();
+      let availability: 'standard' | 'optional' | 'unavailable' = 'unavailable';
+
+      if (stdSet.has(fIdStr)) {
+        availability = 'standard';
+      } else if (optSet.has(fIdStr)) {
+        availability = 'optional';
+      }
+
+      return {
+        _id: fDoc._id,
+        variantId: new Types.ObjectId(variantId),
+        featureId: fDoc,
+        availability,
+        status: 'active',
+      } as any;
+    });
+
+    return result;
   }
 
   async update(id: string, data: UpdateVariantFeatureDTO): Promise<IVariantFeature | null> {
     if (!Types.ObjectId.isValid(id)) return null;
-    return VariantFeature.findByIdAndUpdate(id, data, { new: true, runValidators: true }).populate(
-      'featureId',
-    );
+    const featureDoc = await Feature.findById(id).lean();
+    if (!featureDoc) return null;
+    return {
+      _id: featureDoc._id,
+      variantId: new Types.ObjectId(),
+      featureId: featureDoc,
+      availability: data.availability || 'standard',
+      status: 'active',
+    } as any;
   }
 
   async delete(id: string): Promise<IVariantFeature | null> {
     if (!Types.ObjectId.isValid(id)) return null;
-    return VariantFeature.findByIdAndUpdate(
-      id,
-      { status: 'inactive' },
-      { new: true, runValidators: true },
-    ).populate('featureId');
+    const featureIdObj = new Types.ObjectId(id);
+    await Variant.updateMany(
+      {},
+      {
+        $pull: {
+          'features.standard': featureIdObj,
+          'features.optional': featureIdObj,
+        },
+      },
+    );
+    const featureDoc = await Feature.findById(id).lean();
+    if (!featureDoc) return null;
+    return {
+      _id: featureDoc._id,
+      variantId: new Types.ObjectId(),
+      featureId: featureDoc,
+      availability: 'unavailable',
+      status: 'inactive',
+    } as any;
   }
 
   async bulkUpsert(
@@ -176,27 +297,34 @@ class VariantFeatureRepository {
   ): Promise<{ upserted: number; modified: number }> {
     if (items.length === 0) return { upserted: 0, modified: 0 };
 
-    const ops = items.map((item) => ({
-      updateOne: {
-        filter: {
-          variantId: new Types.ObjectId(variantId),
-          featureId: new Types.ObjectId(item.featureId),
-        },
-        update: {
-          $set: {
-            availability: item.availability,
-            value: item.value ?? '',
-            status: item.status ?? 'active',
-          },
-        },
-        upsert: true,
-      },
-    }));
+    const variant = await Variant.findById(variantId).lean();
+    if (!variant) return { upserted: 0, modified: 0 };
 
-    const result = await VariantFeature.bulkWrite(ops, { ordered: false });
+    const stdSet = new Set((variant.features?.standard || []).map((id: any) => id.toString()));
+    const optSet = new Set((variant.features?.optional || []).map((id: any) => id.toString()));
+
+    for (const item of items) {
+      const fStr = item.featureId.toString();
+      if (item.availability === 'standard') {
+        stdSet.add(fStr);
+        optSet.delete(fStr);
+      } else if (item.availability === 'optional') {
+        optSet.add(fStr);
+        stdSet.delete(fStr);
+      } else if (item.availability === 'unavailable') {
+        stdSet.delete(fStr);
+        optSet.delete(fStr);
+      }
+    }
+
+    await Variant.findByIdAndUpdate(variantId, {
+      'features.standard': Array.from(stdSet).map((id) => new Types.ObjectId(id)),
+      'features.optional': Array.from(optSet).map((id) => new Types.ObjectId(id)),
+    });
+
     return {
-      upserted: result.upsertedCount,
-      modified: result.modifiedCount,
+      upserted: items.length,
+      modified: items.length,
     };
   }
 }

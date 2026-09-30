@@ -55,6 +55,9 @@ export const createVariantColorSchema = z.object({
     variantId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid variant ID'),
     colorId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid color ID'),
     availability: z.enum(AVAILABILITIES),
+    imageUrl: z.string().optional(),
+    isBaseColor: z.boolean().optional(),
+    extraPrice: z.number().optional(),
     status: z.enum(['active', 'inactive']).optional(),
   }),
 });
@@ -63,6 +66,9 @@ export const updateVariantColorSchema = z.object({
   body: z
     .object({
       availability: z.enum(AVAILABILITIES).optional(),
+      imageUrl: z.string().optional(),
+      isBaseColor: z.boolean().optional(),
+      extraPrice: z.number().optional(),
       status: z.enum(['active', 'inactive']).optional(),
     })
     .refine((data) => Object.keys(data).length > 0, {
@@ -92,7 +98,10 @@ export const bulkUpsertVariantColorsSchema = z.object({
       .array(
         z.object({
           colorId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid color ID'),
-          availability: z.enum(AVAILABILITIES),
+          availability: z.enum(AVAILABILITIES).optional(),
+          imageUrl: z.string().optional(),
+          isBaseColor: z.boolean().optional(),
+          extraPrice: z.number().optional(),
           status: z.enum(['active', 'inactive']).optional(),
         }),
       )

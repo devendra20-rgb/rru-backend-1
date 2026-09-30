@@ -1,6 +1,35 @@
 import { Schema, model } from 'mongoose';
 import { IVariant } from './variant.types';
 
+const variantEmbeddedColorSchema = new Schema(
+  {
+    colorId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Color',
+      required: true,
+    },
+    imageUrl: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    isBaseColor: {
+      type: Boolean,
+      default: false,
+    },
+    extraPrice: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    status: {
+      type: String,
+      default: 'active',
+    },
+  },
+  { _id: false },
+);
+
 const variantSchema = new Schema<IVariant>(
   {
     modelId: {
@@ -69,6 +98,21 @@ const variantSchema = new Schema<IVariant>(
       enum: ['active', 'inactive', 'draft'],
       default: 'draft',
     },
+    features: {
+      standard: [
+        {
+          type: Schema.Types.ObjectId,
+          ref: 'Feature',
+        },
+      ],
+      optional: [
+        {
+          type: Schema.Types.ObjectId,
+          ref: 'Feature',
+        },
+      ],
+    },
+    colors: [variantEmbeddedColorSchema],
   },
   {
     timestamps: true,
@@ -86,5 +130,8 @@ variantSchema.index({ fuelType: 1 });
 variantSchema.index({ transmissionType: 1 });
 variantSchema.index({ drivetrain: 1 });
 variantSchema.index({ status: 1 });
+variantSchema.index({ 'features.standard': 1 });
+variantSchema.index({ 'features.optional': 1 });
+variantSchema.index({ 'colors.colorId': 1 });
 
 export const Variant = model<IVariant>('Variant', variantSchema);

@@ -496,75 +496,118 @@ export class CarsService {
       },
       { $unwind: { path: '$specs', preserveNullAndEmptyArrays: true } },
 
-      // 5. Features lookup
+      // 5. Features lookup (from embedded features.standard and features.optional)
       {
         $lookup: {
-          from: 'variantfeatures',
-          let: { vId: '$_id' },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [{ $eq: ['$variantId', '$$vId'] }, { $eq: ['$status', 'active'] }],
+          from: 'features',
+          localField: 'features.standard',
+          foreignField: '_id',
+          as: 'standardFeatureDocs',
+        },
+      },
+      {
+        $lookup: {
+          from: 'features',
+          localField: 'features.optional',
+          foreignField: '_id',
+          as: 'optionalFeatureDocs',
+        },
+      },
+      {
+        $addFields: {
+          features: {
+            $concatArrays: [
+              {
+                $map: {
+                  input: '$standardFeatureDocs',
+                  as: 'sf',
+                  in: {
+                    category: '$$sf.category',
+                    name: '$$sf.name',
+                    availability: 'standard',
+                    value: '',
+                  },
                 },
               },
-            },
-            {
-              $lookup: {
-                from: 'features',
-                localField: 'featureId',
-                foreignField: '_id',
-                as: 'featureDoc',
+              {
+                $map: {
+                  input: '$optionalFeatureDocs',
+                  as: 'of',
+                  in: {
+                    category: '$$of.category',
+                    name: '$$of.name',
+                    availability: 'optional',
+                    value: '',
+                  },
+                },
               },
-            },
-            { $unwind: '$featureDoc' },
-            {
-              $project: {
-                _id: 0,
-                category: '$featureDoc.category',
-                name: '$featureDoc.name',
-                availability: 1,
-                value: 1,
-              },
-            },
-          ],
-          as: 'features',
+            ],
+          },
         },
       },
 
-      // 6. Colors lookup
+      // 6. Colors lookup (from embedded colors array)
       {
         $lookup: {
-          from: 'variantcolors',
-          let: { vId: '$_id' },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [{ $eq: ['$variantId', '$$vId'] }, { $eq: ['$status', 'active'] }],
+          from: 'colors',
+          localField: 'colors.colorId',
+          foreignField: '_id',
+          as: 'masterColorDocs',
+        },
+      },
+      {
+        $addFields: {
+          colors: {
+            $map: {
+              input: '$colors',
+              as: 'c',
+              in: {
+                $let: {
+                  vars: {
+                    matchedDoc: {
+                      $arrayElemAt: [
+                        {
+                          $filter: {
+                            input: '$masterColorDocs',
+                            as: 'mc',
+                            cond: { $eq: ['$$mc._id', '$$c.colorId'] },
+                          },
+                        },
+                        0,
+                      ],
+                    },
+                  },
+                  in: {
+                    _id: '$$matchedDoc._id',
+                    name: '$$matchedDoc.name',
+                    hexCode: '$$matchedDoc.hexCode',
+                    type: '$$matchedDoc.type',
+                    availability: {
+                      $ifNull: [
+                        '$$c.availability',
+                        {
+                          $cond: [
+                            { $eq: ['$$c.isBaseColor', true] },
+                            'standard',
+                            {
+                              $cond: [
+                                { $gt: ['$$c.extraPrice', 0] },
+                                'optional',
+                                'standard',
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                    imageUrl: '$$c.imageUrl',
+                    isBaseColor: '$$c.isBaseColor',
+                    extraPrice: '$$c.extraPrice',
+                  },
                 },
               },
             },
-            {
-              $lookup: {
-                from: 'colors',
-                localField: 'colorId',
-                foreignField: '_id',
-                as: 'colorDoc',
-              },
-            },
-            { $unwind: '$colorDoc' },
-            {
-              $project: {
-                _id: '$colorDoc._id',   // expose the color document ID for media matching
-                name: '$colorDoc.name',
-                hexCode: '$colorDoc.hexCode',
-                type: '$colorDoc.type',
-                availability: 1,
-              },
-            },
-          ],
-          as: 'colors',
+          },
         },
       },
 

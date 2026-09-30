@@ -4,7 +4,17 @@ import dotenv from 'dotenv';
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://pandeydevendra20devops_db_user:1Devendrapandey0@deliverly.4lvw8v3.mongodb.net/';
+const MONGODB_URI = process.env.MONGODB_URI;
+
+if (!MONGODB_URI) {
+  console.error('❌ [SAFETY ABORT] MONGODB_URI environment variable is missing! Aborting.');
+  process.exit(1);
+}
+
+if (MONGODB_URI.includes('/rideroundup?') || MONGODB_URI.endsWith('/rideroundup')) {
+  console.error('❌ [SAFETY GUARD ABORT] MONGODB_URI points to production database "rideroundup". Operations against production are strictly prohibited!');
+  process.exit(1);
+}
 
 import { Brand } from '../src/modules/catalog/brands/brand.model';
 import { Color } from '../src/modules/catalog/colors/color.model';

@@ -4,8 +4,6 @@ import { generationRepository } from '../generations/generation.repository';
 import { modelRepository } from '../models/model.repository';
 import { brandRepository } from '../brands/brand.repository';
 import { Specification } from '../specifications/specification.model';
-import { VariantFeature } from '../features/feature.model';
-import { VariantColor } from '../colors/color.model';
 import { VariantMarket } from '../variant-markets/variant-market.model';
 import { Media } from '../../media/media.model';
 import { AppError } from '../../../middlewares/error.middleware';
@@ -305,10 +303,9 @@ export const variantService = {
     if (!variant) throw new AppError('Variant not found', 404);
 
     // Cascade-delete all child records, then remove the variant itself.
+    // Note: features and colors are embedded directly inside Variant, so deleting the variant removes them automatically.
     await Promise.all([
       Specification.deleteMany({ variantId: id }),
-      VariantFeature.deleteMany({ variantId: id }),
-      VariantColor.deleteMany({ variantId: id }),
       VariantMarket.deleteMany({ variantId: id }),
       // Media: soft-deactivate so uploaded files can be cleaned up separately
       Media.updateMany({ entityId: id }, { status: 'inactive' }),
