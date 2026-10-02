@@ -98,6 +98,10 @@ html {
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Prevent layout shift from scrollbar appearing/disappearing during navigation.
+     This eliminates the "zoom" effect caused by the page width changing by ~15px. */
+  scrollbar-gutter: stable;
+  overflow-y: scroll;
 }
 
 body {
@@ -107,6 +111,13 @@ body {
   color: var(--text);
   background: var(--white);
   overflow-x: hidden;
+}
+
+/* CRITICAL: ensure <main> always pushes the footer below the fold.
+   This prevents the footer from appearing during skeleton/loading states
+   across ALL pages without any per-page CSS changes. */
+main {
+  min-height: calc(100vh - var(--nav-height));
 }
 
 a {
@@ -134,6 +145,81 @@ ul, ol {
 input, select, textarea {
   font-family: inherit;
   font-size: inherit;
+}
+
+/* ---------- RideRoundUp Dropdown UI Theme System ---------- */
+select {
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  color: var(--text);
+  background-color: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 9px 32px 9px 12px;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%230D3B49' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+select:hover {
+  border-color: var(--petrol-light);
+}
+
+select:focus {
+  border-color: var(--petrol);
+  box-shadow: 0 0 0 3px rgba(13, 59, 73, 0.12);
+}
+
+/* Option & Optgroup Styling */
+select option,
+select optgroup {
+  background-color: var(--white) !important;
+  color: var(--text) !important;
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  padding: 10px 14px;
+}
+
+/* Option Checked & Hover Highlight State in RideRoundUp Theme Petrol Color */
+select option:checked,
+select option:hover,
+select option:focus,
+select option:active {
+  background-color: var(--petrol) !important;
+  color: var(--white) !important;
+  background: linear-gradient(0deg, #0D3B49 0%, #0D3B49 100%) !important;
+}
+
+/* Application-Wide Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--mist);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--petrol);
+}
+
+/* Firefox Scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) var(--mist);
 }
 
 /* ---------- Typography ---------- */

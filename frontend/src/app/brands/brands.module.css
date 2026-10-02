@@ -125,6 +125,132 @@
   gap: 20px;
 }
 
+/* ---- Models section top bar (title + live search) ---- */
+.modelsTopBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+}
+
+.modelsHeading {
+  font-size: var(--font-size-2xl);
+  font-weight: 800;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modelsCount {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--mist);
+  border-radius: var(--radius-full);
+  padding: 3px 10px;
+}
+
+/* Search bar inside brand detail page */
+.modelSearchBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--white);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-full);
+  padding: 8px 14px;
+  min-width: 240px;
+  max-width: 340px;
+  width: 100%;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.modelSearchBar:focus-within {
+  border-color: var(--petrol);
+  box-shadow: 0 0 0 3px rgba(13, 59, 73, 0.1);
+}
+
+.modelSearchIcon {
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.modelSearchInput {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 13.5px;
+  color: var(--text);
+  font-family: inherit;
+}
+
+.modelSearchInput::placeholder {
+  color: var(--muted);
+}
+
+.modelSearchClear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: none;
+  background: var(--line);
+  color: var(--muted);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.modelSearchClear:hover {
+  background: var(--petrol);
+  color: var(--white);
+}
+
+/* No-results state */
+.noResults {
+  padding: 60px 40px;
+  text-align: center;
+  color: var(--muted);
+  background: var(--mist);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.noResultsIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--white);
+  display: grid;
+  place-items: center;
+  color: var(--petrol);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 4px;
+}
+
+.noResultsTitle {
+  font-size: var(--font-size-md);
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.noResultsDesc {
+  font-size: var(--font-size-base);
+  color: var(--muted);
+  margin: 0;
+}
+
 @media (max-width: 1024px) {
   .brandsGrid { grid-template-columns: repeat(3, 1fr); }
   .modelsGrid { grid-template-columns: repeat(2, 1fr); }
@@ -137,4 +263,13 @@
     flex-direction: column;
     text-align: center;
   }
+  .modelsTopBar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .modelSearchBar {
+    max-width: 100%;
+  }
 }
+

@@ -54,17 +54,22 @@ export default function RegisterPage() {
           </div>
 
           <div className={styles.formGroup}>
-            <label className={styles.formLabel}>Emirate / Location</label>
+            <label className={styles.formLabel}>Country / Region</label>
             <select
               className={styles.formInput}
               value={city}
               onChange={(e) => setCity(e.target.value)}
             >
-              <option value="Dubai">Dubai</option>
-              <option value="Abu Dhabi">Abu Dhabi</option>
-              <option value="Sharjah">Sharjah</option>
-              <option value="Ajman">Ajman</option>
-              <option value="Ras Al Khaimah">Ras Al Khaimah</option>
+              <option value="Dubai">Dubai (UAE)</option>
+              <option value="Abu Dhabi" disabled>Abu Dhabi (Coming Soon)</option>
+              <option value="Sharjah" disabled>Sharjah (Coming Soon)</option>
+              <option value="Ajman" disabled>Ajman (Coming Soon)</option>
+              <option value="Ras Al Khaimah" disabled>Ras Al Khaimah (Coming Soon)</option>
+              <option value="Saudi Arabia" disabled>Saudi Arabia (Coming Soon)</option>
+              <option value="Qatar" disabled>Qatar (Coming Soon)</option>
+              <option value="Kuwait" disabled>Kuwait (Coming Soon)</option>
+              <option value="Oman" disabled>Oman (Coming Soon)</option>
+              <option value="Bahrain" disabled>Bahrain (Coming Soon)</option>
             </select>
           </div>
 

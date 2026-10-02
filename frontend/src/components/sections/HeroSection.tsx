@@ -1,9 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Search, Check, FileSpreadsheet, Sparkles } from 'lucide-react';
+import { Search, Check, FileSpreadsheet, Star, Award } from 'lucide-react';
+import { vehiclesService } from '@/services/vehicles.service';
+import { brandsService } from '@/services/brands.service';
+import { reviewsService } from '@/services/reviews.service';
 import styles from './HeroSection.module.css';
 
 const HERO_SUGGESTIONS = [
@@ -12,9 +15,93 @@ const HERO_SUGGESTIONS = [
   { label: 'cheapest car to run', query: 'hybrid economical' },
 ];
 
+// Animated counter hook — counts from 0 to target over ~900ms
+function useCountUp(target: number | null, duration = 900) {
+  const [count, setCount] = useState(0);
+  const frameRef = useRef<number | null>(null);
+  const startTimeRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (target === null || target === 0) return;
+    startTimeRef.current = null;
+
+    const step = (timestamp: number) => {
+      if (!startTimeRef.current) startTimeRef.current = timestamp;
+      const elapsed = timestamp - startTimeRef.current;
+      const progress = Math.min(elapsed / duration, 1);
+      // Ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.round(eased * target));
+      if (progress < 1) {
+        frameRef.current = requestAnimationFrame(step);
+      }
+    };
+
+    frameRef.current = requestAnimationFrame(step);
+    return () => {
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [target, duration]);
+
+  return target === null ? null : count;
+}
+
+interface KpiData {
+  variantCount: number | null;
+  brandCount: number | null;
+  bodyTypeCount: number | null;
+  reviewCount: number | null;
+}
+
 export default function HeroSection() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
+  const [kpi, setKpi] = useState<KpiData>({
+    variantCount: null,
+    brandCount: null,
+    bodyTypeCount: null,
+    reviewCount: null,
+  });
+
+  // Fetch live KPI data in parallel
+  useEffect(() => {
+    let cancelled = false;
+
+    Promise.allSettled([
+      vehiclesService.getAllPages(),
+      brandsService.getAll(),
+      reviewsService.getAll(),
+    ]).then(([vehiclesResult, brandsResult, reviewsResult]) => {
+      if (cancelled) return;
+
+      const vehicles = vehiclesResult.status === 'fulfilled' ? vehiclesResult.value : [];
+      const brands = brandsResult.status === 'fulfilled' ? brandsResult.value : [];
+      const reviews = reviewsResult.status === 'fulfilled' ? reviewsResult.value : [];
+
+      // Count distinct body types from active vehicles
+      const bodyTypes = new Set(
+        vehicles
+          .filter((v) => v.status === 'active' || v.status === 'upcoming')
+          .map((v) => v.bodyType?.toLowerCase())
+          .filter(Boolean),
+      );
+
+      setKpi({
+        variantCount: vehicles.filter((v) => v.status === 'active' || v.status === 'upcoming').length,
+        brandCount: brands.length,
+        bodyTypeCount: bodyTypes.size,
+        reviewCount: reviews.length,
+      });
+    });
+
+    return () => { cancelled = true; };
+  }, []);
+
+  // Animated counts
+  const variantCount = useCountUp(kpi.variantCount);
+  const brandCount = useCountUp(kpi.brandCount);
+  const bodyTypeCount = useCountUp(kpi.bodyTypeCount);
+  const reviewCount = useCountUp(kpi.reviewCount);
 
   const handleSearch = (customQuery?: string) => {
     const q = customQuery !== undefined ? customQuery : searchTerm;
@@ -138,29 +225,55 @@ export default function HeroSection() {
         </div>
       </section>
 
-      {/* Floating 4-Card Quick Action Discovery Strip with True 50/50 Section Overlap */}
+      {/* Floating 4-Card KPI Discovery Strip */}
       <div className={styles.quickStrip}>
-        <Link href="/new-cars" className={styles.quickCard}>
+
+        {/* KPI 1 — Browse New Cars (live variant + brand count) */}
+        <Link href="/new-cars" className={styles.quickCard} id="kpi-browse-new-cars">
           <div className={`${styles.quickCardIcon} ${styles.iconNewCars}`}>
             <Search size={19} />
           </div>
           <div>
             <div className={styles.quickCardTitle}>Browse new cars</div>
-            <div className={styles.quickCardSubtitle}>412 models in the UAE</div>
+            <div className={styles.quickCardSubtitle}>
+              {variantCount === null ? (
+                <span className={styles.kpiSkeleton} />
+              ) : (
+                <>
+                  <strong className={styles.kpiHighlight}>{variantCount.toLocaleString()}</strong>
+                  {' variants · '}
+                  <strong className={styles.kpiHighlight}>{brandCount ?? '—'}</strong>
+                  {' brands'}
+                </>
+              )}
+            </div>
           </div>
         </Link>
 
-        <Link href="/new-cars" className={styles.quickCard}>
+        {/* KPI 2 — Body Styles (live body type count + brand count) */}
+        <Link href="/new-cars" className={styles.quickCard} id="kpi-body-styles">
           <div className={`${styles.quickCardIcon} ${styles.iconVerified}`}>
-            <Check size={19} strokeWidth={2.6} />
+            <Award size={19} />
           </div>
           <div>
-            <div className={styles.quickCardTitle}>Verified used cars</div>
-            <div className={styles.quickCardSubtitle}>1,840 listings · 62 dealers</div>
+            <div className={styles.quickCardTitle}>All body styles</div>
+            <div className={styles.quickCardSubtitle}>
+              {bodyTypeCount === null ? (
+                <span className={styles.kpiSkeleton} />
+              ) : (
+                <>
+                  <strong className={styles.kpiHighlight}>{bodyTypeCount}</strong>
+                  {' styles · '}
+                  <strong className={styles.kpiHighlight}>{brandCount ?? '—'}</strong>
+                  {' brands'}
+                </>
+              )}
+            </div>
           </div>
         </Link>
 
-        <Link href="/cost-to-own" className={`${styles.quickCard} ${styles.quickCardAccent}`}>
+        {/* KPI 3 — Cost Calculator (static CTA) */}
+        <Link href="/cost-to-own" className={`${styles.quickCard} ${styles.quickCardAccent}`} id="kpi-cost-calculator">
           <div className={`${styles.quickCardIcon} ${styles.iconCost}`}>
             <FileSpreadsheet size={19} />
           </div>
@@ -172,15 +285,28 @@ export default function HeroSection() {
           </div>
         </Link>
 
-        <Link href="/ai-assistant" className={styles.quickCard}>
+        {/* KPI 4 — Expert Reviews (live review count) */}
+        <Link href="/reviews" className={styles.quickCard} id="kpi-reviews">
           <div className={`${styles.quickCardIcon} ${styles.iconHelp}`}>
-            <Sparkles size={19} />
+            <Star size={19} />
           </div>
           <div>
-            <div className={styles.quickCardTitle}>Help me choose</div>
-            <div className={styles.quickCardSubtitle}>8 questions, 5 matches</div>
+            <div className={styles.quickCardTitle}>Owner reviews</div>
+            <div className={styles.quickCardSubtitle}>
+              {reviewCount === null ? (
+                <span className={styles.kpiSkeleton} />
+              ) : reviewCount > 0 ? (
+                <>
+                  <strong className={styles.kpiHighlight}>{reviewCount.toLocaleString()}</strong>
+                  {' verified UAE reviews'}
+                </>
+              ) : (
+                'Be the first to review'
+              )}
+            </div>
           </div>
         </Link>
+
       </div>
     </div>
   );

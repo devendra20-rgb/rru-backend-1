@@ -225,6 +225,41 @@
   margin-bottom: 24px;
 }
 
+/* Row layout for header title + "View All Brands" button */
+.brandsHeaderRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.viewAllBrandsBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  background: var(--white);
+  border: 1.5px solid var(--petrol);
+  border-radius: var(--radius-full);
+  color: var(--petrol);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.viewAllBrandsBtn:hover {
+  background: var(--petrol);
+  color: var(--white);
+  box-shadow: 0 4px 14px rgba(13, 59, 73, 0.2);
+  transform: translateY(-1px);
+}
+
+
 .brandTabs {
   display: flex;
   gap: 8px;
@@ -300,7 +335,7 @@
 .carouselArrow:hover:not(:disabled) {
   border-color: var(--petrol);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
-  transform: scale(1.06);
+  transform: translateY(-50%) scale(1.06);
   color: var(--petrol);
 }
 

@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import {
   ChevronRight,
   ChevronLeft,
@@ -30,6 +30,7 @@ import {
   formatFeatureCategory,
 } from '@/lib/vehicleNormalize';
 import Badge from '@/components/ui/Badge';
+import Skeleton from '@/components/ui/Skeleton';
 import { useCompare } from '@/hooks/useCompare';
 import VehicleCard from '@/components/ui/VehicleCard';
 import styles from './vdp.module.css';
@@ -50,9 +51,11 @@ function SpecRow({ label, value }: { label: string; value?: string | number | bo
 
 export default function VehicleDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const slug = params.slug as string;
   const { addToCompare, isInCompare } = useCompare();
+  // Ref to track the slug currently being managed by variant switching
+  // so we can suppress the useEffect re-firing when history.replaceState updates the URL.
+  const handledByVariantSwitch = useRef<Set<string>>(new Set());
 
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [allVehicles, setAllVehicles] = useState<Vehicle[]>([]);
@@ -67,10 +70,49 @@ export default function VehicleDetailPage() {
   const [featureQuery, setFeatureQuery] = useState('');
   const [featureAvail, setFeatureAvail] = useState<FeatureAvailFilter>('all');
 
+  const [variantLoading, setVariantLoading] = useState(false);
+  const [activeVariantSlug, setActiveVariantSlug] = useState<string | null>(null);
+
   useEffect(() => {
     if (!slug) return;
     let cancelled = false;
-    setLoading(true);
+
+    // Handle browser back/forward buttons (popstate) seamlessly
+    const handlePopState = () => {
+      const pathname = window.location.pathname;
+      const match = pathname.match(/\/new-cars\/([^/]+)/);
+      if (match && match[1]) {
+        const poppedSlug = match[1];
+        setActiveVariantSlug(poppedSlug);
+        vehiclesService.getBySlug(poppedSlug).then((v) => {
+          if (v && !cancelled) {
+            setVehicle(v);
+          }
+        });
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    // *** KEY FIX: if this slug change was caused by our variant switch using
+    // window.history.replaceState (tracked in handledByVariantSwitch), skip
+    // the full reload entirely — the data is already being fetched in handleSelectVariant.
+    if (handledByVariantSwitch.current.has(slug)) {
+      handledByVariantSwitch.current.delete(slug);
+      return () => {
+        window.removeEventListener('popstate', handlePopState);
+      };
+    }
+
+    if (!vehicle) {
+      setLoading(true);
+    }
+
+    if (vehicle && (vehicle.slug === slug || activeVariantSlug === slug)) {
+      return () => {
+        window.removeEventListener('popstate', handlePopState);
+      };
+    }
 
     vehiclesService
       .getBySlug(slug)
@@ -78,6 +120,9 @@ export default function VehicleDetailPage() {
         if (cancelled) return;
         if (v) {
           setVehicle(v);
+          setActiveVariantSlug(v.slug);
+          setActivePhotoIndex(0);
+          setSelectedColorId(null);
           if (v.priceFrom) {
             costToOwnService
               .calculate({
@@ -90,42 +135,70 @@ export default function VehicleDetailPage() {
                 if (!cancelled) setCost(c);
               })
               .catch(console.error);
+          } else {
+            setCost(null);
           }
 
-          // Fetch all vehicles to extract variants for this specific model
-          vehiclesService.getAllPages().then((list) => {
-            if (cancelled) return;
-            setAllVehicles(list);
-            const matches = list.filter(
-              (item) =>
-                (item.brandSlug === v.brandSlug || item.brand.toLowerCase() === v.brand.toLowerCase()) &&
-                (item.modelSlug === v.modelSlug || item.model.toLowerCase() === v.model.toLowerCase()),
-            );
-            if (matches.length > 0) {
-              matches.sort((a, b) => (a.priceFrom || 0) - (b.priceFrom || 0));
-              setModelVariants(matches);
-            } else {
-              setModelVariants([v]);
-            }
-          }).catch(console.error);
+          // Fetch all vehicles to extract variants for this specific model if not already populated
+          if (modelVariants.length <= 1) {
+            vehiclesService.getAllPages().then((list) => {
+              if (cancelled) return;
+              setAllVehicles(list);
+              const matches = list.filter(
+                (item) =>
+                  (item.brandSlug === v.brandSlug || item.brand.toLowerCase() === v.brand.toLowerCase()) &&
+                  (item.modelSlug === v.modelSlug || item.model.toLowerCase() === v.model.toLowerCase()),
+              );
+              if (matches.length > 0) {
+                matches.sort((a, b) => (a.priceFrom || 0) - (b.priceFrom || 0));
+                setModelVariants(matches);
+              } else {
+                setModelVariants([v]);
+              }
+            }).catch(console.error);
+          }
         } else {
           setVehicle(null);
         }
         setLoading(false);
+        setVariantLoading(false);
       })
       .catch(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+          setVariantLoading(false);
+        }
       });
 
     return () => {
       cancelled = true;
+      window.removeEventListener('popstate', handlePopState);
     };
   }, [slug]);
 
   const handleSelectVariant = (selectedVariant: Vehicle) => {
-    setVehicle(selectedVariant);
+    const targetSlug = selectedVariant.slug;
+    if (!targetSlug || (vehicle?.slug === targetSlug && activeVariantSlug === targetSlug)) return;
+
+    // 1. Immediately highlight selected variant button and reset gallery/filters (0ms latency)
+    setActiveVariantSlug(targetSlug);
+    setVariantLoading(true);
     setActivePhotoIndex(0);
     setSelectedColorId(null);
+    setFeatureQuery('');
+
+    // 2. Immediate optimistic update for summary header, price & key spec strip
+    setVehicle((prev) => {
+      if (!prev) return selectedVariant;
+      return {
+        ...prev,
+        ...selectedVariant,
+        features: selectedVariant.features?.length ? selectedVariant.features : prev.features,
+        specifications: selectedVariant.specifications || prev.specifications,
+        colors: selectedVariant.colors?.length ? selectedVariant.colors : prev.colors,
+        mediaItems: selectedVariant.mediaItems?.length ? selectedVariant.mediaItems : prev.mediaItems,
+      };
+    });
 
     if (selectedVariant.priceFrom) {
       costToOwnService
@@ -137,11 +210,38 @@ export default function VehicleDetailPage() {
         })
         .then(setCost)
         .catch(console.error);
-    } else {
-      setCost(null);
     }
 
-    window.history.replaceState(null, '', `/new-cars/${selectedVariant.slug}`);
+    // 3. Update URL bar without any Next.js routing — pure history API.
+    // We mark this slug so the useEffect(slug) ignores it and doesn't re-fetch.
+    handledByVariantSwitch.current.add(targetSlug);
+    window.history.replaceState({ variantSlug: targetSlug }, '', `/new-cars/${targetSlug}`);
+
+    // 4. Background hydration: fetch full features, specs, gallery & colors
+    vehiclesService
+      .getBySlug(targetSlug)
+      .then((fullVehicle) => {
+        if (fullVehicle) {
+          setVehicle(fullVehicle);
+          if (fullVehicle.priceFrom) {
+            costToOwnService
+              .calculate({
+                vehiclePrice: fullVehicle.priceFrom,
+                annualMileageKm: 15000,
+                ownershipYears: 3,
+                fuelType: fullVehicle.fuelType?.toLowerCase().replace(/[\s-]+/g, '_') || 'petrol',
+              })
+              .then(setCost)
+              .catch(console.error);
+          }
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to hydrate variant details:', err);
+      })
+      .finally(() => {
+        setVariantLoading(false);
+      });
   };
 
   const photoGallery = useMemo(() => {
@@ -258,8 +358,30 @@ export default function VehicleDetailPage() {
   if (loading) {
     return (
       <div className={styles.vdpPage}>
-        <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--muted)' }}>
-          Loading vehicle details...
+        <div className={styles.breadcrumb}>
+          <Skeleton type="text" width="220px" height="14px" />
+        </div>
+        <div className={styles.vdpTop}>
+          <div className={styles.gallery}>
+            <Skeleton type="image" height="380px" />
+            <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
+              <Skeleton width="80px" height="54px" />
+              <Skeleton width="80px" height="54px" />
+              <Skeleton width="80px" height="54px" />
+              <Skeleton width="80px" height="54px" />
+            </div>
+          </div>
+          <div className={styles.infoPanel}>
+            <Skeleton type="text" width="90px" height="12px" />
+            <Skeleton type="title" width="70%" height="28px" />
+            <Skeleton type="text" width="45%" height="14px" />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, margin: '20px 0' }}>
+              <Skeleton height="54px" />
+              <Skeleton height="54px" />
+              <Skeleton height="54px" />
+            </div>
+            <Skeleton height="76px" />
+          </div>
         </div>
       </div>
     );
@@ -470,11 +592,17 @@ export default function VehicleDetailPage() {
                 <span className={styles.variantSwitcherTitle}>
                   <Layers size={13} /> Select Trim / Variant ({modelVariants.length})
                 </span>
-                <span className={styles.variantSwitcherHint}>All specs update live below</span>
+                <span className={styles.variantSwitcherHint}>
+                  {variantLoading ? 'Syncing features & media...' : 'All specs update live below'}
+                </span>
               </div>
               <div className={styles.variantSwitcherList}>
                 {modelVariants.map((v) => {
-                  const isActive = v.slug === vehicle.slug || v._id === vehicle._id;
+                  const currentSlug = activeVariantSlug || vehicle.slug;
+                  const isActive =
+                    v.slug === currentSlug ||
+                    (v._id && vehicle._id && String(v._id) === String(vehicle._id)) ||
+                    (v.variant && vehicle.variant && v.variant.toLowerCase() === vehicle.variant.toLowerCase());
                   return (
                     <button
                       key={v._id || v.slug}

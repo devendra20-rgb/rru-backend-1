@@ -195,6 +195,50 @@ export const createAppTheme = (mode: PaletteMode) => {
           track:  { borderRadius: 12, backgroundColor: isDark ? '#253640' : '#DCE3E6', opacity: 1 },
         },
       },
+      MuiSelect: {
+        styleOverrides: {
+          select: {
+            borderRadius: 8,
+            padding: '9px 14px',
+          },
+        },
+      },
+      MuiMenu: {
+        styleOverrides: {
+          paper: {
+            borderRadius: 10,
+            boxShadow: isDark
+              ? '0 8px 24px rgba(0, 0, 0, 0.5)'
+              : '0 8px 24px rgba(7, 40, 48, 0.12)',
+            border: `1px solid ${isDark ? '#253640' : '#DCE3E6'}`,
+            marginTop: 4,
+          },
+        },
+      },
+      MuiMenuItem: {
+        styleOverrides: {
+          root: {
+            fontSize: '0.875rem',
+            fontWeight: 500,
+            borderRadius: 6,
+            margin: '2px 6px',
+            padding: '8px 12px',
+            transition: 'all 150ms ease',
+            '&:hover': {
+              backgroundColor: isDark ? 'rgba(42, 138, 175, 0.15)' : 'rgba(13, 59, 73, 0.06)',
+              color: isDark ? '#4AAFD4' : BRAND_DARK,
+            },
+            '&.Mui-selected': {
+              backgroundColor: isDark ? '#2A8AAF !important' : `${BRAND_DARK} !important`,
+              color: '#FFFFFF !important',
+              fontWeight: 700,
+              '&:hover': {
+                backgroundColor: isDark ? '#1A6A8A !important' : `${BRAND_XDARK} !important`,
+              },
+            },
+          },
+        },
+      },
     },
   });
 };

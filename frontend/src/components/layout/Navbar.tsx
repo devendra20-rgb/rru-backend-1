@@ -135,23 +135,34 @@ export default function Navbar() {
 
             {marketOpen && (
               <div className={styles.marketDropdown}>
-                <div className={styles.marketDropdownHeader}>Select Location (UAE)</div>
-                {EMIRATES.map((e) => (
-                  <button
-                    key={e.id}
-                    className={cn(
-                      styles.marketItem,
-                      selectedEmirate === e.name && styles.marketItemActive
-                    )}
-                    onClick={() => {
-                      setSelectedEmirate(e.name);
-                      setMarketOpen(false);
-                    }}
-                  >
-                    <span>{e.name}</span>
-                    {selectedEmirate === e.name && <Check size={14} color="var(--green)" />}
-                  </button>
-                ))}
+                <div className={styles.marketDropdownHeader}>Select Location</div>
+                {EMIRATES.map((e) => {
+                  const isDubai = e.id === 'dubai';
+                  const isSelected = selectedEmirate === e.name;
+                  return (
+                    <button
+                      key={e.id}
+                      className={cn(
+                        styles.marketItem,
+                        isSelected && styles.marketItemActive,
+                        !isDubai && styles.marketItemDisabled
+                      )}
+                      onClick={() => {
+                        if (!isDubai) return;
+                        setSelectedEmirate(e.name);
+                        setMarketOpen(false);
+                      }}
+                      disabled={!isDubai}
+                    >
+                      <span className={styles.marketItemName}>{e.name}</span>
+                      {isDubai ? (
+                        isSelected && <Check size={14} color="var(--green)" />
+                      ) : (
+                        <span className={styles.comingSoonTag}>Coming Soon</span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>

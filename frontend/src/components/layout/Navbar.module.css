@@ -179,7 +179,7 @@
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  width: 180px;
+  width: 215px;
   background: var(--white);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
@@ -211,13 +211,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   background: transparent;
   border: none;
   cursor: pointer;
   transition: background var(--transition-fast);
 }
 
-.marketItem:hover {
+.marketItem:hover:not(:disabled) {
   background: var(--mist);
   color: var(--petrol);
 }
@@ -226,6 +227,30 @@
   background: var(--mist);
   color: var(--petrol);
   font-weight: 800;
+}
+
+.marketItemDisabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.marketItemDisabled:hover {
+  background: transparent;
+}
+
+.marketItemName {
+  white-space: nowrap;
+}
+
+.comingSoonTag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #f3f4f6;
+  color: #9ca3af;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .loginBtn {

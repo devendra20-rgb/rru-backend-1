@@ -3,6 +3,7 @@
    ============================================ */
 .vdpPage {
   padding: var(--space-3xl) var(--content-padding) var(--space-4xl);
+  min-height: calc(100vh - var(--nav-height));
 }
 
 /* --- Breadcrumb --- */
@@ -334,22 +335,26 @@
   border: 1.5px solid var(--line);
   cursor: pointer;
   text-align: left;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   flex-direction: column;
   gap: 2px;
+  user-select: none;
 }
 
-.variantBtn:hover {
+.variantBtn:hover:not(:disabled) {
   border-color: var(--petrol);
-  background: rgba(13, 59, 73, 0.02);
+  background: rgba(13, 59, 73, 0.04);
+  transform: translateY(-1px);
 }
 
-.variantBtnActive {
-  border-color: var(--petrol);
-  background: var(--petrol);
-  color: var(--white);
-  box-shadow: 0 2px 8px rgba(13, 59, 73, 0.2);
+.variantBtnActive,
+.variantBtnActive:disabled {
+  border-color: var(--petrol) !important;
+  background: var(--petrol) !important;
+  color: var(--white) !important;
+  box-shadow: 0 4px 12px rgba(13, 59, 73, 0.25);
+  transform: translateY(-1px);
 }
 
 .variantBtnName {
@@ -358,20 +363,29 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: var(--deep);
+  transition: color 0.2s ease;
 }
 
-.variantBtnActive .variantBtnName {
-  color: var(--white);
+.variantBtnActive .variantBtnName,
+.variantBtnActive:disabled .variantBtnName {
+  color: var(--white) !important;
 }
 
 .variantBtnPrice {
   font-size: 11px;
   font-weight: 600;
   color: var(--amber-dark);
+  transition: color 0.2s ease;
 }
 
-.variantBtnActive .variantBtnPrice {
-  color: #ffda85;
+.variantBtnActive .variantBtnPrice,
+.variantBtnActive:disabled .variantBtnPrice {
+  color: #ffda85 !important;
+}
+
+.variantBtn:disabled {
+  cursor: wait;
 }
 
 /* Key specs strip */

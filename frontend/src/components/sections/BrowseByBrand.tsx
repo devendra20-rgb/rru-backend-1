@@ -14,6 +14,7 @@ import {
   Zap,
   User,
   Users,
+  ArrowRight,
 } from 'lucide-react';
 import { brandsService } from '@/services/brands.service';
 import type { Brand } from '@/types/brand';
@@ -112,10 +113,20 @@ export default function BrowseByBrand() {
   return (
     <section className={styles.brands} id="browse-by-brand">
       <div className={styles.brandsHeader}>
-        <h2 className="section-title">Find Cars Your Way</h2>
-        <p className="section-subtitle">
-          Explore official manufacturers, body styles, budgets, and fuel choices in the UAE.
-        </p>
+        <div className={styles.brandsHeaderRow}>
+          <div>
+            <h2 className="section-title">Find Cars Your Way</h2>
+            <p className="section-subtitle">
+              Explore official manufacturers, body styles, budgets, and fuel choices in the UAE.
+            </p>
+          </div>
+          {activeTab === 'makes' && (
+            <Link href="/brands" className={styles.viewAllBrandsBtn} id="view-all-brands-btn">
+              View All Brands
+              <ArrowRight size={15} />
+            </Link>
+          )}
+        </div>
 
         {/* Tab Bar */}
         <div className={styles.brandTabs}>

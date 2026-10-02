@@ -13,6 +13,7 @@ import { vehiclesService } from '@/services/vehicles.service';
 import { formatPrice, resolveMediaUrl } from '@/lib/utils';
 import type { Vehicle, VehicleMedia } from '@/types/vehicle';
 import VehicleSearchPicker from '@/components/ui/VehicleSearchPicker';
+import Skeleton from '@/components/ui/Skeleton';
 import styles from './compare.module.css';
 
 /* ─── Spec Groups ─── */
@@ -415,9 +416,11 @@ function CompareContent() {
   if (loading) {
     return (
       <div className={styles.comparePage}>
-        <div className={styles.loadingState}>
-          <div className={styles.spinner} />
-          Loading vehicles...
+        <div className={styles.breadcrumb}>
+          <Skeleton type="text" width="160px" height="14px" />
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20, margin: '24px 0' }}>
+          <Skeleton type="card" count={3} />
         </div>
       </div>
     );

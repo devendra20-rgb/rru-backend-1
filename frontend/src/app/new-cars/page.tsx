@@ -15,7 +15,9 @@ import {
 } from '@/lib/vehicleNormalize';
 import VehicleCard from '@/components/ui/VehicleCard';
 import ModelCard from '@/components/ui/ModelCard';
+import Skeleton from '@/components/ui/Skeleton';
 import { groupVehiclesByModel } from '@/lib/modelGroup';
+import { parseSearchQuery } from '@/lib/searchQueryParser';
 import styles from './newcars.module.css';
 
 type SortOption = 'popular' | 'price-low' | 'price-high' | 'cost-low' | 'newest';
@@ -136,11 +138,36 @@ function NewCarsContent() {
     minPrice ||
     maxPrice;
 
+  const parsedQuery = useMemo(() => {
+    return searchQuery.trim() ? parseSearchQuery(searchQuery, brands) : null;
+  }, [searchQuery, brands]);
+
   const filteredVehicles = useMemo(() => {
     let result = vehicles.filter((v) => v.status === 'active' || v.status === 'upcoming');
 
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim().replace(/[\s-]+/g, ' ');
+    // Combine explicit UI filters with parsed natural language search parameters
+    const effectiveBrand = selectedBrand || parsedQuery?.brandSlug || '';
+    const effectiveBodyTypes =
+      selectedBodyTypes.length > 0 ? selectedBodyTypes : (parsedQuery?.bodyTypes || []);
+    const effectiveFuelTypes =
+      selectedFuelTypes.length > 0 ? selectedFuelTypes : (parsedQuery?.fuelTypes || []);
+    const effectiveTransmission =
+      selectedTransmission || (parsedQuery?.transmissions?.[0] || '');
+    const effectiveSeats = selectedSeats || parsedQuery?.seats || '';
+
+    const minVal = minPrice
+      ? parseInt(minPrice, 10)
+      : (parsedQuery?.minPrice !== undefined ? parsedQuery.minPrice : NaN);
+    const maxVal = maxPrice
+      ? parseInt(maxPrice, 10)
+      : (parsedQuery?.maxPrice !== undefined ? parsedQuery.maxPrice : NaN);
+
+    const keywordQuery = parsedQuery
+      ? parsedQuery.remainingQuery
+      : searchQuery.toLowerCase().trim().replace(/[\s-]+/g, ' ');
+
+    if (keywordQuery) {
+      const q = keywordQuery.toLowerCase().replace(/[\s-]+/g, ' ');
       result = result.filter((v) => {
         const text = `${v.brand} ${v.model} ${v.variant} ${v.brandSlug} ${v.bodyType} ${v.fuelType} ${(v.tags || []).join(' ')}`
           .toLowerCase()
@@ -149,43 +176,41 @@ function NewCarsContent() {
       });
     }
 
-    if (selectedBrand) {
+    if (effectiveBrand) {
       result = result.filter(
         (v) =>
-          v.brandSlug === selectedBrand ||
-          v.brand.toLowerCase() === selectedBrand.toLowerCase(),
+          v.brandSlug === effectiveBrand ||
+          v.brand.toLowerCase() === effectiveBrand.toLowerCase(),
       );
     }
 
-    if (selectedBodyTypes.length > 0) {
-      const wanted = selectedBodyTypes.map((b) => b.toLowerCase());
+    if (effectiveBodyTypes.length > 0) {
+      const wanted = effectiveBodyTypes.map((b) => b.toLowerCase());
       result = result.filter((v) => wanted.includes((v.bodyType || '').toLowerCase()));
     }
 
-    if (selectedFuelTypes.length > 0) {
+    if (effectiveFuelTypes.length > 0) {
       result = result.filter((v) =>
-        selectedFuelTypes.some((ft) => fuelMatchesFilter(v.fuelType, ft)),
+        effectiveFuelTypes.some((ft) => fuelMatchesFilter(v.fuelType, ft)),
       );
     }
 
-    if (selectedTransmission) {
+    if (effectiveTransmission) {
       result = result.filter((v) =>
-        transmissionMatchesFilter(v.transmission, selectedTransmission),
+        transmissionMatchesFilter(v.transmission, effectiveTransmission),
       );
     }
 
-    if (selectedSeats) {
-      result = result.filter((v) => matchesSeatFilter(v.seats, selectedSeats));
+    if (effectiveSeats) {
+      result = result.filter((v) => matchesSeatFilter(v.seats, effectiveSeats));
     }
 
-    const min = minPrice ? parseInt(minPrice, 10) : NaN;
-    const max = maxPrice ? parseInt(maxPrice, 10) : NaN;
-    if (!Number.isNaN(min) || !Number.isNaN(max)) {
+    if (!Number.isNaN(minVal) || !Number.isNaN(maxVal)) {
       result = result.filter((v) => {
         const price = v.priceFrom;
         if (price == null || price <= 0) return false;
-        if (!Number.isNaN(min) && price < min) return false;
-        if (!Number.isNaN(max) && price > max) return false;
+        if (!Number.isNaN(minVal) && price < minVal) return false;
+        if (!Number.isNaN(maxVal) && price > maxVal) return false;
         return true;
       });
     }
@@ -218,6 +243,7 @@ function NewCarsContent() {
   }, [
     vehicles,
     searchQuery,
+    parsedQuery,
     selectedBrand,
     selectedBodyTypes,
     selectedFuelTypes,
@@ -327,114 +353,116 @@ function NewCarsContent() {
             )}
           </div>
 
-          <div className={styles.filterGroup}>
-            <label className={styles.filterLabel}>Search Keywords</label>
-            <input
-              type="text"
-              className={styles.filterPriceInput}
-              placeholder="e.g. Toyota, hybrid..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-
-          <div className={styles.filterGroup}>
-            <label className={styles.filterLabel}>Brand</label>
-            <select
-              className={styles.filterSelect}
-              value={selectedBrand}
-              onChange={(e) => setSelectedBrand(e.target.value)}
-            >
-              <option value="">All Brands</option>
-              {brands.map((brand) => (
-                <option key={brand._id} value={brand.slug}>
-                  {brand.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className={styles.filterGroup}>
-            <label className={styles.filterLabel}>Body Type</label>
-            <div className={styles.filterChips}>
-              {BODY_TYPES.map((bt) => (
-                <button
-                  key={bt}
-                  type="button"
-                  className={`${styles.filterChip} ${selectedBodyTypes.includes(bt) ? styles.filterChipActive : ''}`}
-                  onClick={() => toggleBodyType(bt)}
-                >
-                  {bt}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className={styles.filterGroup}>
-            <label className={styles.filterLabel}>Fuel Type</label>
-            <div className={styles.filterChips}>
-              {FUEL_TYPES.map((ft) => (
-                <button
-                  key={ft}
-                  type="button"
-                  className={`${styles.filterChip} ${selectedFuelTypes.includes(ft) ? styles.filterChipActive : ''}`}
-                  onClick={() => toggleFuelType(ft)}
-                >
-                  {ft}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className={styles.filterGroup}>
-            <label className={styles.filterLabel}>Transmission</label>
-            <select
-              className={styles.filterSelect}
-              value={selectedTransmission}
-              onChange={(e) => setSelectedTransmission(e.target.value)}
-            >
-              <option value="">Any</option>
-              {TRANSMISSIONS.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className={styles.filterGroup}>
-            <label className={styles.filterLabel}>Seats</label>
-            <div className={styles.filterChips}>
-              {SEAT_OPTIONS.map((s) => (
-                <button
-                  key={s.value}
-                  type="button"
-                  className={`${styles.filterChip} ${selectedSeats === s.value ? styles.filterChipActive : ''}`}
-                  onClick={() => setSelectedSeats(selectedSeats === s.value ? '' : s.value)}
-                >
-                  {s.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className={styles.filterGroup}>
-            <label className={styles.filterLabel}>Price Range (AED)</label>
-            <div className={styles.filterPriceInputs}>
+          <div className={styles.filterBody}>
+            <div className={styles.filterGroup}>
+              <label className={styles.filterLabel}>Search Keywords</label>
               <input
-                type="number"
+                type="text"
                 className={styles.filterPriceInput}
-                placeholder="Min"
-                value={minPrice}
-                onChange={(e) => setMinPrice(e.target.value)}
+                placeholder="e.g. Toyota, hybrid..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
-              <input
-                type="number"
-                className={styles.filterPriceInput}
-                placeholder="Max"
-                value={maxPrice}
-                onChange={(e) => setMaxPrice(e.target.value)}
-              />
+            </div>
+
+            <div className={styles.filterGroup}>
+              <label className={styles.filterLabel}>Brand</label>
+              <select
+                className={styles.filterSelect}
+                value={selectedBrand}
+                onChange={(e) => setSelectedBrand(e.target.value)}
+              >
+                <option value="">All Brands</option>
+                {brands.map((brand) => (
+                  <option key={brand._id} value={brand.slug}>
+                    {brand.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className={styles.filterGroup}>
+              <label className={styles.filterLabel}>Body Type</label>
+              <div className={styles.filterChips}>
+                {BODY_TYPES.map((bt) => (
+                  <button
+                    key={bt}
+                    type="button"
+                    className={`${styles.filterChip} ${selectedBodyTypes.includes(bt) ? styles.filterChipActive : ''}`}
+                    onClick={() => toggleBodyType(bt)}
+                  >
+                    {bt}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className={styles.filterGroup}>
+              <label className={styles.filterLabel}>Fuel Type</label>
+              <div className={styles.filterChips}>
+                {FUEL_TYPES.map((ft) => (
+                  <button
+                    key={ft}
+                    type="button"
+                    className={`${styles.filterChip} ${selectedFuelTypes.includes(ft) ? styles.filterChipActive : ''}`}
+                    onClick={() => toggleFuelType(ft)}
+                  >
+                    {ft}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className={styles.filterGroup}>
+              <label className={styles.filterLabel}>Transmission</label>
+              <select
+                className={styles.filterSelect}
+                value={selectedTransmission}
+                onChange={(e) => setSelectedTransmission(e.target.value)}
+              >
+                <option value="">Any</option>
+                {TRANSMISSIONS.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className={styles.filterGroup}>
+              <label className={styles.filterLabel}>Seats</label>
+              <div className={styles.filterChips}>
+                {SEAT_OPTIONS.map((s) => (
+                  <button
+                    key={s.value}
+                    type="button"
+                    className={`${styles.filterChip} ${selectedSeats === s.value ? styles.filterChipActive : ''}`}
+                    onClick={() => setSelectedSeats(selectedSeats === s.value ? '' : s.value)}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className={styles.filterGroup}>
+              <label className={styles.filterLabel}>Price Range (AED)</label>
+              <div className={styles.filterPriceInputs}>
+                <input
+                  type="number"
+                  className={styles.filterPriceInput}
+                  placeholder="Min"
+                  value={minPrice}
+                  onChange={(e) => setMinPrice(e.target.value)}
+                />
+                <input
+                  type="number"
+                  className={styles.filterPriceInput}
+                  placeholder="Max"
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(e.target.value)}
+                />
+              </div>
             </div>
           </div>
         </aside>
@@ -498,9 +526,7 @@ function NewCarsContent() {
 
           <div className={styles.resultsGrid}>
             {loading ? (
-              <div style={{ padding: 40, textAlign: 'center', color: 'var(--muted)' }}>
-                Loading vehicles...
-              </div>
+              <Skeleton type="card" count={6} />
             ) : filteredVehicles.length > 0 ? (
               viewMode === 'model' ? (
                 modelGroups.map((mg) => (
@@ -534,7 +560,13 @@ function NewCarsContent() {
 
 export default function NewCarsPage() {
   return (
-    <Suspense fallback={<div style={{ padding: 40, textAlign: 'center' }}>Loading cars...</div>}>
+    <Suspense
+      fallback={
+        <div className={styles.resultsGrid} style={{ padding: '40px 20px' }}>
+          <Skeleton type="card" count={6} />
+        </div>
+      }
+    >
       <NewCarsContent />
     </Suspense>
   );

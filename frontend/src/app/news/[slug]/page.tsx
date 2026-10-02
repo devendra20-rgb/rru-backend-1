@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import { ChevronRight, Calendar, User, Clock, FileText } from 'lucide-react';
 import { articlesService } from '@/services/articles.service';
 import type { Article } from '@/types/article';
+import Skeleton from '@/components/ui/Skeleton';
 import { formatDate } from '@/lib/utils';
 import styles from '@/app/reviews/content.module.css';
 
@@ -27,8 +28,18 @@ export default function ArticleDetailPage() {
   if (loading) {
     return (
       <div className={styles.page}>
-        <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--muted)' }}>
-          Loading article...
+        <div className={styles.breadcrumb}>
+          <Skeleton type="text" width="160px" height="14px" />
+        </div>
+        <div style={{ maxWidth: 800, margin: '24px auto' }}>
+          <Skeleton type="title" width="85%" height="32px" />
+          <Skeleton type="text" width="40%" height="14px" />
+          <Skeleton type="image" height="320px" />
+          <div style={{ marginTop: 20 }}>
+            <Skeleton type="text" width="100%" />
+            <Skeleton type="text" width="95%" />
+            <Skeleton type="text" width="90%" />
+          </div>
         </div>
       </div>
     );

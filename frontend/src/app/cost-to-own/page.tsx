@@ -9,6 +9,7 @@ import { costToOwnService } from '@/services/costToOwn.service';
 import type { Vehicle } from '@/types/vehicle';
 import type { CostToOwnBreakdown, SegmentComparison } from '@/types/cost';
 import VehicleSearchPicker from '@/components/ui/VehicleSearchPicker';
+import Skeleton from '@/components/ui/Skeleton';
 import styles from './costoown.module.css';
 
 function CostToOwnContent() {
@@ -63,8 +64,12 @@ function CostToOwnContent() {
   if (!vehicle || !cost) {
     return (
       <div className={styles.costPage}>
-        <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--muted)' }}>
-          Loading Cost to Own calculator...
+        <div className={styles.breadcrumb}>
+          <Skeleton type="text" width="180px" height="14px" />
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 20, margin: '24px 0' }}>
+          <Skeleton height="300px" />
+          <Skeleton height="300px" />
         </div>
       </div>
     );
@@ -280,7 +285,13 @@ function CostToOwnContent() {
 
 export default function CostToOwnPage() {
   return (
-    <Suspense fallback={<div style={{ padding: 60, textAlign: 'center' }}>Loading Cost to Own calculator...</div>}>
+    <Suspense
+      fallback={
+        <div style={{ padding: '40px 20px' }}>
+          <Skeleton height="300px" />
+        </div>
+      }
+    >
       <CostToOwnContent />
     </Suspense>
   );
