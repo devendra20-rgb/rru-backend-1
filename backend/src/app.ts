@@ -31,6 +31,7 @@ import reviewRoutes from './modules/reviews/review.routes';
 import articleRoutes from './modules/articles/article.routes';
 import dashboardRoutes from './modules/dashboard/dashboard.routes';
 import customAttributeRoutes from './modules/catalog/custom-attributes/custom-attribute.routes';
+import contactRoutes from './modules/contact/contact.routes';
 
 const app = express();
 
@@ -116,6 +117,7 @@ v1Router.use('/vehicles', carsRoutes);
 v1Router.use('/cost-to-own', costToOwnRoutes);
 v1Router.use('/articles', articleRoutes);
 v1Router.use('/dashboard', dashboardRoutes);
+v1Router.use('/contact', contactRoutes);
 
 // Register API Routes
 app.use('/api/v1', v1Router);

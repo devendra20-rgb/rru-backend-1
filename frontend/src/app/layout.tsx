@@ -1,3 +1,4 @@
+import { Inter } from 'next/font/google';
 import type { Metadata } from 'next';
 import { SITE_NAME, SITE_DESCRIPTION } from '@/lib/constants';
 import Navbar from '@/components/layout/Navbar';
@@ -5,6 +6,12 @@ import Footer from '@/components/layout/Footer';
 import { CompareProvider } from '@/hooks/useCompare';
 import CompareFloatingBar from '@/components/ui/CompareFloatingBar';
 import './globals.css';
+
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+});
 
 export const metadata: Metadata = {
   title: {
@@ -21,8 +28,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body suppressHydrationWarning>
+    <html lang="en" className={inter.variable} suppressHydrationWarning>
+      <body className={inter.className} suppressHydrationWarning>
         <CompareProvider>
           <div className="page-container" suppressHydrationWarning>
             <Navbar />

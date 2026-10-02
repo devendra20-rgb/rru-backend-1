@@ -1,0 +1,470 @@
+/* ============================================
+   RIDE ROUND UP — CONTACT US PAGE STYLES
+   Modern Automotive Marketplace Design System
+   ============================================ */
+
+.page {
+  padding: 36px var(--content-padding) 70px;
+  background-color: var(--mist);
+}
+
+.inner {
+  max-width: 1180px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ── Breadcrumb ── */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+
+.breadcrumb a {
+  color: var(--petrol);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color var(--transition-fast);
+}
+
+.breadcrumb a:hover {
+  color: var(--petrol-light);
+}
+
+/* ── Header ── */
+.header {
+  margin-bottom: 36px;
+}
+
+.title {
+  font-size: clamp(30px, 4vw, 40px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--deep);
+  margin-bottom: 8px;
+  line-height: 1.15;
+}
+
+.subtitle {
+  font-size: 16px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  max-width: 680px;
+}
+
+/* ── Two-Column Layout ── */
+.layout {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 36px;
+  align-items: start;
+}
+
+/* ── Left Column ── */
+.leftCol {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Info Card */
+.infoCard {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 28px 24px;
+  box-shadow: 0 4px 20px rgba(7, 40, 48, 0.04);
+}
+
+.cardHeading {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--deep);
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line-light);
+}
+
+.infoList {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.infoItem {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.infoIconWrapper {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: #eef5f8;
+  color: var(--petrol);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.infoLabel {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+
+.infoValue {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--deep);
+}
+
+/* FAQ Card */
+.faqCard {
+  background: linear-gradient(135deg, var(--petrol) 0%, #154c5d 100%);
+  color: var(--white);
+  border-radius: 14px;
+  padding: 28px 24px;
+  box-shadow: 0 8px 24px rgba(13, 59, 73, 0.15);
+}
+
+.faqHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.faqIcon {
+  color: var(--amber);
+  flex-shrink: 0;
+}
+
+.faqTitle {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.faqText {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.faqBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 12px 20px;
+  background: var(--amber);
+  color: var(--deep);
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background var(--transition-fast), transform var(--transition-fast);
+}
+
+.faqBtn:hover {
+  background: var(--amber-light);
+  transform: translateY(-1px);
+}
+
+/* ── Right Column: Form Card ── */
+.rightCol {
+  width: 100%;
+}
+
+.formCard {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 36px 40px;
+  box-shadow: 0 6px 24px rgba(7, 40, 48, 0.05);
+}
+
+.formHeader {
+  margin-bottom: 28px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line-light);
+}
+
+.formTitle {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--deep);
+  margin-bottom: 4px;
+}
+
+.formSub {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* Form Layout */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+/* Field */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--deep);
+}
+
+.required {
+  color: var(--rust);
+  margin-left: 2px;
+}
+
+/* Form Controls */
+.input,
+.select,
+.textarea {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 15px;
+  color: var(--text);
+  background: var(--white);
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.input {
+  height: 48px;
+}
+
+.select {
+  height: 48px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%230D3B49' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  padding-right: 44px;
+  cursor: pointer;
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 150px;
+  line-height: 1.6;
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: #a0aec0;
+}
+
+.input:hover,
+.select:hover,
+.textarea:hover {
+  border-color: var(--petrol-light);
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  border-color: var(--petrol);
+  box-shadow: 0 0 0 3px rgba(13, 59, 73, 0.12);
+}
+
+/* Error States */
+.inputError {
+  border-color: var(--rust) !important;
+  box-shadow: 0 0 0 3px rgba(196, 69, 29, 0.1) !important;
+}
+
+.errorText {
+  font-size: 13px;
+  color: var(--rust);
+  font-weight: 500;
+}
+
+/* Field Footer */
+.fieldFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  min-height: 18px;
+}
+
+.charCount {
+  font-size: 12px;
+  color: var(--muted);
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.charCountOver {
+  color: var(--rust);
+  font-weight: 600;
+}
+
+/* Primary Button */
+.btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 50px;
+  padding: 0 36px;
+  background: var(--petrol);
+  color: var(--white);
+  font-size: 16px;
+  font-weight: 700;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
+  align-self: flex-start;
+  margin-top: 4px;
+}
+
+.btnPrimary:hover:not(:disabled) {
+  background: var(--petrol-light);
+  box-shadow: 0 4px 14px rgba(13, 59, 73, 0.2);
+}
+
+.btnPrimary:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btnPrimary:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Spinner */
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Submit Error Banner */
+.submitError {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 16px 20px;
+  background: #fff1ee;
+  border: 1px solid rgba(196, 69, 29, 0.3);
+  border-radius: 10px;
+  font-size: 14px;
+  color: var(--rust);
+  line-height: 1.5;
+}
+
+.submitError svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* Success Panel */
+.successPanel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 72px 40px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  max-width: 600px;
+  margin: 40px auto;
+  box-shadow: 0 10px 30px rgba(7, 40, 48, 0.06);
+}
+
+.successIcon {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: #e6f5f0;
+  color: var(--green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.successTitle {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--deep);
+  margin-bottom: 12px;
+  letter-spacing: -0.02em;
+}
+
+.successBody {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 32px;
+  max-width: 480px;
+}
+
+/* ─────────────────────────────────────────────
+   RESPONSIVE BREAKPOINTS
+   ───────────────────────────────────────────── */
+@media (max-width: 960px) {
+  .layout {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .formCard {
+    padding: 30px 24px;
+  }
+}
+
+@media (max-width: 600px) {
+  .page {
+    padding: 24px 16px 60px 16px;
+  }
+
+  .row {
+    grid-template-columns: 1fr;
+  }
+
+  .btnPrimary {
+    width: 100%;
+  }
+
+  .successPanel {
+    padding: 48px 20px;
+  }
+}

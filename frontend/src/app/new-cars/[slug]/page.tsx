@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import {
   ChevronRight,
   ChevronLeft,
@@ -51,6 +51,7 @@ function SpecRow({ label, value }: { label: string; value?: string | number | bo
 
 export default function VehicleDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const slug = params.slug as string;
   const { addToCompare, isInCompare } = useCompare();
   // Ref to track the slug currently being managed by variant switching

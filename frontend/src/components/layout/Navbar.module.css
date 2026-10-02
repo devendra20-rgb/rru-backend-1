@@ -11,6 +11,7 @@
   z-index: 100;
   backdrop-filter: blur(12px);
   background: rgba(255, 255, 255, 0.97);
+  box-sizing: border-box;
 }
 
 .logo {
@@ -19,10 +20,18 @@
   letter-spacing: -0.7px;
   white-space: nowrap;
   color: var(--deep);
-  display: flex;
-  flex-direction: column;
+  display: inline-flex;
+  align-items: center;
+  height: 38px;
   text-decoration: none;
   flex-shrink: 0;
+}
+
+.logoImg {
+  display: block;
+  width: 170px;
+  height: 38px;
+  object-fit: contain;
 }
 
 .logoRound {
@@ -43,6 +52,7 @@
   display: flex;
   gap: 32px;
   align-items: center;
+  height: 100%;
   flex: 1;
 }
 
@@ -53,7 +63,10 @@
   color: var(--text);
   transition: color var(--transition-fast);
   position: relative;
-  padding: 4px 0;
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 2px;
   text-decoration: none;
 }
 
@@ -64,7 +77,7 @@
 .navLink::after {
   content: '';
   position: absolute;
-  bottom: -2px;
+  bottom: 0;
   left: 0;
   width: 0;
   height: 2px;
@@ -91,7 +104,8 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 14px;
+  height: 36px;
+  padding: 0 14px;
   border-radius: var(--radius-full);
   background: linear-gradient(135deg, rgba(13, 59, 73, 0.05), rgba(232, 148, 43, 0.14));
   border: 1px solid rgba(232, 148, 43, 0.45);
@@ -100,6 +114,7 @@
   font-size: 14px;
   transition: all var(--transition-fast);
   text-decoration: none;
+  box-sizing: border-box;
 }
 
 .navLinkHighlight:hover {
@@ -128,6 +143,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  height: 100%;
   flex-shrink: 0;
   position: relative;
 }
@@ -137,12 +153,14 @@
   height: 36px;
   border: 1px solid var(--line);
   border-radius: 50%;
-  display: grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: var(--text);
   transition: all var(--transition-fast);
   background: transparent;
   cursor: pointer;
+  box-sizing: border-box;
 }
 
 .searchBtn:hover {
@@ -153,21 +171,26 @@
 
 .marketWrapper {
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
 }
 
 .marketBtn {
-  padding: 9px 12px;
+  height: 36px;
+  padding: 0 12px;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
   font-weight: 600;
   color: var(--text);
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
   transition: all var(--transition-fast);
   background: transparent;
   cursor: pointer;
+  box-sizing: border-box;
 }
 
 .marketBtn:hover {
@@ -254,7 +277,8 @@
 }
 
 .loginBtn {
-  padding: 9px 14px;
+  height: 36px;
+  padding: 0 16px;
   border-radius: var(--radius-md);
   background: var(--petrol);
   color: var(--white);
@@ -265,6 +289,8 @@
   text-decoration: none;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
 }
 
 .loginBtn:hover {
@@ -277,7 +303,8 @@
   display: none;
   width: 36px;
   height: 36px;
-  place-items: center;
+  align-items: center;
+  justify-content: center;
   color: var(--text);
   background: transparent;
   border: none;
@@ -460,7 +487,7 @@
   }
 
   .hamburger {
-    display: grid;
+    display: inline-flex;
   }
 
   .mobileOverlay {
