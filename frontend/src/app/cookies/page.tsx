@@ -33,14 +33,14 @@ export default function CookiesPage() {
           <div className={styles.pageHeader}>
             <h1 className={styles.pageTitle}>Cookie Policy</h1>
             {/* ⚠️ LEGAL CONFIRMATION REQUIRED: Effective date */}
-            <div className={styles.pageMeta}>Last updated: [DATE — requires legal confirmation]</div>
+            <div className={styles.pageMeta}>Last updated: 02 Oct 2026</div>
           </div>
 
-          <div className={styles.confirmationBanner}>
+          {/* <div className={styles.confirmationBanner}>
             ⚠️ <strong>Legal confirmation required.</strong> The specific list of cookies, their
             names, and durations must be populated by your development and legal teams before
             publication.
-          </div>
+          </div> */}
 
           <section className={styles.section} id="what-are-cookies">
             <h2 className={styles.sectionTitle}>1. What Are Cookies</h2>

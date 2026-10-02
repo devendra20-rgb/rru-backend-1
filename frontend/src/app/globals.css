@@ -108,7 +108,7 @@ body {
   line-height: 1.55;
   color: var(--text);
   background: var(--white);
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* CRITICAL: ensure <main> always pushes the footer below the fold.

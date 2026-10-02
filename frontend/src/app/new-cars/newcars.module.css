@@ -368,6 +368,61 @@
   margin-bottom: 18px;
 }
 
+/* --- Infinite Scroll Footer States --- */
+.infiniteScrollSentinel {
+  grid-column: 1 / -1;
+  padding: 20px 0 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.infiniteScrollLoader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--petrol);
+}
+
+.infiniteScrollSpinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--line);
+  border-top-color: var(--petrol);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.infiniteScrollHint {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  letter-spacing: 0.2px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.endOfList {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 20px 0 12px;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--muted);
+  border-top: 1px dashed var(--line);
+  margin-top: 16px;
+}
+
 /* --- Responsive --- */
 @media (max-width: 1024px) {
   .resultsGrid {

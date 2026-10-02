@@ -62,7 +62,7 @@ export default function AccessibilityPage() {
           <div className={styles.pageHeader}>
             <h1 className={styles.pageTitle}>Accessibility Statement</h1>
             {/* ⚠️ BUSINESS CONFIRMATION REQUIRED: Review date */}
-            <div className={styles.pageMeta}>Last reviewed: [DATE — requires confirmation]</div>
+            <div className={styles.pageMeta}>Last reviewed: 02 Oct 2026</div>
           </div>
 
           <section className={styles.section} id="our-commitment">

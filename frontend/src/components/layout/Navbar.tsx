@@ -3,8 +3,8 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter, usePathname } from 'next/navigation';
-import { Search, Menu, X, ChevronDown, Check, Sparkles } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { Users, Menu, X, ChevronDown, Check, Sparkles } from 'lucide-react';
 import { NAV_LINKS } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import styles from './Navbar.module.css';
@@ -17,25 +17,36 @@ const EMIRATES = [
   { id: 'rak', name: 'Ras Al Khaimah' },
 ];
 
-const SEARCH_SUGGESTIONS = [
-  '7 seater under AED 150k',
-  'GCC spec SUV under AED 80k',
-  'Best first car in Dubai',
-  'Electric cars under AED 200k',
-  'Toyota Land Cruiser',
-  'Nissan Patrol',
-];
-
 export default function Navbar() {
-  const router = useRouter();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [marketOpen, setMarketOpen] = useState(false);
   const [selectedEmirate, setSelectedEmirate] = useState('Dubai');
-  const [searchModalOpen, setSearchModalOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [visitorCount, setVisitorCount] = useState(128);
   const marketRef = useRef<HTMLDivElement>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Simulated visitor count fluctuation between 118 and 146 every 3-7 seconds
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+
+    const scheduleUpdate = () => {
+      const nextDelay = Math.floor(Math.random() * 4000) + 3000;
+      timeoutId = setTimeout(() => {
+        setVisitorCount((prev) => {
+          const delta = Math.floor(Math.random() * 5) - 2; // -2 to +2
+          const nextCount = prev + delta;
+          return Math.min(146, Math.max(118, nextCount));
+        });
+        scheduleUpdate();
+      }, nextDelay);
+    };
+
+    scheduleUpdate();
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, []);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -47,21 +58,6 @@ export default function Navbar() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  // Focus search input when search modal opens
-  useEffect(() => {
-    if (searchModalOpen) {
-      setTimeout(() => searchInputRef.current?.focus(), 50);
-    }
-  }, [searchModalOpen]);
-
-  const handleSearchSubmit = (query?: string) => {
-    const q = query !== undefined ? query : searchQuery;
-    if (!q.trim()) return;
-    setSearchModalOpen(false);
-    setSearchQuery('');
-    router.push(`/new-cars?search=${encodeURIComponent(q.trim())}`);
-  };
 
   return (
     <>
@@ -114,14 +110,15 @@ export default function Navbar() {
 
         {/* Utility buttons */}
         <div className={styles.utility}>
-          <button
-            className={styles.searchBtn}
-            aria-label="Search"
-            id="search-btn"
-            onClick={() => setSearchModalOpen(true)}
+          {/* Simulated Visitor / Browsing Indicator */}
+          <div
+            className={styles.browsingBadge}
+            // title="Simulated indicator: estimated active UAE shoppers"
+            id="browsing-indicator"
           >
-            <Search size={16} />
-          </button>
+            <span className={styles.pulseDot} />
+            <span>{visitorCount} browsing</span>
+          </div>
 
           {/* Market Selector */}
           <div className={styles.marketWrapper} ref={marketRef}>
@@ -182,59 +179,7 @@ export default function Navbar() {
         </div>
       </header>
 
-      {/* Quick Search Modal */}
-      {searchModalOpen && (
-        <div
-          className={styles.searchModalOverlay}
-          onClick={() => setSearchModalOpen(false)}
-        >
-          <div
-            className={styles.searchModal}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <form
-              className={styles.searchModalHeader}
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSearchSubmit();
-              }}
-            >
-              <Search size={18} color="var(--muted)" />
-              <input
-                ref={searchInputRef}
-                type="text"
-                className={styles.searchModalInput}
-                placeholder="Search cars by model, brand, or feature..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <button
-                type="button"
-                className={styles.searchModalClose}
-                onClick={() => setSearchModalOpen(false)}
-              >
-                <X size={20} />
-              </button>
-            </form>
 
-            <div className={styles.searchModalSuggestions}>
-              <div className={styles.searchModalSectionTitle}>Popular Searches</div>
-              <div className={styles.searchModalChips}>
-                {SEARCH_SUGGESTIONS.map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    className={styles.searchModalChip}
-                    onClick={() => handleSearchSubmit(s)}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Mobile Menu */}
       {mobileOpen && (

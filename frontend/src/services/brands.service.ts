@@ -5,8 +5,8 @@ import type { Brand } from '@/types/brand';
 export const brandsService = {
   getAll: async (): Promise<Brand[]> => {
     if (USE_MOCK) return brandsMock;
-    // Backend default page size is 20 — request enough to cover the full brand catalog
-    const res = await api.get<{ data: Brand[] }>('/api/v1/brands', { limit: 100, status: 'active' });
+    // Request all active brands from the catalog without artificial 100 limit restriction
+    const res = await api.get<{ data: Brand[] }>('/api/v1/brands', { limit: 1000, status: 'active' });
     return res.data || [];
   },
 

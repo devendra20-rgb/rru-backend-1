@@ -131,6 +131,7 @@ export interface VehicleFilters {
   maxPrice?: number;
   search?: string;
   sort?: string;
+  sortBy?: string;
   page?: number;
   limit?: number;
 }

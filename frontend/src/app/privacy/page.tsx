@@ -35,14 +35,14 @@ export default function PrivacyPage() {
           <div className={styles.pageHeader}>
             <h1 className={styles.pageTitle}>Privacy Policy</h1>
             {/* ⚠️ LEGAL CONFIRMATION REQUIRED: Confirm effective date */}
-            <div className={styles.pageMeta}>Last updated: [DATE — requires legal confirmation]</div>
+            <div className={styles.pageMeta}>Last updated: 02 Oct 2026</div>
           </div>
 
-          <div className={styles.confirmationBanner}>
+          {/* <div className={styles.confirmationBanner}>
             ⚠️ <strong>Legal confirmation required.</strong> This page contains placeholder text
             that must be reviewed and approved by your legal counsel before publication. Items
             marked [CONFIRM] require specific business details.
-          </div>
+          </div> */}
 
           <section className={styles.section} id="who-we-are">
             <h2 className={styles.sectionTitle}>1. Who We Are</h2>

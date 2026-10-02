@@ -105,6 +105,79 @@ export function normalizeVehicle(raw: any): Vehicle {
 }
 
 export const vehiclesService = {
+  getPaginated: async (
+    filters?: VehicleFilters,
+  ): Promise<{ data: Vehicle[]; meta: { page: number; limit: number; total: number; totalPages: number } }> => {
+    if (USE_MOCK) {
+      const q = (filters?.search || '').trim().toLowerCase();
+      let list = vehiclesMock;
+      if (q) {
+        list = list.filter((v) =>
+          [v.brand, v.model, v.variant, v.slug].join(' ').toLowerCase().includes(q),
+        );
+      }
+      if (filters?.brand) {
+        list = list.filter((v) => v.brandSlug === filters.brand);
+      }
+      const page = Number(filters?.page) || 1;
+      const limit = Number(filters?.limit) || 16;
+      const start = (page - 1) * limit;
+      const data = list.slice(start, start + limit);
+      return {
+        data,
+        meta: {
+          page,
+          limit,
+          total: list.length,
+          totalPages: Math.max(1, Math.ceil(list.length / limit)),
+        },
+      };
+    }
+
+    const params: Record<string, any> = {
+      page: filters?.page || 1,
+      limit: filters?.limit || 16,
+    };
+
+    if (filters?.search) params.search = filters.search;
+    if (filters?.brand) params.brandSlug = filters.brand;
+    if (filters?.bodyType) params.bodyType = filters.bodyType;
+    if (filters?.fuelType) params.fuelType = filters.fuelType;
+    if (filters?.transmission) params.transmissionType = filters.transmission;
+    if (filters?.seats) params.seats = filters.seats;
+    if (filters?.minPrice) params.priceMin = filters.minPrice;
+    if (filters?.maxPrice) params.priceMax = filters.maxPrice;
+
+    if (filters?.sortBy === 'price-low') {
+      params.sortBy = 'price';
+      params.sortOrder = 'asc';
+    } else if (filters?.sortBy === 'price-high') {
+      params.sortBy = 'price';
+      params.sortOrder = 'desc';
+    } else if (filters?.sortBy === 'newest') {
+      params.sortBy = 'modelYear';
+      params.sortOrder = 'desc';
+    } else if (filters?.sortBy === 'popular') {
+      params.sortBy = 'createdAt';
+      params.sortOrder = 'desc';
+    }
+
+    const res = await api.get<{
+      data: any[];
+      meta?: { page: number; limit: number; total: number; totalPages: number };
+    }>('/api/v1/vehicles', params);
+
+    const vehicles = (res.data || []).map(normalizeVehicle);
+    const meta = res.meta || {
+      page: Number(filters?.page) || 1,
+      limit: Number(filters?.limit) || 16,
+      total: vehicles.length,
+      totalPages: 1,
+    };
+
+    return { data: vehicles, meta };
+  },
+
   getAll: async (filters?: VehicleFilters): Promise<Vehicle[]> => {
     if (USE_MOCK) {
       const q = (filters?.search || '').trim().toLowerCase();

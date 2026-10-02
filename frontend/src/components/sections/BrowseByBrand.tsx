@@ -180,82 +180,103 @@ export default function BrowseByBrand() {
           <ChevronLeft size={20} />
         </button>
 
-        <div className={styles.brandsGrid}>
-          {loading && activeTab === 'makes' ? (
-            <div style={{ padding: '40px 0', color: 'var(--muted)', gridColumn: '1 / -1', textAlign: 'center' }}>
-              Loading brands...
-            </div>
-          ) : visibleItems.length > 0 ? (
-            activeTab === 'makes' ? (
-              (visibleItems as Brand[]).map((brand) => (
-                <Link
-                  key={brand._id}
-                  href={`/brands/${brand.slug}`}
-                  className={styles.brand}
-                >
-                  <div className={styles.brandLogoBox}>
-                    <img
-                      src={getBrandLogoUrl(brand.slug, brand.name)}
-                      alt={brand.name}
-                      className={styles.brandLogoImg}
-                      onError={(e) => {
-                        (e.target as HTMLElement).style.display = 'none';
-                      }}
-                    />
+        <div className={styles.carouselTrackWrapper}>
+          <div
+            className={styles.carouselTrack}
+            style={{
+              transform: `translateX(-${currentPage * 100}%)`,
+            }}
+          >
+            {loading && activeTab === 'makes' ? (
+              <div className={styles.brandsGrid}>
+                <div style={{ padding: '40px 0', color: 'var(--muted)', gridColumn: '1 / -1', textAlign: 'center' }}>
+                  Loading brands...
+                </div>
+              </div>
+            ) : totalItems.length > 0 ? (
+              Array.from({ length: totalPages }).map((_, pageIdx) => {
+                const pageItems = totalItems.slice(
+                  pageIdx * CARDS_PER_PAGE,
+                  (pageIdx + 1) * CARDS_PER_PAGE
+                );
+                return (
+                  <div key={pageIdx} className={styles.brandsGrid}>
+                    {activeTab === 'makes' ? (
+                      (pageItems as Brand[]).map((brand) => (
+                        <Link
+                          key={brand._id}
+                          href={`/brands/${brand.slug}`}
+                          className={styles.brand}
+                        >
+                          <div className={styles.brandLogoBox}>
+                            <img
+                              src={getBrandLogoUrl(brand.slug, brand.name)}
+                              alt={brand.name}
+                              className={styles.brandLogoImg}
+                              onError={(e) => {
+                                (e.target as HTMLElement).style.display = 'none';
+                              }}
+                            />
+                          </div>
+                          <span className={styles.brandNameText}>{brand.name}</span>
+                        </Link>
+                      ))
+                    ) : activeTab === 'bodyTypes' ? (
+                      (pageItems as typeof BODY_TYPES_LIST).map((item) => (
+                        <Link
+                          key={item.name}
+                          href={`/new-cars?${item.query}`}
+                          className={styles.brand}
+                        >
+                          <div className={styles.bodyTypeSvgBox}>{item.icon}</div>
+                          <span className={styles.brandNameText}>{item.name}</span>
+                        </Link>
+                      ))
+                    ) : activeTab === 'budget' ? (
+                      (pageItems as typeof BUDGET_LIST).map((item) => (
+                        <Link
+                          key={item.name}
+                          href={`/new-cars?${item.query}`}
+                          className={styles.brand}
+                        >
+                          <div className={styles.brandIconBox}>{item.icon}</div>
+                          <span className={styles.brandNameText}>{item.name}</span>
+                        </Link>
+                      ))
+                    ) : activeTab === 'fuel' ? (
+                      (pageItems as typeof FUEL_LIST).map((item) => (
+                        <Link
+                          key={item.name}
+                          href={`/new-cars?${item.query}`}
+                          className={styles.brand}
+                        >
+                          <div className={styles.brandIconBox}>{item.icon}</div>
+                          <span className={styles.brandNameText}>{item.name}</span>
+                        </Link>
+                      ))
+                    ) : (
+                      (pageItems as typeof SEATS_LIST).map((item) => (
+                        <Link
+                          key={item.name}
+                          href={`/new-cars?${item.query}`}
+                          className={styles.brand}
+                        >
+                          <div className={styles.brandIconBox}>{item.icon}</div>
+                          <span className={styles.brandNameText}>{item.name}</span>
+                        </Link>
+                      ))
+                    )}
                   </div>
-                  <span className={styles.brandNameText}>{brand.name}</span>
-                </Link>
-              ))
-            ) : activeTab === 'bodyTypes' ? (
-              (visibleItems as typeof BODY_TYPES_LIST).map((item) => (
-                <Link
-                  key={item.name}
-                  href={`/new-cars?${item.query}`}
-                  className={styles.brand}
-                >
-                  <div className={styles.bodyTypeSvgBox}>{item.icon}</div>
-                  <span className={styles.brandNameText}>{item.name}</span>
-                </Link>
-              ))
-            ) : activeTab === 'budget' ? (
-              (visibleItems as typeof BUDGET_LIST).map((item) => (
-                <Link
-                  key={item.name}
-                  href={`/new-cars?${item.query}`}
-                  className={styles.brand}
-                >
-                  <div className={styles.brandIconBox}>{item.icon}</div>
-                  <span className={styles.brandNameText}>{item.name}</span>
-                </Link>
-              ))
-            ) : activeTab === 'fuel' ? (
-              (visibleItems as typeof FUEL_LIST).map((item) => (
-                <Link
-                  key={item.name}
-                  href={`/new-cars?${item.query}`}
-                  className={styles.brand}
-                >
-                  <div className={styles.brandIconBox}>{item.icon}</div>
-                  <span className={styles.brandNameText}>{item.name}</span>
-                </Link>
-              ))
+                );
+              })
             ) : (
-              (visibleItems as typeof SEATS_LIST).map((item) => (
-                <Link
-                  key={item.name}
-                  href={`/new-cars?${item.query}`}
-                  className={styles.brand}
-                >
-                  <div className={styles.brandIconBox}>{item.icon}</div>
-                  <span className={styles.brandNameText}>{item.name}</span>
-                </Link>
-              ))
-            )
-          ) : (
-            <div style={{ padding: '40px 0', color: 'var(--muted)', gridColumn: '1 / -1', textAlign: 'center' }}>
-              No items available.
-            </div>
-          )}
+              <div className={styles.brandsGrid}>
+                <div style={{ padding: '40px 0', color: 'var(--muted)', gridColumn: '1 / -1', textAlign: 'center' }}>
+                  No items available.
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         <button

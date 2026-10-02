@@ -148,25 +148,47 @@
   position: relative;
 }
 
-.searchBtn {
-  width: 36px;
+.browsingBadge {
   height: 36px;
+  padding: 0 10px;
+  border-radius: var(--radius-md);
+  background: var(--mist);
   border: 1px solid var(--line);
-  border-radius: 50%;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--petrol);
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  color: var(--text);
-  transition: all var(--transition-fast);
-  background: transparent;
-  cursor: pointer;
+  gap: 5px;
+  white-space: nowrap;
+  user-select: none;
   box-sizing: border-box;
 }
 
-.searchBtn:hover {
-  border-color: var(--petrol);
-  color: var(--petrol);
-  background: var(--mist);
+.pulseDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #ef4444;
+  display: inline-block;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  animation: pulseDotAnim 2s infinite;
+}
+
+@keyframes pulseDotAnim {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 5px rgba(239, 68, 68, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
 }
 
 .marketWrapper {
@@ -311,96 +333,7 @@
   cursor: pointer;
 }
 
-/* Search Overlay Modal */
-.searchModalOverlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(7, 40, 48, 0.6);
-  backdrop-filter: blur(4px);
-  z-index: 250;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 80px 20px 20px;
-  animation: fadeIn 0.2s ease;
-}
 
-.searchModal {
-  width: 100%;
-  max-width: 620px;
-  background: var(--white);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-xl);
-  overflow: hidden;
-  animation: fadeInUp 0.3s ease;
-}
-
-.searchModalHeader {
-  display: flex;
-  align-items: center;
-  padding: 18px 20px;
-  gap: 12px;
-  border-bottom: 1px solid var(--line);
-}
-
-.searchModalInput {
-  flex: 1;
-  border: none;
-  outline: none;
-  font-size: 16px;
-  color: var(--text);
-  background: transparent;
-}
-
-.searchModalClose {
-  color: var(--muted);
-  cursor: pointer;
-  background: none;
-  border: none;
-  display: grid;
-  place-items: center;
-}
-
-.searchModalClose:hover {
-  color: var(--deep);
-}
-
-.searchModalSuggestions {
-  padding: 18px 20px;
-}
-
-.searchModalSectionTitle {
-  font-size: 11px;
-  font-weight: 800;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 10px;
-}
-
-.searchModalChips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.searchModalChip {
-  padding: 6px 12px;
-  border-radius: var(--radius-full);
-  background: var(--mist);
-  color: var(--petrol);
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  border: 1px solid var(--line);
-  transition: all var(--transition-fast);
-}
-
-.searchModalChip:hover {
-  background: var(--petrol);
-  color: var(--white);
-  border-color: var(--petrol);
-}
 
 /* Mobile menu overlay */
 .mobileOverlay {

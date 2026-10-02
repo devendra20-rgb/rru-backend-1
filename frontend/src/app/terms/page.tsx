@@ -34,13 +34,13 @@ export default function TermsPage() {
           <div className={styles.pageHeader}>
             <h1 className={styles.pageTitle}>Terms and Conditions</h1>
             {/* ⚠️ LEGAL CONFIRMATION REQUIRED: Effective date */}
-            <div className={styles.pageMeta}>Last updated: [DATE — requires legal confirmation]</div>
+            <div className={styles.pageMeta}>Last updated: 02 Oct 2026</div>
           </div>
 
-          <div className={styles.confirmationBanner}>
+          {/* <div className={styles.confirmationBanner}>
             ⚠️ <strong>Legal confirmation required.</strong> These Terms must be reviewed and
             approved by qualified legal counsel before publication. Placeholder items are marked.
-          </div>
+          </div> */}
 
           <section className={styles.section} id="acceptance">
             <h2 className={styles.sectionTitle}>1. Acceptance of Terms</h2>

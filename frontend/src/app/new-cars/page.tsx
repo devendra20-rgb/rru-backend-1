@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useMemo, useEffect, Suspense } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ChevronRight, SlidersHorizontal, Search, LayoutGrid, List } from 'lucide-react';
+import { ChevronRight, SlidersHorizontal, Search, LayoutGrid, List, Loader2 } from 'lucide-react';
 import { vehiclesService } from '@/services/vehicles.service';
 import { brandsService } from '@/services/brands.service';
 import type { Vehicle } from '@/types/vehicle';
@@ -42,6 +42,10 @@ function NewCarsContent() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalVehicles, setTotalVehicles] = useState(0);
 
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedBrand, setSelectedBrand] = useState<string>('');
@@ -55,28 +59,167 @@ function NewCarsContent() {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'model' | 'variant'>('model');
 
+  // Sync refs for observer callbacks & strict concurrency guards
+  const isFetchingRef = useRef(false);
+  const pageRef = useRef(1);
+  const totalPagesRef = useRef(1);
+
+  // Load brands list once on mount for filter dropdown
+  useEffect(() => {
+    brandsService.getAll().then(setBrands).catch(console.error);
+  }, []);
+
+  // Server-side paginated fetch on filter / search / sort change (Page 1)
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
+    setPage(1);
+    pageRef.current = 1;
+    isFetchingRef.current = true;
 
-    Promise.all([
-      vehiclesService.getAllPages(),
-      brandsService.getAll(),
-    ])
-      .then(([vList, brandList]) => {
-        if (cancelled) return;
-        setVehicles(vList);
-        setBrands(brandList);
-        setLoading(false);
+    const activeBodyType = selectedBodyTypes[0] || '';
+    const activeFuelType = selectedFuelTypes[0] || '';
+
+    vehiclesService
+      .getPaginated({
+        page: 1,
+        limit: 16,
+        search: searchQuery,
+        brand: selectedBrand,
+        bodyType: activeBodyType,
+        fuelType: activeFuelType,
+        transmission: selectedTransmission,
+        seats: selectedSeats ? parseInt(selectedSeats, 10) : undefined,
+        minPrice: minPrice ? Number(minPrice) : undefined,
+        maxPrice: maxPrice ? Number(maxPrice) : undefined,
+        sortBy,
       })
-      .catch(() => {
-        if (!cancelled) setLoading(false);
+      .then(({ data, meta }) => {
+        if (cancelled) return;
+        setVehicles(data);
+        const tPages = meta.totalPages || 1;
+        setTotalPages(tPages);
+        totalPagesRef.current = tPages;
+        setTotalVehicles(meta.total || data.length);
+        setLoading(false);
+        setTimeout(() => {
+          isFetchingRef.current = false;
+        }, 200);
+      })
+      .catch((err) => {
+        console.error('Failed to load page 1 vehicles:', err);
+        if (!cancelled) {
+          setLoading(false);
+          isFetchingRef.current = false;
+        }
       });
 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [
+    searchQuery,
+    selectedBrand,
+    selectedBodyTypes,
+    selectedFuelTypes,
+    selectedTransmission,
+    selectedSeats,
+    minPrice,
+    maxPrice,
+    sortBy,
+  ]);
+
+  // Load next page function with lock guard
+  const loadNextPage = useCallback(async () => {
+    if (isFetchingRef.current || loading || pageRef.current >= totalPagesRef.current) {
+      return;
+    }
+    isFetchingRef.current = true;
+    setLoadingMore(true);
+
+    const nextPage = pageRef.current + 1;
+    const activeBodyType = selectedBodyTypes[0] || '';
+    const activeFuelType = selectedFuelTypes[0] || '';
+
+    try {
+      const { data, meta } = await vehiclesService.getPaginated({
+        page: nextPage,
+        limit: 16,
+        search: searchQuery,
+        brand: selectedBrand,
+        bodyType: activeBodyType,
+        fuelType: activeFuelType,
+        transmission: selectedTransmission,
+        seats: selectedSeats ? parseInt(selectedSeats, 10) : undefined,
+        minPrice: minPrice ? Number(minPrice) : undefined,
+        maxPrice: maxPrice ? Number(maxPrice) : undefined,
+        sortBy,
+      });
+
+      setVehicles((prev) => {
+        const existingIds = new Set(prev.map((v) => v._id));
+        const newItems = data.filter((v) => !existingIds.has(v._id));
+        return [...prev, ...newItems];
+      });
+      setPage(nextPage);
+      pageRef.current = nextPage;
+
+      const tPages = meta.totalPages || 1;
+      setTotalPages(tPages);
+      totalPagesRef.current = tPages;
+      setTotalVehicles(meta.total || 0);
+    } catch (err) {
+      console.error('Failed to load next page:', err);
+    } finally {
+      setLoadingMore(false);
+      setTimeout(() => {
+        isFetchingRef.current = false;
+      }, 300);
+    }
+  }, [
+    loading,
+    searchQuery,
+    selectedBrand,
+    selectedBodyTypes,
+    selectedFuelTypes,
+    selectedTransmission,
+    selectedSeats,
+    minPrice,
+    maxPrice,
+    sortBy,
+  ]);
+
+  // Infinite Scroll Observer on bottom sentinel with rootMargin tuning
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const sentinelRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+        observerRef.current = null;
+      }
+      if (!node) return;
+
+      observerRef.current = new IntersectionObserver(
+        (entries) => {
+          if (
+            entries[0].isIntersecting &&
+            !isFetchingRef.current &&
+            !loading &&
+            !loadingMore &&
+            pageRef.current < totalPagesRef.current
+          ) {
+            loadNextPage();
+          }
+        },
+        {
+          rootMargin: '0px 0px 200px 0px',
+          threshold: 0,
+        },
+      );
+      observerRef.current.observe(node);
+    },
+    [loading, loadingMore, loadNextPage],
+  );
 
   // Initialize filters from URL query parameters
   useEffect(() => {
@@ -486,7 +629,7 @@ function NewCarsContent() {
 
           <div className={styles.resultsHeader}>
             <div className={styles.resultsCount}>
-              Showing <strong>{modelGroups.length}</strong> models ({filteredVehicles.length} variants)
+              Showing <strong>{modelGroups.length}</strong> models ({filteredVehicles.length}{totalVehicles > 0 ? ` of ${totalVehicles}` : ''} variants)
             </div>
             <div className={styles.resultsControls}>
               <div className={styles.viewModeToggle}>
@@ -552,6 +695,28 @@ function NewCarsContent() {
               </div>
             )}
           </div>
+
+          {/* Sentinel & Infinite Scroll Loader / End of List Indicator */}
+          {!loading && vehicles.length > 0 && (
+            page < totalPages ? (
+              <div ref={sentinelRef} className={styles.infiniteScrollSentinel}>
+                {loadingMore ? (
+                  <div className={styles.infiniteScrollLoader}>
+                    <div className={styles.infiniteScrollSpinner} />
+                    <span>Loading more cars…</span>
+                  </div>
+                ) : (
+                  <div className={styles.infiniteScrollHint}>
+                    <span>Scroll down to load more cars</span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className={styles.endOfList}>
+                ✓ You&apos;ve reached the end — Showing all {totalVehicles || vehicles.length} available cars
+              </div>
+            )
+          )}
         </div>
       </div>
     </div>

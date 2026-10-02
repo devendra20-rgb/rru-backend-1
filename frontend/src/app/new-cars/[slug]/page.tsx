@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import {
@@ -61,6 +61,15 @@ export default function VehicleDetailPage() {
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [allVehicles, setAllVehicles] = useState<Vehicle[]>([]);
   const [modelVariants, setModelVariants] = useState<Vehicle[]>([]);
+  const [variantPage, setVariantPage] = useState(1);
+  const [variantTotalPages, setVariantTotalPages] = useState(1);
+  const [totalVariantsCount, setTotalVariantsCount] = useState(0);
+  const [loadingMoreVariants, setLoadingMoreVariants] = useState(false);
+
+  const isFetchingVariantsRef = useRef(false);
+  const variantPageRef = useRef(1);
+  const variantTotalPagesRef = useRef(1);
+
   const [cost, setCost] = useState<CostToOwnBreakdown | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<VdpTab>('overview');
@@ -73,6 +82,81 @@ export default function VehicleDetailPage() {
 
   const [variantLoading, setVariantLoading] = useState(false);
   const [activeVariantSlug, setActiveVariantSlug] = useState<string | null>(null);
+
+  const loadNextVariantPage = useCallback(async () => {
+    if (
+      isFetchingVariantsRef.current ||
+      !vehicle ||
+      variantPageRef.current >= variantTotalPagesRef.current
+    ) {
+      return;
+    }
+    isFetchingVariantsRef.current = true;
+    setLoadingMoreVariants(true);
+
+    const nextPage = variantPageRef.current + 1;
+    try {
+      const { data, meta } = await vehiclesService.getPaginated({
+        page: nextPage,
+        limit: 16,
+        brand: vehicle.brandSlug,
+        search: vehicle.model,
+      });
+
+      setModelVariants((prev) => {
+        const existingIds = new Set(prev.map((v) => v._id));
+        const existingSlugs = new Set(prev.map((v) => v.slug));
+        const newItems = data.filter(
+          (v) => !existingIds.has(v._id) && !existingSlugs.has(v.slug),
+        );
+        return [...prev, ...newItems];
+      });
+
+      setVariantPage(nextPage);
+      variantPageRef.current = nextPage;
+      const tPages = meta.totalPages || 1;
+      setVariantTotalPages(tPages);
+      variantTotalPagesRef.current = tPages;
+      setTotalVariantsCount(meta.total || 0);
+    } catch (err) {
+      console.error('Failed to load next variant batch:', err);
+    } finally {
+      setLoadingMoreVariants(false);
+      setTimeout(() => {
+        isFetchingVariantsRef.current = false;
+      }, 300);
+    }
+  }, [vehicle]);
+
+  const variantObserverRef = useRef<IntersectionObserver | null>(null);
+  const variantSentinelRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (variantObserverRef.current) {
+        variantObserverRef.current.disconnect();
+        variantObserverRef.current = null;
+      }
+      if (!node) return;
+
+      variantObserverRef.current = new IntersectionObserver(
+        (entries) => {
+          if (
+            entries[0].isIntersecting &&
+            !isFetchingVariantsRef.current &&
+            !loadingMoreVariants &&
+            variantPageRef.current < variantTotalPagesRef.current
+          ) {
+            loadNextVariantPage();
+          }
+        },
+        {
+          rootMargin: '0px 0px 150px 0px',
+          threshold: 0,
+        },
+      );
+      variantObserverRef.current.observe(node);
+    },
+    [loadingMoreVariants, loadNextVariantPage],
+  );
 
   useEffect(() => {
     if (!slug) return;
@@ -140,23 +224,32 @@ export default function VehicleDetailPage() {
             setCost(null);
           }
 
-          // Fetch all vehicles to extract variants for this specific model if not already populated
+          // Fetch variants for this model in paginated batches (batch size 16)
           if (modelVariants.length <= 1) {
-            vehiclesService.getAllPages().then((list) => {
-              if (cancelled) return;
-              setAllVehicles(list);
-              const matches = list.filter(
-                (item) =>
-                  (item.brandSlug === v.brandSlug || item.brand.toLowerCase() === v.brand.toLowerCase()) &&
-                  (item.modelSlug === v.modelSlug || item.model.toLowerCase() === v.model.toLowerCase()),
-              );
-              if (matches.length > 0) {
-                matches.sort((a, b) => (a.priceFrom || 0) - (b.priceFrom || 0));
-                setModelVariants(matches);
-              } else {
-                setModelVariants([v]);
-              }
-            }).catch(console.error);
+            vehiclesService
+              .getPaginated({
+                page: 1,
+                limit: 16,
+                brand: v.brandSlug,
+                search: v.model,
+              })
+              .then(({ data, meta }) => {
+                if (cancelled) return;
+                const hasCurrent = data.some((item) => item.slug === v.slug || item._id === v._id);
+                const initialVariants = hasCurrent ? data : [v, ...data];
+                initialVariants.sort((a, b) => (a.priceFrom || 0) - (b.priceFrom || 0));
+                setModelVariants(initialVariants);
+                const tPages = meta.totalPages || 1;
+                setVariantPage(1);
+                variantPageRef.current = 1;
+                setVariantTotalPages(tPages);
+                variantTotalPagesRef.current = tPages;
+                setTotalVariantsCount(meta.total || initialVariants.length);
+              })
+              .catch((err) => {
+                console.error('Failed to fetch variants batch 1:', err);
+                if (!cancelled) setModelVariants([v]);
+              });
           }
         } else {
           setVehicle(null);
@@ -591,7 +684,7 @@ export default function VehicleDetailPage() {
             <div className={styles.variantSwitcherBox}>
               <div className={styles.variantSwitcherHeader}>
                 <span className={styles.variantSwitcherTitle}>
-                  <Layers size={13} /> Select Trim / Variant ({modelVariants.length})
+                  <Layers size={13} /> Select Trim / Variant ({totalVariantsCount || modelVariants.length})
                 </span>
                 <span className={styles.variantSwitcherHint}>
                   {variantLoading ? 'Syncing features & media...' : 'All specs update live below'}
@@ -620,6 +713,24 @@ export default function VehicleDetailPage() {
                     </button>
                   );
                 })}
+              </div>
+
+              {/* Variant Pagination Footer States */}
+              <div ref={variantSentinelRef} className={styles.variantSentinel}>
+                {loadingMoreVariants ? (
+                  <div className={styles.variantLoader}>
+                    <div className={styles.variantSpinner} />
+                    <span>Loading more variants…</span>
+                  </div>
+                ) : variantPage < variantTotalPages ? (
+                  <div className={styles.variantHint}>
+                    <span>Scroll down to load more variants</span>
+                  </div>
+                ) : (
+                  <div className={styles.variantEnd}>
+                    ✓ Showing all {totalVariantsCount || modelVariants.length} variants
+                  </div>
+                )}
               </div>
             </div>
           )}

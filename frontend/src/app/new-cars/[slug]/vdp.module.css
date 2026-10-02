@@ -388,6 +388,54 @@
   cursor: wait;
 }
 
+/* --- Variant Pagination Footer States --- */
+.variantSentinel {
+  width: 100%;
+  padding: 8px 0 2px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 8px;
+  border-top: 1px dashed rgba(13, 59, 73, 0.1);
+}
+
+.variantLoader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--petrol);
+}
+
+.variantSpinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--line);
+  border-top-color: var(--petrol);
+  border-radius: 50%;
+  animation: variantSpin 0.8s linear infinite;
+}
+
+@keyframes variantSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.variantHint {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.2px;
+}
+
+.variantEnd {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
 /* Key specs strip */
 .specsStrip {
   display: grid;
