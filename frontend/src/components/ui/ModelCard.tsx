@@ -122,14 +122,14 @@ export default function ModelCard({ modelGroup }: ModelCardProps) {
               </span>
               <span className={styles.receiptPrice}>{priceDisplay()}</span>
             </div>
-            {modelGroup.minMonthlyCost > 0 && (
-              <div className={styles.receiptRow}>
-                <span className={styles.receiptLabel}>Est. Monthly Ownership</span>
-                <span className={styles.receiptMonthly}>
-                  from {formatPrice(modelGroup.minMonthlyCost)}/mo
-                </span>
-              </div>
-            )}
+            <div className={styles.receiptRow}>
+              <span className={styles.receiptLabel}>Est. Monthly Ownership</span>
+              <span className={styles.receiptMonthly}>
+                {modelGroup.minMonthlyCost > 0
+                  ? `from ${formatPrice(modelGroup.minMonthlyCost)}/mo`
+                  : 'On Request'}
+              </span>
+            </div>
           </div>
 
           {/* Action Footer */}

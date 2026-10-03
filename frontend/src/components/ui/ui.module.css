@@ -13,6 +13,7 @@
   color: inherit;
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
 
 .vehicleCard:hover {
@@ -24,7 +25,7 @@
   width: 100%;
   aspect-ratio: 16 / 9;
   height: auto;
-  background: #ffffff;
+  background: #f8fafc;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -76,12 +77,18 @@
   font-weight: 800;
   color: var(--deep);
   line-height: 1.15;
+  min-height: 2.3em;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .vehicleCardVariant {
   font-size: var(--font-size-sm);
   color: var(--muted);
   margin-bottom: 4px;
+  min-height: 1.3em;
 }
 
 .vehicleCardMeta {
@@ -89,6 +96,7 @@
   color: var(--muted);
   line-height: 1.4;
   margin-bottom: auto;
+  min-height: 1.4em;
 }
 
 .vehicleCardReceipt {

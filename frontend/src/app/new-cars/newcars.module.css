@@ -258,24 +258,81 @@
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
 
-.resultsSortSelect {
-  padding: 7px 30px 7px 12px;
+.customSortDropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.sortTriggerBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text);
   background: var(--white);
-  outline: none;
   cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2366777D' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
+  transition: all var(--transition-fast);
 }
 
-.resultsSortSelect:focus {
+.sortTriggerBtn:hover {
   border-color: var(--petrol);
+  background: #f8fafc;
+}
+
+.sortChevron {
+  transition: transform 0.2s ease;
+  color: var(--muted);
+}
+
+.sortChevronRotate {
+  transform: rotate(180deg);
+  color: var(--petrol);
+}
+
+.sortMenuOverlay {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 220px;
+  background: var(--white);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  padding: 6px;
+  z-index: 100;
+  animation: fadeIn 0.18s ease;
+}
+
+.sortMenuItem {
+  width: 100%;
+  text-align: left;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sortMenuItem:hover {
+  background: rgba(13, 59, 73, 0.05);
+  color: var(--petrol);
+}
+
+.sortMenuItemActive {
+  background: rgba(13, 59, 73, 0.08);
+  color: var(--petrol);
+  font-weight: 800;
 }
 
 /* --- Results Grid --- */

@@ -26,6 +26,10 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
     }
   };
 
+  const displayModelName = vehicle.model.toLowerCase().startsWith(vehicle.brand.toLowerCase())
+    ? vehicle.model
+    : `${vehicle.brand} ${vehicle.model}`;
+
   return (
     <Link href={`/new-cars/${vehicle.slug}`} className={styles.vehicleCard}>
       <div className={styles.vehicleCardImg}>
@@ -59,7 +63,7 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
       <div className={styles.vehicleCardInfo}>
         <div className={styles.vehicleCardBrand}>{vehicle.brand}</div>
         <h3 className={styles.vehicleCardName}>
-          {vehicle.brand} {vehicle.model}
+          {displayModelName}
         </h3>
         <div className={styles.vehicleCardVariant}>{vehicle.variant}</div>
         <div className={styles.vehicleCardMeta}>

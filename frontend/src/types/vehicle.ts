@@ -132,6 +132,7 @@ export interface VehicleFilters {
   search?: string;
   sort?: string;
   sortBy?: string;
+  status?: string;
   page?: number;
   limit?: number;
 }

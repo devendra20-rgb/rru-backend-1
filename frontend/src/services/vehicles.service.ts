@@ -147,6 +147,7 @@ export const vehiclesService = {
     if (filters?.seats) params.seats = filters.seats;
     if (filters?.minPrice) params.priceMin = filters.minPrice;
     if (filters?.maxPrice) params.priceMax = filters.maxPrice;
+    if (filters?.status) params.availabilityStatus = filters.status;
 
     if (filters?.sortBy === 'price-low') {
       params.sortBy = 'price';

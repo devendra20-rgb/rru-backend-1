@@ -10,6 +10,7 @@
   transition: all var(--transition-base);
   display: flex;
   flex-direction: column;
+  height: 100%;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
@@ -21,13 +22,15 @@
 .cardHeader {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  height: 100%;
 }
 
 .imageContainer {
   width: 100%;
   aspect-ratio: 16 / 9;
   height: auto;
-  background: #ffffff;
+  background: #f8fafc;
   position: relative;
   overflow: hidden;
   display: flex;
@@ -49,6 +52,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: #f1f5f9;
 }
 
 .badgeGroup {
@@ -132,6 +138,11 @@
   font-weight: 800;
   color: var(--deep);
   line-height: 1.2;
+  min-height: 2.4em;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .modelName a {
@@ -152,6 +163,7 @@
   color: var(--muted);
   margin-bottom: 12px;
   flex-wrap: wrap;
+  min-height: 18px;
 }
 
 /* Variant Pills */

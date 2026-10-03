@@ -15,7 +15,6 @@ export const AI_BOT_NAME = 'RideIQ';
 export const NAV_LINKS = [
   { label: 'Home', href: '/' },
   { label: 'Explore Cars', href: '/new-cars' },
-  { label: 'Brands', href: '/brands' },
   { label: 'Compare', href: '/compare' },
   { label: 'News & Blogs', href: '/news' },
   { label: 'Ask RideIQ', href: '/ai-assistant', isHighlighted: true },

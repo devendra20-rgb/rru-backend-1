@@ -24,7 +24,9 @@ export default function Navbar() {
   const [mobileMarketOpen, setMobileMarketOpen] = useState(false);
   const [selectedEmirate, setSelectedEmirate] = useState('Dubai');
   const [visitorCount, setVisitorCount] = useState(128);
+  const [exploreOpen, setExploreOpen] = useState(false);
   const marketRef = useRef<HTMLDivElement>(null);
+  const exploreRef = useRef<HTMLDivElement>(null);
 
   // Simulated visitor count fluctuation between 118 and 146 every 3-7 seconds
   useEffect(() => {
@@ -67,6 +69,9 @@ export default function Navbar() {
       if (marketRef.current && !marketRef.current.contains(event.target as Node)) {
         setMarketOpen(false);
       }
+      if (exploreRef.current && !exploreRef.current.contains(event.target as Node)) {
+        setExploreOpen(false);
+      }
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -92,6 +97,151 @@ export default function Navbar() {
           {NAV_LINKS.map((link) => {
             const isHighlighted = 'isHighlighted' in link && link.isHighlighted;
             const isActive = pathname === link.href;
+
+            if (link.label === 'Explore Cars') {
+              return (
+                <div
+                  key={link.href}
+                  className={styles.exploreWrapper}
+                  ref={exploreRef}
+                  onMouseEnter={() => setExploreOpen(true)}
+                  onMouseLeave={() => setExploreOpen(false)}
+                >
+                  <Link
+                    href={link.href}
+                    className={cn(
+                      styles.navLink,
+                      styles.exploreTrigger,
+                      (isActive || exploreOpen) && styles.navLinkActive,
+                    )}
+                    onClick={() => setExploreOpen(false)}
+                  >
+                    <span>{link.label}</span>
+                    <ChevronDown
+                      size={13}
+                      className={cn(styles.chevronIcon, exploreOpen && styles.chevronRotate)}
+                    />
+                  </Link>
+
+                  {exploreOpen && (
+                    <div className={styles.megaMenu}>
+                      <div className={styles.megaMenuGrid}>
+                        <div className={styles.megaCol}>
+                          <div className={styles.megaHeading}>Browse & Discover</div>
+                          <Link
+                            href="/new-cars"
+                            className={styles.megaItem}
+                            onClick={() => setExploreOpen(false)}
+                          >
+                            <div className={styles.megaIconBox}>🚗</div>
+                            <div>
+                              <div className={styles.megaTitle}>All New Cars 2026</div>
+                              <div className={styles.megaDesc}>
+                                Filter 140+ models by specs, price & fuel
+                              </div>
+                            </div>
+                          </Link>
+
+                          <Link
+                            href="/new-cars?status=upcoming"
+                            className={styles.megaItem}
+                            onClick={() => setExploreOpen(false)}
+                          >
+                            <div className={styles.megaIconBox}>🔮</div>
+                            <div>
+                              <div className={styles.megaTitle}>
+                                Upcoming Launches <span className={styles.newBadge}>Hot</span>
+                              </div>
+                              <div className={styles.megaDesc}>
+                                Future models coming soon to UAE
+                              </div>
+                            </div>
+                          </Link>
+
+                          <Link
+                            href="/brands"
+                            className={styles.megaItem}
+                            onClick={() => setExploreOpen(false)}
+                          >
+                            <div className={styles.megaIconBox}>🏭</div>
+                            <div>
+                              <div className={styles.megaTitle}>Browse by Brand</div>
+                              <div className={styles.megaDesc}>
+                                Toyota, BMW, Nissan, Mercedes & more
+                              </div>
+                            </div>
+                          </Link>
+                        </div>
+
+                        <div className={styles.megaCol}>
+                          <div className={styles.megaHeading}>By Lifestyle</div>
+                          <Link
+                            href="/new-cars?bodyType=SUV&seats=7"
+                            className={styles.megaSubItem}
+                            onClick={() => setExploreOpen(false)}
+                          >
+                            <span>🚙 7-Seater Family SUVs</span>
+                            <span className={styles.countBadge}>18 models</span>
+                          </Link>
+                          <Link
+                            href="/new-cars?fuelType=Electric"
+                            className={styles.megaSubItem}
+                            onClick={() => setExploreOpen(false)}
+                          >
+                            <span>⚡ Electric & Hybrid (EV)</span>
+                            <span className={styles.countBadge}>24 models</span>
+                          </Link>
+                          <Link
+                            href="/new-cars?maxPrice=100000"
+                            className={styles.megaSubItem}
+                            onClick={() => setExploreOpen(false)}
+                          >
+                            <span>💰 Cars Under AED 100k</span>
+                            <span className={styles.countBadge}>32 models</span>
+                          </Link>
+                          <Link
+                            href="/new-cars?minPrice=250000"
+                            className={styles.megaSubItem}
+                            onClick={() => setExploreOpen(false)}
+                          >
+                            <span>🚀 Performance & Luxury</span>
+                            <span className={styles.countBadge}>15 models</span>
+                          </Link>
+                        </div>
+
+                        <div className={styles.megaColFeatured}>
+                          <div className={styles.megaHeading}>Smart Tools</div>
+                          <Link
+                            href="/car-matchmaker"
+                            className={styles.featuredCard}
+                            onClick={() => setExploreOpen(false)}
+                          >
+                            <div className={styles.featuredBadge}>AI Quiz</div>
+                            <div className={styles.featuredTitle}>🎯 Car Matchmaker</div>
+                            <div className={styles.featuredText}>
+                              Answer 3 quick questions to discover your ideal car match in UAE.
+                            </div>
+                          </Link>
+
+                          <Link
+                            href="/cost-to-own"
+                            className={styles.featuredCardSecondary}
+                            onClick={() => setExploreOpen(false)}
+                          >
+                            <div className={styles.featuredTitleSec}>
+                              💰 Cost-to-Own Calculator
+                            </div>
+                            <div className={styles.featuredTextSec}>
+                              Know true 5-year running costs: insurance, fuel, servicing.
+                            </div>
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            }
 
             if (isHighlighted) {
               return (
@@ -129,7 +279,7 @@ export default function Navbar() {
             id="browsing-indicator"
           >
             <span className={styles.pulseDot} />
-            <span>{visitorCount} browsing</span>
+            <span>{visitorCount} active users</span>
           </div>
 
           {/* Market Selector */}
@@ -246,7 +396,7 @@ export default function Navbar() {
               {/* Browsing Badge inside mobile drawer */}
               <div className={styles.mobileBrowsingBadge}>
                 <span className={styles.pulseDot} />
-                <span>{visitorCount} shoppers browsing live</span>
+                <span>{visitorCount} active users</span>
               </div>
 
               {/* Location Selector inside mobile drawer */}

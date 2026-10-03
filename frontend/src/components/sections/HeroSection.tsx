@@ -10,9 +10,9 @@ import { reviewsService } from '@/services/reviews.service';
 import styles from './HeroSection.module.css';
 
 const HERO_SUGGESTIONS = [
-  { label: 'GCC spec SUV under AED 80k', query: 'SUV under 80000' },
-  { label: 'best first car in Dubai', query: 'first car' },
-  { label: 'cheapest car to run', query: 'hybrid economical' },
+  { label: '7-Seater Family SUVs', href: '/new-cars?bodyType=SUV&seats=7' },
+  { label: 'Electric & EV Cars', href: '/new-cars?fuelType=electric' },
+  { label: 'Cars Under AED 400k', href: '/new-cars?maxPrice=400000' },
 ];
 
 // Animated counter hook — counts from 0 to target over ~900ms
@@ -196,7 +196,7 @@ export default function HeroSection() {
             <input
               type="text"
               className={styles.heroSearchInput}
-              placeholder="7 seater under 150k"
+              placeholder="e.g. 7 seater SUV, Electric, Audi..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               id="hero-search-input"
@@ -211,13 +211,12 @@ export default function HeroSection() {
             <span>Try:</span>
             {HERO_SUGGESTIONS.map((item, idx) => (
               <span key={item.label}>
-                <button
-                  type="button"
+                <Link
+                  href={item.href}
                   className={styles.heroSuggestionLink}
-                  onClick={() => handleSearch(item.query)}
                 >
                   {item.label}
-                </button>
+                </Link>
                 {idx < HERO_SUGGESTIONS.length - 1 && ' · '}
               </span>
             ))}

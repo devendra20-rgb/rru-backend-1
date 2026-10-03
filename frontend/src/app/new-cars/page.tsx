@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ChevronRight, SlidersHorizontal, Search, LayoutGrid, List, Loader2 } from 'lucide-react';
+import { ChevronRight, SlidersHorizontal, Search, LayoutGrid, List, Loader2, ChevronDown, Check } from 'lucide-react';
 import { vehiclesService } from '@/services/vehicles.service';
 import { brandsService } from '@/services/brands.service';
 import type { Vehicle } from '@/types/vehicle';
@@ -18,9 +18,18 @@ import ModelCard from '@/components/ui/ModelCard';
 import Skeleton from '@/components/ui/Skeleton';
 import { groupVehiclesByModel } from '@/lib/modelGroup';
 import { parseSearchQuery } from '@/lib/searchQueryParser';
+import { cn } from '@/lib/utils';
 import styles from './newcars.module.css';
 
 type SortOption = 'popular' | 'price-low' | 'price-high' | 'cost-low' | 'newest';
+
+const SORT_OPTIONS: { value: SortOption; label: string }[] = [
+  { value: 'popular', label: 'Popular' },
+  { value: 'price-low', label: 'Price: Low → High' },
+  { value: 'price-high', label: 'Price: High → Low' },
+  { value: 'cost-low', label: 'Ownership Cost: Low → High' },
+  { value: 'newest', label: 'Newest' },
+];
 
 const SEAT_OPTIONS = [
   { value: '5', label: '5 Seats' },
@@ -55,9 +64,23 @@ function NewCarsContent() {
   const [selectedSeats, setSelectedSeats] = useState<string>('');
   const [minPrice, setMinPrice] = useState<string>('');
   const [maxPrice, setMaxPrice] = useState<string>('');
+  const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [sortBy, setSortBy] = useState<SortOption>('popular');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'model' | 'variant'>('model');
+
+  const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
+  const sortDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (sortDropdownRef.current && !sortDropdownRef.current.contains(event.target as Node)) {
+        setSortDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Sync refs for observer callbacks & strict concurrency guards
   const isFetchingRef = useRef(false);
@@ -92,6 +115,7 @@ function NewCarsContent() {
         seats: selectedSeats ? parseInt(selectedSeats, 10) : undefined,
         minPrice: minPrice ? Number(minPrice) : undefined,
         maxPrice: maxPrice ? Number(maxPrice) : undefined,
+        status: selectedStatus,
         sortBy,
       })
       .then(({ data, meta }) => {
@@ -126,6 +150,7 @@ function NewCarsContent() {
     selectedSeats,
     minPrice,
     maxPrice,
+    selectedStatus,
     sortBy,
   ]);
 
@@ -153,6 +178,7 @@ function NewCarsContent() {
         seats: selectedSeats ? parseInt(selectedSeats, 10) : undefined,
         minPrice: minPrice ? Number(minPrice) : undefined,
         maxPrice: maxPrice ? Number(maxPrice) : undefined,
+        status: selectedStatus,
         sortBy,
       });
 
@@ -246,6 +272,9 @@ function NewCarsContent() {
 
     const min = searchParams.get('minPrice');
     setMinPrice(min || '');
+
+    const status = searchParams.get('status');
+    setSelectedStatus(status || '');
   }, [searchParams]);
 
   const toggleBodyType = (bt: string) => {
@@ -269,6 +298,7 @@ function NewCarsContent() {
     setSelectedSeats('');
     setMinPrice('');
     setMaxPrice('');
+    setSelectedStatus('');
   };
 
   const hasActiveFilters =
@@ -279,14 +309,20 @@ function NewCarsContent() {
     selectedTransmission ||
     selectedSeats ||
     minPrice ||
-    maxPrice;
+    maxPrice ||
+    selectedStatus;
 
   const parsedQuery = useMemo(() => {
     return searchQuery.trim() ? parseSearchQuery(searchQuery, brands) : null;
   }, [searchQuery, brands]);
 
   const filteredVehicles = useMemo(() => {
-    let result = vehicles.filter((v) => v.status === 'active' || v.status === 'upcoming');
+    let result = vehicles.filter((v) => {
+      if (selectedStatus === 'upcoming') {
+        return v.status === 'upcoming';
+      }
+      return v.status === 'active' || v.status === 'upcoming';
+    });
 
     // Combine explicit UI filters with parsed natural language search parameters
     const effectiveBrand = selectedBrand || parsedQuery?.brandSlug || '';
@@ -459,19 +495,43 @@ function NewCarsContent() {
       clear: () => setMaxPrice(''),
     });
   }
+  if (selectedStatus === 'upcoming') {
+    activeFilterTags.push({
+      label: '🔮 Upcoming Launches Only',
+      clear: () => setSelectedStatus(''),
+    });
+  }
 
   return (
     <div className={styles.listingPage}>
       <div className={styles.listingHeader}>
-        <div className={styles.listingBreadcrumb}>
-          <Link href="/">Home</Link>
-          <ChevronRight size={12} />
-          <span>New Cars</span>
-        </div>
-        <h1 className={styles.listingTitle}>Explore New Cars</h1>
-        <p className={styles.listingSubtitle}>
-          Browse all new cars available in the UAE. Use filters to narrow down your options.
-        </p>
+        {selectedStatus === 'upcoming' ? (
+          <>
+            <div className={styles.listingBreadcrumb}>
+              <Link href="/">Home</Link>
+              <ChevronRight size={12} />
+              <Link href="/new-cars">New Cars</Link>
+              <ChevronRight size={12} />
+              <span>Upcoming Launches</span>
+            </div>
+            <h1 className={styles.listingTitle}>🔮 Upcoming Cars in UAE (2026/2027)</h1>
+            <p className={styles.listingSubtitle}>
+              Discover future car launches, expected specs & estimated AED pricing. Stay ahead of the curve.
+            </p>
+          </>
+        ) : (
+          <>
+            <div className={styles.listingBreadcrumb}>
+              <Link href="/">Home</Link>
+              <ChevronRight size={12} />
+              <span>New Cars</span>
+            </div>
+            <h1 className={styles.listingTitle}>Explore New Cars</h1>
+            <p className={styles.listingSubtitle}>
+              Browse all new cars available in the UAE. Use filters to narrow down your options.
+            </p>
+          </>
+        )}
       </div>
 
       <button
@@ -653,17 +713,46 @@ function NewCarsContent() {
                 </button>
               </div>
 
-              <select
-                className={styles.resultsSortSelect}
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as SortOption)}
-              >
-                <option value="popular">Popular</option>
-                <option value="price-low">Price: Low → High</option>
-                <option value="price-high">Price: High → Low</option>
-                <option value="cost-low">Ownership Cost: Low → High</option>
-                <option value="newest">Newest</option>
-              </select>
+              <div className={styles.customSortDropdown} ref={sortDropdownRef}>
+                <button
+                  type="button"
+                  className={styles.sortTriggerBtn}
+                  onClick={() => setSortDropdownOpen(!sortDropdownOpen)}
+                >
+                  <span>
+                    {SORT_OPTIONS.find((s) => s.value === sortBy)?.label || 'Popular'}
+                  </span>
+                  <ChevronDown
+                    size={14}
+                    className={cn(
+                      styles.sortChevron,
+                      sortDropdownOpen && styles.sortChevronRotate,
+                    )}
+                  />
+                </button>
+
+                {sortDropdownOpen && (
+                  <div className={styles.sortMenuOverlay}>
+                    {SORT_OPTIONS.map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        className={cn(
+                          styles.sortMenuItem,
+                          sortBy === opt.value && styles.sortMenuItemActive,
+                        )}
+                        onClick={() => {
+                          setSortBy(opt.value);
+                          setSortDropdownOpen(false);
+                        }}
+                      >
+                        <span>{opt.label}</span>
+                        {sortBy === opt.value && <Check size={14} color="var(--petrol)" />}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
