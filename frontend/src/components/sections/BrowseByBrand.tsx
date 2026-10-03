@@ -62,11 +62,30 @@ const SEATS_LIST = [
   { name: '8+ Seater', query: 'seats=8', icon: <Users size={36} strokeWidth={1.75} /> },
 ];
 
-export default function BrowseByBrand() {
+interface BrowseByBrandProps {
+  showBreadcrumb?: boolean;
+  title?: string;
+  subtitle?: string;
+  showViewAll?: boolean;
+  showTabs?: boolean;
+}
+
+export default function BrowseByBrand({
+  showBreadcrumb = false,
+  title = 'Find Cars Your Way',
+  subtitle = 'Explore official manufacturers, body styles, budgets, and fuel choices in the UAE.',
+  showViewAll = true,
+  showTabs = true,
+}: BrowseByBrandProps) {
   const [brands, setBrands] = useState<Brand[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<BrandTab>('makes');
   const [currentPage, setCurrentPage] = useState(0);
+  const [cardsPerPage, setCardsPerPage] = useState(10);
+
+  // Touch swiping state
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchEndX, setTouchEndX] = useState<number | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -83,6 +102,21 @@ export default function BrowseByBrand() {
       });
     return () => { isMounted = false; };
   }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (!showViewAll) {
+        setCardsPerPage(100);
+      } else if (window.innerWidth <= 768) {
+        setCardsPerPage(6);
+      } else {
+        setCardsPerPage(10);
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [showViewAll]);
 
   const handleTabChange = (tab: BrandTab) => {
     setActiveTab(tab);
@@ -107,20 +141,46 @@ export default function BrowseByBrand() {
   };
 
   const totalItems = getCurrentItems();
-  const totalPages = Math.max(1, Math.ceil(totalItems.length / CARDS_PER_PAGE));
-  const visibleItems = totalItems.slice(currentPage * CARDS_PER_PAGE, (currentPage + 1) * CARDS_PER_PAGE);
+  const totalPages = Math.max(1, Math.ceil(totalItems.length / cardsPerPage));
+
+  // Touch swipe handlers
+  const minSwipeDistance = 40;
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEndX(null);
+    setTouchStartX(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEndX(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartX === null || touchEndX === null) return;
+    const distance = touchStartX - touchEndX;
+    if (distance > minSwipeDistance && currentPage < totalPages - 1) {
+      setCurrentPage((prev) => prev + 1);
+    } else if (distance < -minSwipeDistance && currentPage > 0) {
+      setCurrentPage((prev) => prev - 1);
+    }
+  };
 
   return (
     <section className={styles.brands} id="browse-by-brand">
+      {showBreadcrumb && (
+        <div className={styles.breadcrumb}>
+          <Link href="/">Home</Link>
+          <ChevronRight size={12} />
+          <span>Brands</span>
+        </div>
+      )}
       <div className={styles.brandsHeader}>
         <div className={styles.brandsHeaderRow}>
           <div>
-            <h2 className="section-title">Find Cars Your Way</h2>
-            <p className="section-subtitle">
-              Explore official manufacturers, body styles, budgets, and fuel choices in the UAE.
-            </p>
+            <h2 className="section-title">{title}</h2>
+            <p className="section-subtitle">{subtitle}</p>
           </div>
-          {activeTab === 'makes' && (
+          {showViewAll && activeTab === 'makes' && (
             <Link href="/brands" className={styles.viewAllBrandsBtn} id="view-all-brands-btn">
               View All Brands
               <ArrowRight size={15} />
@@ -129,58 +189,67 @@ export default function BrowseByBrand() {
         </div>
 
         {/* Tab Bar */}
-        <div className={styles.brandTabs}>
-          <button
-            type="button"
-            className={`${styles.brandTab} ${activeTab === 'makes' ? styles.brandTabActive : ''}`}
-            onClick={() => handleTabChange('makes')}
-          >
-            Makes
-          </button>
-          <button
-            type="button"
-            className={`${styles.brandTab} ${activeTab === 'bodyTypes' ? styles.brandTabActive : ''}`}
-            onClick={() => handleTabChange('bodyTypes')}
-          >
-            Body Types
-          </button>
-          <button
-            type="button"
-            className={`${styles.brandTab} ${activeTab === 'budget' ? styles.brandTabActive : ''}`}
-            onClick={() => handleTabChange('budget')}
-          >
-            Budget
-          </button>
-          <button
-            type="button"
-            className={`${styles.brandTab} ${activeTab === 'fuel' ? styles.brandTabActive : ''}`}
-            onClick={() => handleTabChange('fuel')}
-          >
-            Fuel Type
-          </button>
-          <button
-            type="button"
-            className={`${styles.brandTab} ${activeTab === 'seats' ? styles.brandTabActive : ''}`}
-            onClick={() => handleTabChange('seats')}
-          >
-            Seats
-          </button>
-        </div>
+        {showTabs && (
+          <div className={styles.brandTabs}>
+            <button
+              type="button"
+              className={`${styles.brandTab} ${activeTab === 'makes' ? styles.brandTabActive : ''}`}
+              onClick={() => handleTabChange('makes')}
+            >
+              Makes
+            </button>
+            <button
+              type="button"
+              className={`${styles.brandTab} ${activeTab === 'bodyTypes' ? styles.brandTabActive : ''}`}
+              onClick={() => handleTabChange('bodyTypes')}
+            >
+              Body Types
+            </button>
+            <button
+              type="button"
+              className={`${styles.brandTab} ${activeTab === 'budget' ? styles.brandTabActive : ''}`}
+              onClick={() => handleTabChange('budget')}
+            >
+              Budget
+            </button>
+            <button
+              type="button"
+              className={`${styles.brandTab} ${activeTab === 'fuel' ? styles.brandTabActive : ''}`}
+              onClick={() => handleTabChange('fuel')}
+            >
+              Fuel Type
+            </button>
+            <button
+              type="button"
+              className={`${styles.brandTab} ${activeTab === 'seats' ? styles.brandTabActive : ''}`}
+              onClick={() => handleTabChange('seats')}
+            >
+              Seats
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Carousel Container with Side Arrows */}
       <div className={styles.carouselWrapper}>
-        <button
-          type="button"
-          className={`${styles.carouselArrow} ${styles.carouselArrowLeft}`}
-          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 0))}
-          disabled={currentPage === 0}
-          aria-label="Previous Page"
-        >
-          <ChevronLeft size={20} />
-        </button>
+        {totalPages > 1 && (
+          <button
+            type="button"
+            className={`${styles.carouselArrow} ${styles.carouselArrowLeft}`}
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 0))}
+            disabled={currentPage === 0}
+            aria-label="Previous Page"
+          >
+            <ChevronLeft size={20} />
+          </button>
+        )}
 
-        <div className={styles.carouselTrackWrapper}>
+        <div
+          className={styles.carouselTrackWrapper}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
           <div
             className={styles.carouselTrack}
             style={{
@@ -196,8 +265,8 @@ export default function BrowseByBrand() {
             ) : totalItems.length > 0 ? (
               Array.from({ length: totalPages }).map((_, pageIdx) => {
                 const pageItems = totalItems.slice(
-                  pageIdx * CARDS_PER_PAGE,
-                  (pageIdx + 1) * CARDS_PER_PAGE
+                  pageIdx * cardsPerPage,
+                  (pageIdx + 1) * cardsPerPage
                 );
                 return (
                   <div key={pageIdx} className={styles.brandsGrid}>
@@ -279,15 +348,17 @@ export default function BrowseByBrand() {
           </div>
         </div>
 
-        <button
-          type="button"
-          className={`${styles.carouselArrow} ${styles.carouselArrowRight}`}
-          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages - 1))}
-          disabled={currentPage >= totalPages - 1}
-          aria-label="Next Page"
-        >
-          <ChevronRight size={20} />
-        </button>
+        {totalPages > 1 && (
+          <button
+            type="button"
+            className={`${styles.carouselArrow} ${styles.carouselArrowRight}`}
+            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages - 1))}
+            disabled={currentPage >= totalPages - 1}
+            aria-label="Next Page"
+          >
+            <ChevronRight size={20} />
+          </button>
+        )}
       </div>
 
       {/* Pagination Dots at Bottom */}

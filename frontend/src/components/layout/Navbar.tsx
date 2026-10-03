@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Users, Menu, X, ChevronDown, Check, Sparkles } from 'lucide-react';
+import { Menu, X, ChevronDown, Check, Sparkles } from 'lucide-react';
 import { NAV_LINKS } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import styles from './Navbar.module.css';
@@ -21,6 +21,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [marketOpen, setMarketOpen] = useState(false);
+  const [mobileMarketOpen, setMobileMarketOpen] = useState(false);
   const [selectedEmirate, setSelectedEmirate] = useState('Dubai');
   const [visitorCount, setVisitorCount] = useState(128);
   const marketRef = useRef<HTMLDivElement>(null);
@@ -47,6 +48,18 @@ export default function Navbar() {
       if (timeoutId) clearTimeout(timeoutId);
     };
   }, []);
+
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileOpen]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -113,7 +126,6 @@ export default function Navbar() {
           {/* Simulated Visitor / Browsing Indicator */}
           <div
             className={styles.browsingBadge}
-            // title="Simulated indicator: estimated active UAE shoppers"
             id="browsing-indicator"
           >
             <span className={styles.pulseDot} />
@@ -169,30 +181,44 @@ export default function Navbar() {
           </Link>
 
           <button
+            type="button"
             className={styles.hamburger}
-            onClick={() => setMobileOpen(true)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setMarketOpen(false);
+              setMobileOpen(true);
+            }}
             aria-label="Open menu"
+            aria-expanded={mobileOpen}
             id="mobile-menu-btn"
           >
-            <Menu size={22} />
+            <Menu size={24} />
           </button>
         </div>
       </header>
 
-
-
       {/* Mobile Menu */}
       {mobileOpen && (
         <div
-          className={cn(styles.mobileOverlay, styles.mobileOverlayActive)}
-          onClick={() => setMobileOpen(false)}
+          className={styles.mobileOverlay}
+          onClick={() => {
+            setMobileOpen(false);
+            setMobileMarketOpen(false);
+          }}
         >
           <div
-            className={cn(styles.mobileMenu, styles.mobileMenuActive)}
+            className={styles.mobileMenu}
             onClick={(e) => e.stopPropagation()}
           >
             <div className={styles.mobileClose}>
-              <button onClick={() => setMobileOpen(false)} aria-label="Close menu">
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileOpen(false);
+                  setMobileMarketOpen(false);
+                }}
+                aria-label="Close menu"
+              >
                 <X size={24} />
               </button>
             </div>
@@ -206,7 +232,10 @@ export default function Navbar() {
                     styles.mobileLink,
                     isHighlighted && styles.mobileLinkHighlight
                   )}
-                  onClick={() => setMobileOpen(false)}
+                  onClick={() => {
+                    setMobileOpen(false);
+                    setMobileMarketOpen(false);
+                  }}
                 >
                   {isHighlighted && <Sparkles size={16} />}
                   <span>{link.label}</span>
@@ -214,18 +243,69 @@ export default function Navbar() {
               );
             })}
             <div className={styles.mobileActions}>
-              <button
-                className={styles.marketBtn}
-                onClick={() => {
-                  setMarketOpen(!marketOpen);
-                }}
-              >
-                🇦🇪 UAE · {selectedEmirate}
-              </button>
+              {/* Browsing Badge inside mobile drawer */}
+              <div className={styles.mobileBrowsingBadge}>
+                <span className={styles.pulseDot} />
+                <span>{visitorCount} shoppers browsing live</span>
+              </div>
+
+              {/* Location Selector inside mobile drawer */}
+              <div className={styles.mobileMarketWrapper}>
+                <button
+                  type="button"
+                  className={styles.mobileMarketBtn}
+                  onClick={() => setMobileMarketOpen(!mobileMarketOpen)}
+                  aria-expanded={mobileMarketOpen}
+                >
+                  <span>🇦🇪 UAE · {selectedEmirate}</span>
+                  <ChevronDown
+                    size={14}
+                    className={cn(styles.chevron, mobileMarketOpen && styles.chevronRotated)}
+                  />
+                </button>
+
+                {mobileMarketOpen && (
+                  <div className={styles.mobileMarketDropdown}>
+                    <div className={styles.marketDropdownHeader}>Select Location</div>
+                    {EMIRATES.map((e) => {
+                      const isDubai = e.id === 'dubai';
+                      const isSelected = selectedEmirate === e.name;
+                      return (
+                        <button
+                          key={e.id}
+                          type="button"
+                          className={cn(
+                            styles.marketItem,
+                            isSelected && styles.marketItemActive,
+                            !isDubai && styles.marketItemDisabled
+                          )}
+                          onClick={() => {
+                            if (!isDubai) return;
+                            setSelectedEmirate(e.name);
+                            setMobileMarketOpen(false);
+                          }}
+                          disabled={!isDubai}
+                        >
+                          <span className={styles.marketItemName}>{e.name}</span>
+                          {isDubai ? (
+                            isSelected && <Check size={14} color="var(--green)" />
+                          ) : (
+                            <span className={styles.comingSoonTag}>Coming Soon</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
               <Link
                 href="/auth/login"
-                className={styles.loginBtn}
-                onClick={() => setMobileOpen(false)}
+                className={styles.mobileLoginBtn}
+                onClick={() => {
+                  setMobileOpen(false);
+                  setMobileMarketOpen(false);
+                }}
               >
                 Login
               </Link>
@@ -236,3 +316,4 @@ export default function Navbar() {
     </>
   );
 }
+

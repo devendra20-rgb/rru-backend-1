@@ -47,12 +47,15 @@ export default function FeaturedCars() {
   const checkScroll = () => {
     if (scrollTrackRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = scrollTrackRef.current;
-      setCanScrollLeft(scrollLeft > 0);
-      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 1);
+      setCanScrollLeft(scrollLeft > 2);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 2);
     }
   };
 
   useEffect(() => {
+    if (scrollTrackRef.current) {
+      scrollTrackRef.current.scrollLeft = 0;
+    }
     checkScroll();
     window.addEventListener('resize', checkScroll);
     return () => window.removeEventListener('resize', checkScroll);
@@ -60,13 +63,19 @@ export default function FeaturedCars() {
 
   const handleScrollLeft = () => {
     if (scrollTrackRef.current) {
-      scrollTrackRef.current.scrollBy({ left: -scrollTrackRef.current.clientWidth, behavior: 'smooth' });
+      const container = scrollTrackRef.current;
+      const firstChild = container.firstElementChild as HTMLElement;
+      const scrollAmount = firstChild ? firstChild.offsetWidth : container.clientWidth;
+      container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
     }
   };
 
   const handleScrollRight = () => {
     if (scrollTrackRef.current) {
-      scrollTrackRef.current.scrollBy({ left: scrollTrackRef.current.clientWidth, behavior: 'smooth' });
+      const container = scrollTrackRef.current;
+      const firstChild = container.firstElementChild as HTMLElement;
+      const scrollAmount = firstChild ? firstChild.offsetWidth : container.clientWidth;
+      container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
     }
   };
 

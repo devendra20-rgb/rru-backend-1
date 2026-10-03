@@ -23,7 +23,7 @@ export default function Footer() {
                 alt="RideRoundUp"
                 width={130}
                 height={30}
-                style={{ height: '26px', width: 'auto', objectFit: 'contain', filter: 'brightness(0) invert(1)' }}
+                style={{ height: '26px', width: 'auto', objectFit: 'contain' }}
               />
             </div>
             <p className={styles.footerTagline}>

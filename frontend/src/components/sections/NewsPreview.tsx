@@ -91,7 +91,7 @@ export default function NewsPreview() {
                   {article.category.replace('-', ' ').toUpperCase()}
                 </div>
                 <h3 className={styles.articleTitle} title={article.title}>{article.title}</h3>
-                <p className={styles.articleExcerpt}>{article.excerpt}</p>
+                <p className={styles.articleExcerpt} title={article.excerpt}>{article.excerpt}</p>
                 <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 10, display: 'flex', justifyContent: 'space-between' }}>
                   <span>{article.author.name}</span>
                   <span>{article.readingTime} min read</span>

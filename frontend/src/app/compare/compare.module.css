@@ -893,7 +893,7 @@
 
 @media (max-width: 768px) {
   .comparePage {
-    padding: var(--space-xl) 16px var(--space-3xl);
+    padding: var(--space-xl) 12px var(--space-3xl);
   }
 
   .pageTitle {
@@ -901,40 +901,135 @@
   }
 
   .pickerSection {
-    grid-template-columns: 1fr;
-    gap: 12px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .pickerSlotContent {
+    padding: 12px 6px;
+  }
+
+  .pickerImageWrap {
+    margin-bottom: 6px;
+  }
+
+  .pickerBrand {
+    font-size: 10px;
+  }
+
+  .pickerModel {
+    font-size: 13px;
+  }
+
+  .pickerVariant {
+    font-size: 11px;
+    margin-bottom: 4px;
+  }
+
+  .pickerPrice {
+    font-size: 12px;
+  }
+
+  .addSlotContent {
+    padding: 16px 6px;
+    min-height: 150px;
+  }
+
+  .addIcon {
+    width: 36px;
+    height: 36px;
+    margin-bottom: 6px;
+  }
+
+  .addText {
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+
+  .addHint {
+    font-size: 10px;
+    margin-bottom: 8px;
   }
 
   .optionsBar {
     flex-direction: column;
     align-items: flex-start;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+
+  .optionsToggles {
     gap: 12px;
+  }
+
+  .checkboxLabel {
+    font-size: 12px;
   }
 
   .angleTabs {
     flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .angleTab {
+    padding: 6px 10px;
+    font-size: 11px;
   }
 
   .gallerySection {
-    padding: 18px 14px;
+    padding: 14px 10px;
   }
 
   .galleryNavBar {
     flex-wrap: wrap;
     justify-content: center;
+    padding: 8px 10px;
   }
 
   .galleryGrid {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px;
+  }
+
+  .galleryCardHeader {
+    padding: 8px 10px;
+  }
+
+  .galleryCardModel {
+    font-size: 13px;
+  }
+
+  .galleryAnglePill {
+    font-size: 9.5px;
+    padding: 2px 6px;
   }
 
   .verdictGrid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
   }
 }
 
 @media (max-width: 480px) {
   .verdictGrid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+
+  .pickerSlotContent {
+    padding: 10px 4px;
+  }
+
+  .addSlotContent {
+    padding: 12px 4px;
+    min-height: 135px;
+  }
+
+  .addText {
+    font-size: 12px;
+  }
+
+  .pickerModel {
+    font-size: 12px;
   }
 }
