@@ -1,6 +1,6 @@
 // API client configuration with intelligent caching & request deduplication
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://rru-backend-1.onrender.com';
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === 'true';
 
 export interface RequestOptions {

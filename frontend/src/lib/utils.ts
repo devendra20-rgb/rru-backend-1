@@ -87,7 +87,7 @@ export function resolveMediaUrl(url?: string): string {
   if (url.startsWith('http://') || url.startsWith('https://')) {
     return url;
   }
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://rru-backend-1.onrender.com/api/v1';
   const serverRoot = apiBase.replace(/\/api\/v1\/?$/, '');
   const cleanPath = url.startsWith('/') ? url : `/${url}`;
   return `${serverRoot}${cleanPath}`;
