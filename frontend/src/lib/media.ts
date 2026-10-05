@@ -11,8 +11,10 @@ export function resolveMediaUrl(url?: string): string {
   const match = rawUrl.match(s3Pattern);
   if (match && match[1]) {
     const storageKey = match[1];
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://rru-backend-1.onrender.com';
-    return `${baseUrl.replace(/\/$/, '')}/api/v1/media/file/${storageKey}`;
+    const baseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://rru-backend-1.onrender.com')
+      .replace(/\/api\/v1\/?$/, '')
+      .replace(/\/$/, '');
+    return `${baseUrl}/api/v1/media/file/${storageKey}`;
   }
 
   // If already absolute http/https, return as-is
@@ -21,7 +23,9 @@ export function resolveMediaUrl(url?: string): string {
   }
 
   // Otherwise, prefix with backend API URL
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://rru-backend-1.onrender.com';
+  const baseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://rru-backend-1.onrender.com')
+    .replace(/\/api\/v1\/?$/, '')
+    .replace(/\/$/, '');
   const cleanPath = rawUrl.startsWith('/') ? rawUrl : `/${rawUrl}`;
-  return `${baseUrl.replace(/\/$/, '')}${cleanPath}`;
+  return `${baseUrl}${cleanPath}`;
 }

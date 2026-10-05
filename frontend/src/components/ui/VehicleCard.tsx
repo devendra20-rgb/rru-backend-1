@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Car, GitCompare } from 'lucide-react';
 import type { Vehicle } from '@/types/vehicle';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice, resolveMediaUrl } from '@/lib/utils';
 import { useCompare } from '@/hooks/useCompare';
 import Badge from './Badge';
 import styles from './ui.module.css';
@@ -35,7 +35,7 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
       <div className={styles.vehicleCardImg}>
         {vehicle.imageUrl ? (
           <img
-            src={vehicle.imageUrl}
+            src={resolveMediaUrl(vehicle.imageUrl)}
             alt={`${vehicle.brand} ${vehicle.model}`}
             className={styles.vehicleCardImage}
           />

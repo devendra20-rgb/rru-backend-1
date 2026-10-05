@@ -7,6 +7,7 @@ import { GitCompare, X } from 'lucide-react';
 import { useCompare } from '@/hooks/useCompare';
 import { vehiclesService } from '@/services/vehicles.service';
 import type { Vehicle } from '@/types/vehicle';
+import { resolveMediaUrl } from '@/lib/media';
 import styles from './comparefloating.module.css';
 
 export default function CompareFloatingBar() {
@@ -45,7 +46,7 @@ export default function CompareFloatingBar() {
               return (
                 <div key={slug} className={styles.floatingThumb}>
                   {v?.imageUrl ? (
-                    <img src={v.imageUrl} alt={v.model} />
+                    <img src={resolveMediaUrl(v.imageUrl)} alt={v.model} />
                   ) : (
                     <span className={styles.floatingThumbPlaceholder}>
                       {slug.slice(0, 2).toUpperCase()}

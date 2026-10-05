@@ -8,6 +8,7 @@ import { articlesService } from '@/services/articles.service';
 import type { Article } from '@/types/article';
 import Skeleton from '@/components/ui/Skeleton';
 import { formatDate } from '@/lib/utils';
+import { resolveMediaUrl } from '@/lib/media';
 import styles from '@/app/reviews/content.module.css';
 
 export default function ArticleDetailPage() {
@@ -93,7 +94,7 @@ export default function ArticleDetailPage() {
 
       <div className={styles.articleHeroImg}>
         {article.imageUrl ? (
-          <img src={article.imageUrl} alt={article.title} />
+          <img src={resolveMediaUrl(article.imageUrl)} alt={article.title} />
         ) : (
           <FileText size={48} />
         )}

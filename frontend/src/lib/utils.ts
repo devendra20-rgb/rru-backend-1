@@ -79,16 +79,4 @@ export function percentage(value: number, total: number): number {
   return Math.round((value / total) * 100);
 }
 
-/**
- * Resolves relative or full media URLs against NEXT_PUBLIC_API_URL or backend origin
- */
-export function resolveMediaUrl(url?: string): string {
-  if (!url) return '';
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url;
-  }
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://rru-backend-1.onrender.com/api/v1';
-  const serverRoot = apiBase.replace(/\/api\/v1\/?$/, '');
-  const cleanPath = url.startsWith('/') ? url : `/${url}`;
-  return `${serverRoot}${cleanPath}`;
-}
+export { resolveMediaUrl } from './media';

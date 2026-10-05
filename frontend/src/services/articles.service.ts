@@ -1,6 +1,7 @@
 import { api, USE_MOCK } from '@/lib/api';
 import { articlesMock } from '@/data/homepage.mock';
 import type { Article } from '@/types/article';
+import { resolveMediaUrl } from '@/lib/media';
 
 function normalizeArticle(raw: any): Article {
   return {
@@ -10,7 +11,7 @@ function normalizeArticle(raw: any): Article {
     excerpt: raw.excerpt || '',
     content: raw.content || '',
     category: raw.category || 'news',
-    imageUrl: raw.featuredImage?.url || raw.imageUrl || 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=80',
+    imageUrl: resolveMediaUrl(raw.featuredImage?.url || raw.imageUrl || 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=80'),
     author: {
       name: raw.authorId?.username || raw.author?.name || 'RRU Editorial',
       credentials: 'Automotive Journalist',

@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { RotateCw, Play, Pause, Compass, MoveHorizontal } from 'lucide-react';
+import { resolveMediaUrl } from '@/lib/media';
 import styles from './Car360Viewer.module.css';
 
 interface Car360ViewerProps {
@@ -32,7 +33,7 @@ export default function Car360Viewer({
     let count = 0;
     frames.forEach((src) => {
       const img = new Image();
-      img.src = src;
+      img.src = resolveMediaUrl(src);
       img.onload = () => {
         count++;
         setLoadedCount(count);
@@ -129,7 +130,7 @@ export default function Car360Viewer({
       >
         {/* Main Rotatable Frame */}
         <img
-          src={frames[currentIndex]}
+          src={resolveMediaUrl(frames[currentIndex])}
           alt={`${vehicleName} 360 angle view ${currentIndex + 1}`}
           className={styles.frameImage}
           draggable={false}

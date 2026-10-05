@@ -6,6 +6,7 @@ import { ChevronRight, Sparkles, Check, ArrowRight, RotateCcw, ShieldCheck, Zap,
 import { vehiclesService } from '@/services/vehicles.service';
 import type { Vehicle } from '@/types/vehicle';
 import { formatPrice } from '@/lib/utils';
+import { resolveMediaUrl } from '@/lib/media';
 import Skeleton from '@/components/ui/Skeleton';
 import styles from './matchmaker.module.css';
 
@@ -42,7 +43,7 @@ function CarMatchImage({ src, alt }: { src?: string; alt: string }) {
 
   return (
     <img
-      src={src}
+      src={resolveMediaUrl(src)}
       alt={alt}
       className={styles.cardImg}
       onError={() => setHasError(true)}

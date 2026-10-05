@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Car, GitCompare, Zap, ArrowRight } from 'lucide-react';
 import type { ModelGroup } from '@/lib/modelGroup';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice, resolveMediaUrl } from '@/lib/utils';
 import { useCompare } from '@/hooks/useCompare';
 import Badge from './Badge';
 import styles from './ModelCard.module.css';
@@ -47,7 +47,7 @@ export default function ModelCard({ modelGroup }: ModelCardProps) {
         <div className={styles.imageContainer}>
           {modelGroup.imageUrl ? (
             <img
-              src={modelGroup.imageUrl}
+              src={resolveMediaUrl(modelGroup.imageUrl)}
               alt={`${modelGroup.brand} ${modelGroup.model}`}
               className={styles.carImg}
             />

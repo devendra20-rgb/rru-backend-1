@@ -25,6 +25,7 @@ import { costToOwnService } from '@/services/costToOwn.service';
 import type { Vehicle } from '@/types/vehicle';
 import type { CostToOwnBreakdown } from '@/types/cost';
 import { formatPrice } from '@/lib/utils';
+import { resolveMediaUrl } from '@/lib/media';
 import {
   FEATURE_CATEGORY_ORDER,
   formatFeatureCategory,
@@ -567,7 +568,7 @@ export default function VehicleDetailPage() {
               {currentPhoto ? (
                 <img
                   key={currentPhoto.url}
-                  src={currentPhoto.url}
+                  src={resolveMediaUrl(currentPhoto.url)}
                   alt={currentPhoto.altText || `${vehicle.brand} ${vehicle.model}`}
                   className={styles.mainPhotoImage}
                 />
@@ -622,7 +623,7 @@ export default function VehicleDetailPage() {
                   className={`${styles.thumbBtn} ${activePhotoIndex === idx ? styles.thumbBtnActive : ''}`}
                   onClick={() => setActivePhotoIndex(idx)}
                 >
-                  <img src={img.url} alt={img.altText || `Thumb ${idx + 1}`} />
+                  <img src={resolveMediaUrl(img.url)} alt={img.altText || `Thumb ${idx + 1}`} />
                 </button>
               ))}
             </div>
