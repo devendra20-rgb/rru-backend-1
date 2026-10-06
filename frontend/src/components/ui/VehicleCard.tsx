@@ -61,38 +61,43 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
         </button>
       </div>
       <div className={styles.vehicleCardInfo}>
-        <div className={styles.vehicleCardBrand}>{vehicle.brand}</div>
-        <h3 className={styles.vehicleCardName}>
-          {displayModelName}
-        </h3>
-        <div className={styles.vehicleCardVariant}>{vehicle.variant}</div>
-        <div className={styles.vehicleCardMeta}>
-          {vehicle.bodyType} · {vehicle.fuelType} · {vehicle.transmission}
-          {vehicle.seats ? ` · ${vehicle.seats} Seats` : ''}
-        </div>
-        <div className={styles.vehicleCardReceipt}>
-          <span>Price from</span>
-          <span className={styles.vehicleCardReceiptValue}>
-            {vehicle.priceFrom != null && vehicle.priceFrom > 0
-              ? formatPrice(vehicle.priceFrom)
-              : 'On request'}
-          </span>
-        </div>
-        <div className={styles.vehicleCardReceipt}>
-          <span>Est. monthly ownership</span>
-          <span className={styles.vehicleCardReceiptValue}>
-            {vehicle.costToOwnMonthly
-              ? formatPrice(vehicle.costToOwnMonthly)
-              : '—'}
-          </span>
-        </div>
-        {vehicle.tags && vehicle.tags.length > 0 && (
-          <div className={styles.vehicleCardChips}>
-            {vehicle.tags.map((tag) => (
-              <span key={tag} className={styles.vehicleCardChip}>{tag}</span>
-            ))}
+        <div className={styles.vehicleCardMainContent}>
+          <div className={styles.vehicleCardBrand}>{vehicle.brand}</div>
+          <h3 className={styles.vehicleCardName}>
+            {displayModelName}
+          </h3>
+          <div className={styles.vehicleCardVariant}>{vehicle.variant || ''}</div>
+          <div className={styles.vehicleCardMeta}>
+            {vehicle.bodyType} · {vehicle.fuelType} · {vehicle.transmission}
+            {vehicle.seats ? ` · ${vehicle.seats} Seats` : ''}
           </div>
-        )}
+        </div>
+
+        <div className={styles.vehicleCardBottom}>
+          <div className={styles.vehicleCardReceipt}>
+            <span>Price from</span>
+            <span className={styles.vehicleCardReceiptValue}>
+              {vehicle.priceFrom != null && vehicle.priceFrom > 0
+                ? formatPrice(vehicle.priceFrom)
+                : 'On request'}
+            </span>
+          </div>
+          <div className={styles.vehicleCardReceipt}>
+            <span>Est. monthly ownership</span>
+            <span className={styles.vehicleCardReceiptValue}>
+              {vehicle.costToOwnMonthly
+                ? formatPrice(vehicle.costToOwnMonthly)
+                : '—'}
+            </span>
+          </div>
+          <div className={styles.vehicleCardChips}>
+            {vehicle.tags && vehicle.tags.length > 0
+              ? vehicle.tags.map((tag) => (
+                  <span key={tag} className={styles.vehicleCardChip}>{tag}</span>
+                ))
+              : null}
+          </div>
+        </div>
       </div>
     </Link>
   );

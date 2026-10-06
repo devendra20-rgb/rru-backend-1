@@ -1336,6 +1336,12 @@
   transition: opacity 0.12s ease-out, transform 0.12s ease-out !important;
 }
 
+.carSlideWrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
 .newsCarouselTrack::-webkit-scrollbar {
   display: none;
 }

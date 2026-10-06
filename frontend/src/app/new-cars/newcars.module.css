@@ -145,7 +145,8 @@
   color: var(--petrol);
 }
 
-.filterChipActive {
+.filterChipActive,
+.filterChipActive:hover {
   background: var(--petrol);
   color: var(--white);
   border-color: var(--petrol);

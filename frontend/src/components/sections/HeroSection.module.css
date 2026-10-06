@@ -16,28 +16,31 @@
   position: relative;
   display: flex;
   align-items: center;
+  overflow: hidden;
 }
 
 /* Background Car Silhouette Graphic */
 .heroCarBackdrop {
   position: absolute;
-  right: 1%;
-  top: 5%;
-  width: 52%;
-  height: 90%;
+  right: var(--content-padding);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 46%;
+  max-width: 720px;
   pointer-events: none;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   opacity: 0.22;
   transition: opacity var(--transition-slow);
-  overflow: hidden;
+  z-index: 1;
 }
 
 .heroCarSvg {
   width: 100%;
-  max-width: 760px;
   height: auto;
+  aspect-ratio: 1000 / 450;
+  display: block;
   fill: none;
   stroke: #7db4c2;
   stroke-width: 1.6;
@@ -284,8 +287,9 @@
     font-size: 40px;
   }
   .heroCarBackdrop {
-    opacity: 0.12;
-    width: 90%;
+    opacity: 0.10;
+    width: 80%;
+    right: 0;
   }
 }
 

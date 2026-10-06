@@ -28,6 +28,13 @@ export default function Navbar() {
   const marketRef = useRef<HTMLDivElement>(null);
   const exploreRef = useRef<HTMLDivElement>(null);
 
+  const handleLogoClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (pathname === '/') {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   // Simulated visitor count fluctuation between 118 and 146 every 3-7 seconds
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
@@ -81,7 +88,7 @@ export default function Navbar() {
     <>
       <header className={styles.navbar} id="navbar">
         {/* Logo */}
-        <Link href="/" className={styles.logo}>
+        <Link href="/" className={styles.logo} onClick={handleLogoClick}>
           <Image
             src="/logo.png"
             alt="RideRoundUp"

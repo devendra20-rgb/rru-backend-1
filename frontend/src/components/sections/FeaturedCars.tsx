@@ -186,7 +186,7 @@ export default function FeaturedCars() {
             </div>
           ) : displayedCars.length > 0 ? (
             displayedCars.map((vehicle) => (
-              <div key={vehicle._id} style={{ height: '100%' }}>
+              <div key={vehicle._id} className={styles.carSlideWrapper}>
                 <VehicleCard vehicle={vehicle} />
               </div>
             ))
