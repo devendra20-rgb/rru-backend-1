@@ -90,7 +90,7 @@ describe('Models API', () => {
     expect(res.body.data[0].modelCode).toBe('M1');
   });
 
-  it('should soft delete a model', async () => {
+  it('should delete a model', async () => {
     const res = await request(app)
       .delete(`/api/v1/models/${modelId}`)
       .set('Authorization', `Bearer ${adminToken}`);
@@ -98,6 +98,6 @@ describe('Models API', () => {
     expect(res.status).toBe(200);
 
     const check = await request(app).get(`/api/v1/models/${modelId}`);
-    expect(check.body.data.status).toBe('inactive');
+    expect(check.status).toBe(404);
   });
 });

@@ -60,7 +60,7 @@ export const updateModel = async (req: Request, res: Response, next: NextFunctio
 export const deleteModel = async (req: Request, res: Response, next: NextFunction) => {
   try {
     await modelService.deleteModel(req.params.id as string);
-    sendSuccess(res, 200, 'Model deactivated successfully');
+    sendSuccess(res, 200, 'Model deleted successfully');
   } catch (error) {
     next(error);
   }

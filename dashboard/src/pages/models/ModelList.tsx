@@ -38,10 +38,12 @@ import SearchIcon from '@mui/icons-material/Search';
 import { getModels, deleteModel, updateModel } from '../../api/models.api';
 import { getBrands } from '../../api/brands.api';
 import { useDebounce } from '../../hooks/useDebounce';
+import { useToast } from '../../components/common/GlobalToastProvider';
 
 const ModelList: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
   
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -75,14 +77,22 @@ const ModelList: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['models'] });
       setDeleteId(null);
+      showToast('Model deleted successfully', 'success');
+    },
+    onError: (err: any) => {
+      showToast(err?.message || 'Failed to delete model', 'error');
     }
   });
 
   const toggleStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: 'active' | 'inactive' }) =>
       updateModel(id, { status }),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['models'] });
+      showToast(`Model marked as ${variables.status}`, 'success');
+    },
+    onError: (err: any) => {
+      showToast(err?.message || 'Failed to update model status', 'error');
     }
   });
 
@@ -239,15 +249,33 @@ const ModelList: React.FC = () => {
       </TableContainer>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={!!deleteId} onClose={() => setDeleteId(null)}>
+      <Dialog 
+        open={!!deleteId} 
+        onClose={() => {
+          setDeleteId(null);
+          deleteMutation.reset();
+        }}
+      >
         <DialogTitle>Delete Model</DialogTitle>
         <DialogContent>
+          {deleteMutation.isError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {deleteMutation.error instanceof Error ? deleteMutation.error.message : 'Failed to delete model'}
+            </Alert>
+          )}
           <DialogContentText>
             Are you sure you want to delete this model? This action cannot be undone.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteId(null)}>Cancel</Button>
+          <Button 
+            onClick={() => {
+              setDeleteId(null);
+              deleteMutation.reset();
+            }}
+          >
+            Cancel
+          </Button>
           <Button 
             onClick={confirmDelete} 
             color="error" 

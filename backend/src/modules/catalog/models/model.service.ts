@@ -1,6 +1,8 @@
 import { modelRepository } from './model.repository';
 import { IModel } from './model.types';
 import { brandRepository } from '../brands/brand.repository';
+import { generationRepository } from '../generations/generation.repository';
+import { variantRepository } from '../variants/variant.repository';
 import { AppError } from '../../../middlewares/error.middleware';
 import { generateSlug } from '../../../utils/slug';
 import {
@@ -138,8 +140,18 @@ export const modelService = {
     const model = await modelRepository.findById(id);
     if (!model) throw new AppError('Model not found', 404);
 
-    // Dependency check for Generations will go here once Generations are added.
-    // We'll perform a soft delete or set to draft.
-    return modelRepository.updateStatus(id, 'inactive');
+    // Dependency check for Generations
+    const hasGenerations = await generationRepository.count({ modelId: id });
+    if (hasGenerations > 0) {
+      throw new AppError('Cannot delete model because it has associated generations', 409);
+    }
+
+    // Dependency check for Vehicles / Variants
+    const hasVariants = await variantRepository.count({ modelId: id });
+    if (hasVariants > 0) {
+      throw new AppError('Cannot delete model because it has associated vehicles', 409);
+    }
+
+    return modelRepository.deleteById(id);
   },
 };

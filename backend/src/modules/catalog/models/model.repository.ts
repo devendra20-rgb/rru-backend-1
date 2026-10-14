@@ -69,4 +69,8 @@ export const modelRepository = {
   async updateStatus(id: string | Types.ObjectId, status: 'active' | 'inactive' | 'draft') {
     return VehicleModel.findByIdAndUpdate(id, { status }, { new: true }).lean();
   },
+
+  async deleteById(id: string | Types.ObjectId) {
+    return VehicleModel.findByIdAndDelete(id).lean();
+  },
 };
