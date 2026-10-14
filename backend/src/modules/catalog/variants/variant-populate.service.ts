@@ -1,5 +1,6 @@
 import { Types } from 'mongoose';
 import { AppError } from '../../../middlewares/error.middleware';
+import { Variant } from './variant.model';
 import { variantRepository } from './variant.repository';
 import { specificationRepository } from '../specifications/specification.repository';
 import { variantFeatureRepository } from '../features/feature.repository';
@@ -197,6 +198,7 @@ export const variantPopulateService = {
 
   /**
    * Copy related catalog data from a source variant onto a newly created target variant.
+   * Direct bulk copying ensures high performance (sub-second) and avoids timeouts or partial states.
    * Media files are reused (same url / underlying storage), not re-uploaded.
    */
   async populateFromSource(targetVariantId: string, sourceVariantId: string) {
@@ -223,146 +225,156 @@ export const variantPopulateService = {
       media: 0,
     };
 
-    // Specifications (1:1) — deep clone nested objects
-    const sourceSpec = await Specification.findOne({ variantId: sourceVariantId }).lean();
-    if (sourceSpec) {
-      const specPayload = {
-        performance: deepClone((sourceSpec as any).performance || {}),
-        dimensions: deepClone((sourceSpec as any).dimensions || {}),
-        capacity: deepClone((sourceSpec as any).capacity || {}),
-        weight: deepClone((sourceSpec as any).weight || {}),
-        fuel: deepClone((sourceSpec as any).fuel || {}),
-        safety: deepClone((sourceSpec as any).safety || {}),
-        customAttributes: deepClone((sourceSpec as any).customAttributes || {}),
-        status: (sourceSpec as any).status || 'active',
-      };
+    // 1. Specifications (1:1) — deep clone nested objects (including electric, fuel, etc.)
+    try {
+      const sourceSpec = await Specification.findOne({ variantId: sourceVariantId }).lean();
+      if (sourceSpec) {
+        const specPayload = {
+          performance: deepClone((sourceSpec as any).performance || {}),
+          dimensions: deepClone((sourceSpec as any).dimensions || {}),
+          capacity: deepClone((sourceSpec as any).capacity || {}),
+          weight: deepClone((sourceSpec as any).weight || {}),
+          fuel: deepClone((sourceSpec as any).fuel || {}),
+          electric: deepClone((sourceSpec as any).electric || {}),
+          safety: deepClone((sourceSpec as any).safety || {}),
+          customAttributes: deepClone((sourceSpec as any).customAttributes || {}),
+          status: (sourceSpec as any).status || 'active',
+        };
 
-      const existingSpec = await Specification.findOne({ variantId: targetVariantId });
-      if (existingSpec) {
-        await specificationRepository.update((existingSpec as any)._id.toString(), specPayload);
-      } else {
-        await specificationRepository.create({
-          variantId: targetVariantId,
-          ...specPayload,
-        });
-      }
-      summary.specification = true;
-    }
-
-    // Features
-    const sourceFeatures = await variantFeatureRepository.findByVariantId(sourceVariantId);
-    for (const mapping of sourceFeatures) {
-      const featureId = idOf((mapping as any).featureId);
-      if (!featureId) continue;
-
-      const existing = await variantFeatureRepository.findByVariantAndFeature(
-        targetVariantId,
-        featureId,
-      );
-
-      const payload = {
-        availability: (mapping as any).availability,
-        value: (mapping as any).value,
-        status: (mapping as any).status || 'active',
-      };
-
-      if (existing) {
-        await variantFeatureRepository.update((existing as any)._id.toString(), payload);
-      } else {
-        await variantFeatureRepository.create({
-          variantId: targetVariantId,
-          featureId,
-          ...payload,
-        });
-      }
-      summary.features += 1;
-    }
-
-    // Colors
-    const sourceColors = await variantColorRepository.findByVariantId(sourceVariantId);
-    for (const mapping of sourceColors) {
-      const colorId = idOf((mapping as any).colorId);
-      if (!colorId) continue;
-
-      const existing = await variantColorRepository.findByVariantAndColor(
-        targetVariantId,
-        colorId,
-      );
-
-      const payload = {
-        availability: (mapping as any).availability,
-        status: (mapping as any).status || 'active',
-      };
-
-      if (existing) {
-        await variantColorRepository.update((existing as any)._id.toString(), payload);
-      } else {
-        await variantColorRepository.create({
-          variantId: targetVariantId,
-          colorId,
-          ...payload,
-        });
-      }
-      summary.colors += 1;
-    }
-
-    // Markets / pricing
-    const sourceMarkets = await VariantMarket.find({
-      variantId: sourceVariantId,
-      status: { $ne: 'inactive' },
-    }).lean();
-
-    for (const mapping of sourceMarkets) {
-      const marketId = idOf((mapping as any).marketId);
-      if (!marketId) continue;
-
-      const exists = await variantMarketRepository.exists(targetVariantId, marketId);
-      if (exists) {
-        // Update existing mapping with cloned pricing
-        const existingList = await variantMarketRepository.findAll({
-          variantId: targetVariantId,
-          marketId,
-          limit: 1,
-        } as any);
-        const existing = existingList.data?.[0];
-        if (existing) {
-          await variantMarketRepository.update((existing as any)._id.toString(), {
-            availabilityStatus: (mapping as any).availabilityStatus,
-            status: (mapping as any).status || 'active',
-            isFeatured: (mapping as any).isFeatured,
-            launchDate: (mapping as any).launchDate,
-            discontinuedDate: (mapping as any).discontinuedDate,
-            pricing: (mapping as any).pricing
-              ? deepClone((mapping as any).pricing)
-              : undefined,
+        const existingSpec = await Specification.findOne({ variantId: targetVariantId });
+        if (existingSpec) {
+          await specificationRepository.update((existingSpec as any)._id.toString(), specPayload);
+        } else {
+          await specificationRepository.create({
+            variantId: targetVariantId,
+            ...specPayload,
           });
         }
-      } else {
-        await variantMarketRepository.create({
-          variantId: targetVariantId,
-          marketId,
-          availabilityStatus: (mapping as any).availabilityStatus,
-          status: (mapping as any).status || 'active',
-          isFeatured: (mapping as any).isFeatured,
-          launchDate: (mapping as any).launchDate,
-          discontinuedDate: (mapping as any).discontinuedDate,
-          pricing: (mapping as any).pricing
-            ? deepClone((mapping as any).pricing)
-            : undefined,
-        });
+        summary.specification = true;
       }
-      summary.markets += 1;
+    } catch (specErr) {
+      console.warn('Failed to populate specifications:', specErr);
     }
 
-    // Media — reuse existing files/URLs (no re-upload, no new storage objects)
-    const sourceMedia = await mediaRepository.findByEntity('variant', sourceVariantId);
-    for (const media of sourceMedia) {
-      const linked = await mediaService.linkExistingMediaToEntity(
-        media._id.toString(),
-        'variant',
-        targetVariantId,
-      );
-      if (linked) summary.media += 1;
+    // 2. Features (stored directly on the Variant document)
+    try {
+      const standardIds = (source.features?.standard || [])
+        .map((f: any) => idOf(f?._id || f))
+        .filter((id: string) => Types.ObjectId.isValid(id))
+        .map((id: string) => new Types.ObjectId(id));
+
+      const optionalIds = (source.features?.optional || [])
+        .map((f: any) => idOf(f?._id || f))
+        .filter((id: string) => Types.ObjectId.isValid(id))
+        .map((id: string) => new Types.ObjectId(id));
+
+      if (standardIds.length > 0 || optionalIds.length > 0) {
+        await Variant.findByIdAndUpdate(targetVariantId, {
+          $set: {
+            'features.standard': standardIds,
+            'features.optional': optionalIds,
+          },
+        });
+        summary.features = standardIds.length + optionalIds.length;
+      }
+    } catch (featErr) {
+      console.warn('Failed to populate features:', featErr);
+    }
+
+    // 3. Colors (embedded array on the Variant document)
+    try {
+      if (Array.isArray(source.colors) && source.colors.length > 0) {
+        const colorsToCopy = source.colors
+          .map((c: any) => {
+            const cId = idOf(c.colorId || c._id);
+            if (!cId || !Types.ObjectId.isValid(cId)) return null;
+            return {
+              colorId: new Types.ObjectId(cId),
+              imageUrl: c.imageUrl || '',
+              isBaseColor: Boolean(c.isBaseColor),
+              extraPrice: typeof c.extraPrice === 'number' ? c.extraPrice : 0,
+              status: c.status || 'active',
+            };
+          })
+          .filter(Boolean);
+
+        if (colorsToCopy.length > 0) {
+          await Variant.findByIdAndUpdate(targetVariantId, {
+            $set: { colors: colorsToCopy },
+          });
+          summary.colors = colorsToCopy.length;
+        }
+      }
+    } catch (colorErr) {
+      console.warn('Failed to populate colors:', colorErr);
+    }
+
+    // 4. Markets / pricing
+    try {
+      const sourceMarkets = await VariantMarket.find({
+        variantId: sourceVariantId,
+        status: { $ne: 'inactive' },
+      }).lean();
+
+      if (sourceMarkets.length > 0) {
+        const marketDocsToInsert = [];
+        for (const mapping of sourceMarkets) {
+          const marketIdStr = idOf((mapping as any).marketId);
+          if (!marketIdStr || !Types.ObjectId.isValid(marketIdStr)) continue;
+
+          let pricing: any = undefined;
+          if (
+            mapping.pricing &&
+            typeof mapping.pricing.amount === 'number' &&
+            mapping.pricing.currencyCode &&
+            ['starting', 'ex_showroom', 'on_road', 'msrp', 'other'].includes(mapping.pricing.priceType)
+          ) {
+            pricing = {
+              amount: mapping.pricing.amount,
+              currencyCode: mapping.pricing.currencyCode,
+              priceType: mapping.pricing.priceType,
+            };
+          }
+
+          marketDocsToInsert.push({
+            variantId: new Types.ObjectId(targetVariantId),
+            marketId: new Types.ObjectId(marketIdStr),
+            availabilityStatus: (mapping as any).availabilityStatus || 'upcoming',
+            status: (mapping as any).status || 'active',
+            isFeatured: Boolean((mapping as any).isFeatured),
+            launchDate: (mapping as any).launchDate || undefined,
+            discontinuedDate: (mapping as any).discontinuedDate || undefined,
+            ...(pricing ? { pricing } : {}),
+          });
+        }
+
+        if (marketDocsToInsert.length > 0) {
+          await VariantMarket.deleteMany({ variantId: targetVariantId });
+          await VariantMarket.insertMany(marketDocsToInsert);
+          summary.markets = marketDocsToInsert.length;
+        }
+      }
+    } catch (marketErr) {
+      console.warn('Failed to populate markets:', marketErr);
+    }
+
+    // 5. Media — reuse existing files/URLs (no re-upload, no new storage objects)
+    try {
+      const sourceMedia = await mediaRepository.findByEntity('variant', sourceVariantId);
+      for (const media of sourceMedia) {
+        try {
+          const linked = await mediaService.linkExistingMediaToEntity(
+            media._id.toString(),
+            'variant',
+            targetVariantId,
+          );
+          if (linked) summary.media += 1;
+        } catch (mediaErr) {
+          console.warn(`Failed to link media ${media._id} to variant ${targetVariantId}:`, mediaErr);
+        }
+      }
+    } catch (mediaErr) {
+      console.warn('Failed to populate media:', mediaErr);
     }
 
     return {

@@ -171,7 +171,8 @@ export class MediaService {
       (item) =>
         item.url === root.url ||
         item.storageKey === root.storageKey ||
-        item.storageKey === `shared/${root._id.toString()}/${entityId}`,
+        item.storageKey === `shared/${root._id.toString()}/${entityId}` ||
+        item.storageKey === `shared/${root._id.toString()}/${entityId}-${sourceMediaId}`,
     );
     if (alreadyLinked) {
       return this.normalizeMedia(alreadyLinked);
@@ -193,7 +194,7 @@ export class MediaService {
       mediaType: root.mediaType,
       storageProvider: root.storageProvider,
       // Unique key that still resolves to the original file via getMediaStream
-      storageKey: `shared/${root._id.toString()}/${entityId}`,
+      storageKey: `shared/${root._id.toString()}/${entityId}-${sourceMediaId}`,
       url: root.url,
       originalName: root.originalName,
       mimeType: root.mimeType,

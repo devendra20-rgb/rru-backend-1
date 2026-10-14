@@ -462,19 +462,22 @@ const Step1BasicInfo: React.FC<Step1Props> = ({
           await populateVariantFromSource(newId, sourceId);
         } catch (err) {
           console.error('Failed to auto-populate related vehicle data', err);
-          throw Object.assign(
-            new Error(
-              'Vehicle created, but auto-populate of related data failed. You can continue filling steps manually.',
-            ),
-            { cause: err, createdVariantId: newId },
-          );
+          // Do not throw: variant is already created in the DB.
+          // Throwing prevents advancing to the next step and traps the user on Step 1.
         }
       }
       return res;
     },
     onSuccess: (res) => {
+      const newId = res.data._id;
+      setVariantId(newId);
       queryClient.invalidateQueries({ queryKey: ['variants'] });
-      setVariantId(res.data._id);
+      queryClient.invalidateQueries({ queryKey: ['variant', newId] });
+      queryClient.invalidateQueries({ queryKey: ['specifications', newId] });
+      queryClient.invalidateQueries({ queryKey: ['variant-features', newId] });
+      queryClient.invalidateQueries({ queryKey: ['variant-colors', newId] });
+      queryClient.invalidateQueries({ queryKey: ['variant-markets', newId] });
+      queryClient.invalidateQueries({ queryKey: ['variant-media', newId] });
       pendingPopulateRef.current = null;
       onNext();
     },

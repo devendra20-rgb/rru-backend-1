@@ -18,8 +18,25 @@ import {
   Select,
   MenuItem,
   InputAdornment,
+  IconButton,
   Autocomplete
 } from '@mui/material';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+
+const STANDARD_MOTOR_TYPES = [
+  'Permanent Magnet Synchronous Motor',
+  'AC Induction Motor',
+  'Separately Excited Synchronous Motor',
+  'Switched Reluctance Motor',
+  'Axial Flux Motor',
+];
+
+const STANDARD_MOTOR_CONFIGS = [
+  'Single Motor',
+  'Dual Motor',
+  'Tri Motor',
+  'Quad Motor',
+];
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getVariantSpecifications, createVariantSpecification, updateSpecification } from '../../../api/specifications.api';
 import { getVariant } from '../../../api/variants.api';
@@ -104,6 +121,7 @@ const Step2Specifications: React.FC<Step2Props> = ({ variantId, onNext, onBack }
     control,
     handleSubmit,
     reset,
+    setValue,
   } = useForm<SpecData>({
     resolver: zodResolver(specSchema),
     defaultValues: {
@@ -121,6 +139,14 @@ const Step2Specifications: React.FC<Step2Props> = ({ variantId, onNext, onBack }
       }
     }
   });
+
+  const [isCustomMotorType, setIsCustomMotorType] = useState<boolean>(false);
+  const [motorTypeSelect, setMotorTypeSelect] = useState<string>('');
+  const [customMotorType, setCustomMotorType] = useState<string>('');
+
+  const [isCustomMotorConfig, setIsCustomMotorConfig] = useState<boolean>(false);
+  const [motorConfigSelect, setMotorConfigSelect] = useState<string>('');
+  const [customMotorConfig, setCustomMotorConfig] = useState<string>('');
 
   const { data: variantData } = useQuery({
     queryKey: ['variant', variantId],
@@ -154,6 +180,37 @@ const Step2Specifications: React.FC<Step2Props> = ({ variantId, onNext, onBack }
     const spec = Array.isArray(data?.data) ? data.data[0] : data?.data;
     if (spec) {
       setSpecId(spec._id);
+
+      const rawMotorType = spec.electric?.motorType || '';
+      if (STANDARD_MOTOR_TYPES.includes(rawMotorType)) {
+        setIsCustomMotorType(false);
+        setMotorTypeSelect(rawMotorType);
+        setCustomMotorType('');
+      } else if (rawMotorType) {
+        setIsCustomMotorType(true);
+        setMotorTypeSelect('custom');
+        setCustomMotorType(rawMotorType);
+      } else {
+        setIsCustomMotorType(false);
+        setMotorTypeSelect('');
+        setCustomMotorType('');
+      }
+
+      const rawMotorConfig = spec.electric?.motorConfiguration || '';
+      if (STANDARD_MOTOR_CONFIGS.includes(rawMotorConfig)) {
+        setIsCustomMotorConfig(false);
+        setMotorConfigSelect(rawMotorConfig);
+        setCustomMotorConfig('');
+      } else if (rawMotorConfig) {
+        setIsCustomMotorConfig(true);
+        setMotorConfigSelect('custom');
+        setCustomMotorConfig(rawMotorConfig);
+      } else {
+        setIsCustomMotorConfig(false);
+        setMotorConfigSelect('');
+        setCustomMotorConfig('');
+      }
+
       reset({
         performance: spec.performance || {},
         dimensions: spec.dimensions || {},
@@ -217,7 +274,29 @@ const Step2Specifications: React.FC<Step2Props> = ({ variantId, onNext, onBack }
   const onSubmit = (formData: SpecData) => {
     // clean up nulls
     const cleanData = JSON.parse(JSON.stringify(formData));
-    
+
+    if (!cleanData.electric) cleanData.electric = {};
+
+    if (isCustomMotorType || motorTypeSelect === 'custom') {
+      const val = customMotorType.trim();
+      if (val) cleanData.electric.motorType = val;
+      else delete cleanData.electric.motorType;
+    } else if (motorTypeSelect) {
+      cleanData.electric.motorType = motorTypeSelect;
+    } else {
+      delete cleanData.electric.motorType;
+    }
+
+    if (isCustomMotorConfig || motorConfigSelect === 'custom') {
+      const val = customMotorConfig.trim();
+      if (val) cleanData.electric.motorConfiguration = val;
+      else delete cleanData.electric.motorConfiguration;
+    } else if (motorConfigSelect) {
+      cleanData.electric.motorConfiguration = motorConfigSelect;
+    } else {
+      delete cleanData.electric.motorConfiguration;
+    }
+
     if (specId) {
       updateMutation.mutate(cleanData);
     } else {
@@ -738,47 +817,130 @@ const Step2Specifications: React.FC<Step2Props> = ({ variantId, onNext, onBack }
             <Divider sx={{ mb: 2 }} />
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
               <Box>
-                <Controller
-                  name="electric.motorType"
-                  control={control}
-                  render={({ field }) => (
-                    <Autocomplete
-                      {...field}
-                      freeSolo
-                      options={[
-                        'Permanent Magnet Synchronous Motor',
-                        'AC Induction Motor',
-                        'Separately Excited Synchronous Motor',
-                        'Switched Reluctance Motor',
-                      ]}
-                      value={field.value || ''}
-                      onChange={(_, value) => field.onChange(value)}
-                      onInputChange={(_, value) => field.onChange(value)}
-                      renderInput={(params) => (
-                        <TextField {...params} label="Motor Type" placeholder="e.g. Permanent Magnet Synchronous" fullWidth />
-                      )}
-                    />
-                  )}
-                />
+                {isCustomMotorType ? (
+                  <TextField
+                    label="Motor Type"
+                    fullWidth
+                    placeholder="Enter custom motor type"
+                    value={customMotorType}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setCustomMotorType(val);
+                      setValue('electric.motorType', val);
+                    }}
+                    slotProps={{
+                      input: {
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              size="small"
+                              edge="end"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setIsCustomMotorType(false);
+                                setMotorTypeSelect('');
+                                setCustomMotorType('');
+                                setValue('electric.motorType', undefined);
+                              }}
+                              title="Switch to dropdown list"
+                            >
+                              <ArrowDropDownIcon />
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
+                  />
+                ) : (
+                  <FormControl fullWidth>
+                    <InputLabel>Motor Type</InputLabel>
+                    <Select
+                      label="Motor Type"
+                      value={motorTypeSelect}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === 'custom') {
+                          setIsCustomMotorType(true);
+                          setMotorTypeSelect('custom');
+                        } else {
+                          setMotorTypeSelect(val);
+                          setValue('electric.motorType', val || undefined);
+                        }
+                      }}
+                    >
+                      <MenuItem value="">None</MenuItem>
+                      {STANDARD_MOTOR_TYPES.map((type) => (
+                        <MenuItem key={type} value={type}>
+                          {type}
+                        </MenuItem>
+                      ))}
+                      <MenuItem value="custom">CUSTOM</MenuItem>
+                    </Select>
+                  </FormControl>
+                )}
               </Box>
               <Box>
-                <Controller
-                  name="electric.motorConfiguration"
-                  control={control}
-                  render={({ field }) => (
-                    <Autocomplete
-                      {...field}
-                      freeSolo
-                      options={['Single Motor', 'Dual Motor', 'Tri Motor', 'Quad Motor']}
-                      value={field.value || ''}
-                      onChange={(_, value) => field.onChange(value)}
-                      onInputChange={(_, value) => field.onChange(value)}
-                      renderInput={(params) => (
-                        <TextField {...params} label="Motor Configuration" placeholder="e.g. Dual Motor" fullWidth />
-                      )}
-                    />
-                  )}
-                />
+                {isCustomMotorConfig ? (
+                  <TextField
+                    label="Motor Configuration"
+                    fullWidth
+                    placeholder="Enter custom motor configuration"
+                    value={customMotorConfig}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setCustomMotorConfig(val);
+                      setValue('electric.motorConfiguration', val);
+                    }}
+                    slotProps={{
+                      input: {
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              size="small"
+                              edge="end"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setIsCustomMotorConfig(false);
+                                setMotorConfigSelect('');
+                                setCustomMotorConfig('');
+                                setValue('electric.motorConfiguration', undefined);
+                              }}
+                              title="Switch to dropdown list"
+                            >
+                              <ArrowDropDownIcon />
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
+                  />
+                ) : (
+                  <FormControl fullWidth>
+                    <InputLabel>Motor Configuration</InputLabel>
+                    <Select
+                      label="Motor Configuration"
+                      value={motorConfigSelect}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === 'custom') {
+                          setIsCustomMotorConfig(true);
+                          setMotorConfigSelect('custom');
+                        } else {
+                          setMotorConfigSelect(val);
+                          setValue('electric.motorConfiguration', val || undefined);
+                        }
+                      }}
+                    >
+                      <MenuItem value="">None</MenuItem>
+                      {STANDARD_MOTOR_CONFIGS.map((config) => (
+                        <MenuItem key={config} value={config}>
+                          {config}
+                        </MenuItem>
+                      ))}
+                      <MenuItem value="custom">CUSTOM</MenuItem>
+                    </Select>
+                  </FormControl>
+                )}
               </Box>
               <Box>
                 <Controller
