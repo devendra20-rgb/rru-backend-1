@@ -496,7 +496,7 @@ export class CarsService {
       },
       { $unwind: { path: '$specs', preserveNullAndEmptyArrays: true } },
 
-      // 5. Features lookup (from embedded features.standard and features.optional)
+      // 5. Features lookup (primary embedded, fallback to legacy variantfeatures)
       {
         $lookup: {
           from: 'features',
@@ -514,14 +514,65 @@ export class CarsService {
         },
       },
       {
+        $lookup: {
+          from: 'variantfeatures',
+          let: { vId: '$_id' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ['$variantId', '$$vId'] },
+                    { $ne: ['$status', 'inactive'] },
+                    { $ne: ['$availability', 'unavailable'] },
+                  ],
+                },
+              },
+            },
+            {
+              $lookup: {
+                from: 'features',
+                localField: 'featureId',
+                foreignField: '_id',
+                as: 'featureDoc',
+              },
+            },
+            { $unwind: '$featureDoc' },
+            {
+              $match: {
+                'featureDoc.status': { $ne: 'inactive' },
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                featureId: '$featureDoc._id',
+                category: '$featureDoc.category',
+                name: '$featureDoc.name',
+                availability: { $ifNull: ['$availability', 'standard'] },
+                value: { $ifNull: ['$value', ''] },
+              },
+            },
+          ],
+          as: 'legacyFeatureDocs',
+        },
+      },
+      {
         $addFields: {
-          features: {
+          rawEmbeddedFeatures: {
             $concatArrays: [
               {
                 $map: {
-                  input: '$standardFeatureDocs',
+                  input: {
+                    $filter: {
+                      input: { $ifNull: ['$standardFeatureDocs', []] },
+                      as: 'sf',
+                      cond: { $ne: ['$$sf.status', 'inactive'] },
+                    },
+                  },
                   as: 'sf',
                   in: {
+                    featureId: '$$sf._id',
                     category: '$$sf.category',
                     name: '$$sf.name',
                     availability: 'standard',
@@ -531,9 +582,16 @@ export class CarsService {
               },
               {
                 $map: {
-                  input: '$optionalFeatureDocs',
+                  input: {
+                    $filter: {
+                      input: { $ifNull: ['$optionalFeatureDocs', []] },
+                      as: 'of',
+                      cond: { $ne: ['$$of.status', 'inactive'] },
+                    },
+                  },
                   as: 'of',
                   in: {
+                    featureId: '$$of._id',
                     category: '$$of.category',
                     name: '$$of.name',
                     availability: 'optional',
@@ -545,8 +603,66 @@ export class CarsService {
           },
         },
       },
+      {
+        $addFields: {
+          embeddedFeatureIds: {
+            $map: {
+              input: '$rawEmbeddedFeatures',
+              as: 'ef',
+              in: '$$ef.featureId',
+            },
+          },
+        },
+      },
+      {
+        $addFields: {
+          filteredLegacyFeatures: {
+            $filter: {
+              input: { $ifNull: ['$legacyFeatureDocs', []] },
+              as: 'lf',
+              cond: {
+                $not: {
+                  $in: ['$$lf.featureId', '$embeddedFeatureIds'],
+                },
+              },
+            },
+          },
+        },
+      },
+      {
+        $addFields: {
+          features: {
+            $concatArrays: [
+              {
+                $map: {
+                  input: '$rawEmbeddedFeatures',
+                  as: 'f',
+                  in: {
+                    category: '$$f.category',
+                    name: '$$f.name',
+                    availability: '$$f.availability',
+                    value: '$$f.value',
+                  },
+                },
+              },
+              {
+                $map: {
+                  input: '$filteredLegacyFeatures',
+                  as: 'f',
+                  in: {
+                    category: '$$f.category',
+                    name: '$$f.name',
+                    availability: '$$f.availability',
+                    value: '$$f.value',
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
 
-      // 6. Colors lookup (from embedded colors array)
+      // 6. Colors lookup (primary embedded, fallback to legacy variantcolors)
       {
         $lookup: {
           from: 'colors',
@@ -556,57 +672,211 @@ export class CarsService {
         },
       },
       {
-        $addFields: {
-          colors: {
-            $map: {
-              input: '$colors',
-              as: 'c',
-              in: {
-                $let: {
-                  vars: {
-                    matchedDoc: {
-                      $arrayElemAt: [
-                        {
-                          $filter: {
-                            input: '$masterColorDocs',
-                            as: 'mc',
-                            cond: { $eq: ['$$mc._id', '$$c.colorId'] },
-                          },
-                        },
-                        0,
-                      ],
-                    },
-                  },
-                  in: {
-                    _id: '$$matchedDoc._id',
-                    name: '$$matchedDoc.name',
-                    hexCode: '$$matchedDoc.hexCode',
-                    type: '$$matchedDoc.type',
-                    availability: {
-                      $ifNull: [
-                        '$$c.availability',
+        $lookup: {
+          from: 'variantcolors',
+          let: { vId: '$_id' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ['$variantId', '$$vId'] },
+                    { $ne: ['$status', 'inactive'] },
+                    { $ne: ['$availability', 'unavailable'] },
+                  ],
+                },
+              },
+            },
+            {
+              $lookup: {
+                from: 'colors',
+                localField: 'colorId',
+                foreignField: '_id',
+                as: 'colorDoc',
+              },
+            },
+            { $unwind: '$colorDoc' },
+            {
+              $match: {
+                'colorDoc.status': { $ne: 'inactive' },
+              },
+            },
+            {
+              $project: {
+                _id: '$colorDoc._id',
+                colorId: '$colorDoc._id',
+                name: '$colorDoc.name',
+                hexCode: '$colorDoc.hexCode',
+                type: '$colorDoc.type',
+                availability: {
+                  $ifNull: [
+                    '$availability',
+                    {
+                      $cond: [
+                        { $eq: ['$isBaseColor', true] },
+                        'standard',
                         {
                           $cond: [
-                            { $eq: ['$$c.isBaseColor', true] },
+                            { $gt: ['$extraPrice', 0] },
+                            'optional',
                             'standard',
-                            {
-                              $cond: [
-                                { $gt: ['$$c.extraPrice', 0] },
-                                'optional',
-                                'standard',
-                              ],
-                            },
                           ],
                         },
                       ],
                     },
+                  ],
+                },
+                imageUrl: { $ifNull: ['$imageUrl', null] },
+                isBaseColor: { $ifNull: ['$isBaseColor', false] },
+                extraPrice: { $ifNull: ['$extraPrice', 0] },
+              },
+            },
+          ],
+          as: 'legacyColorDocs',
+        },
+      },
+      {
+        $addFields: {
+          rawEmbeddedColors: {
+            $filter: {
+              input: {
+                $map: {
+                  input: {
+                    $filter: {
+                      input: { $ifNull: ['$colors', []] },
+                      as: 'c',
+                      cond: { $ne: ['$$c.status', 'inactive'] },
+                    },
+                  },
+                  as: 'c',
+                  in: {
+                    $let: {
+                      vars: {
+                        matchedDoc: {
+                          $arrayElemAt: [
+                            {
+                              $filter: {
+                                input: { $ifNull: ['$masterColorDocs', []] },
+                                as: 'mc',
+                                cond: {
+                                  $and: [
+                                    { $eq: ['$$mc._id', '$$c.colorId'] },
+                                    { $ne: ['$$mc.status', 'inactive'] },
+                                  ],
+                                },
+                              },
+                            },
+                            0,
+                          ],
+                        },
+                      },
+                      in: {
+                        $cond: [
+                          { $ifNull: ['$$matchedDoc._id', false] },
+                          {
+                            _id: '$$matchedDoc._id',
+                            colorId: '$$matchedDoc._id',
+                            name: '$$matchedDoc.name',
+                            hexCode: '$$matchedDoc.hexCode',
+                            type: '$$matchedDoc.type',
+                            availability: {
+                              $ifNull: [
+                                '$$c.availability',
+                                {
+                                  $cond: [
+                                    { $eq: ['$$c.isBaseColor', true] },
+                                    'standard',
+                                    {
+                                      $cond: [
+                                        { $gt: ['$$c.extraPrice', 0] },
+                                        'optional',
+                                        'standard',
+                                      ],
+                                    },
+                                  ],
+                                },
+                              ],
+                            },
+                            imageUrl: '$$c.imageUrl',
+                            isBaseColor: '$$c.isBaseColor',
+                            extraPrice: '$$c.extraPrice',
+                          },
+                          null,
+                        ],
+                      },
+                    },
+                  },
+                },
+              },
+              as: 'ec',
+              cond: { $ne: ['$$ec', null] },
+            },
+          },
+        },
+      },
+      {
+        $addFields: {
+          embeddedColorIds: {
+            $map: {
+              input: '$rawEmbeddedColors',
+              as: 'ec',
+              in: '$$ec._id',
+            },
+          },
+        },
+      },
+      {
+        $addFields: {
+          filteredLegacyColors: {
+            $filter: {
+              input: { $ifNull: ['$legacyColorDocs', []] },
+              as: 'lc',
+              cond: {
+                $not: {
+                  $in: ['$$lc._id', '$embeddedColorIds'],
+                },
+              },
+            },
+          },
+        },
+      },
+      {
+        $addFields: {
+          colors: {
+            $concatArrays: [
+              {
+                $map: {
+                  input: '$rawEmbeddedColors',
+                  as: 'c',
+                  in: {
+                    _id: '$$c._id',
+                    name: '$$c.name',
+                    hexCode: '$$c.hexCode',
+                    type: '$$c.type',
+                    availability: '$$c.availability',
                     imageUrl: '$$c.imageUrl',
                     isBaseColor: '$$c.isBaseColor',
                     extraPrice: '$$c.extraPrice',
                   },
                 },
               },
-            },
+              {
+                $map: {
+                  input: '$filteredLegacyColors',
+                  as: 'c',
+                  in: {
+                    _id: '$$c._id',
+                    name: '$$c.name',
+                    hexCode: '$$c.hexCode',
+                    type: '$$c.type',
+                    availability: '$$c.availability',
+                    imageUrl: '$$c.imageUrl',
+                    isBaseColor: '$$c.isBaseColor',
+                    extraPrice: '$$c.extraPrice',
+                  },
+                },
+              },
+            ],
           },
         },
       },

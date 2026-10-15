@@ -150,25 +150,50 @@ class VariantColorRepository {
   async findByVariantAndColor(variantId: string, colorId: string): Promise<IVariantColor | null> {
     if (!Types.ObjectId.isValid(variantId) || !Types.ObjectId.isValid(colorId)) return null;
     const variant = await Variant.findById(variantId).lean();
-    if (!variant || !variant.colors) return null;
+    if (!variant) return null;
 
-    const embColor = variant.colors.find((c: any) => c.colorId.toString() === colorId.toString());
-    if (!embColor) return null;
+    const embColor = (variant.colors || []).find((c: any) => c.colorId.toString() === colorId.toString());
+    if (embColor) {
+      const colorDoc = await Color.findById(colorId).lean();
+      if (!colorDoc || colorDoc.status === 'inactive') return null;
+
+      const availability = (embColor as any).availability || (embColor.isBaseColor ? 'standard' : ((embColor.extraPrice ?? 0) > 0 ? 'optional' : 'standard'));
+
+      return {
+        _id: colorDoc._id,
+        variantId: new Types.ObjectId(variantId),
+        colorId: colorDoc,
+        availability,
+        imageUrl: embColor.imageUrl || null,
+        isBaseColor: embColor.isBaseColor ?? false,
+        extraPrice: embColor.extraPrice ?? 0,
+        status: embColor.status || 'active',
+      } as any;
+    }
+
+    // Fallback: check legacy variantcolors collection
+    const legacyColor = await VariantColor.findOne({
+      variantId: new Types.ObjectId(variantId),
+      colorId: new Types.ObjectId(colorId),
+      status: { $ne: 'inactive' },
+    }).lean();
+
+    if (!legacyColor || legacyColor.availability === 'unavailable') return null;
 
     const colorDoc = await Color.findById(colorId).lean();
-    if (!colorDoc) return null;
+    if (!colorDoc || colorDoc.status === 'inactive') return null;
 
-    const availability = (embColor as any).availability || (embColor.isBaseColor ? 'standard' : ((embColor.extraPrice ?? 0) > 0 ? 'optional' : 'standard'));
+    const availability = (legacyColor as any).availability || ((legacyColor as any).isBaseColor ? 'standard' : (((legacyColor as any).extraPrice ?? 0) > 0 ? 'optional' : 'standard'));
 
     return {
       _id: colorDoc._id,
       variantId: new Types.ObjectId(variantId),
       colorId: colorDoc,
       availability,
-      imageUrl: embColor.imageUrl || null,
-      isBaseColor: embColor.isBaseColor ?? false,
-      extraPrice: embColor.extraPrice ?? 0,
-      status: embColor.status || 'active',
+      imageUrl: (legacyColor as any).imageUrl || null,
+      isBaseColor: (legacyColor as any).isBaseColor ?? false,
+      extraPrice: (legacyColor as any).extraPrice ?? 0,
+      status: legacyColor.status || 'active',
     } as any;
   }
 
@@ -205,27 +230,75 @@ class VariantColorRepository {
   async findByVariantId(variantId: string): Promise<IVariantColor[]> {
     if (!Types.ObjectId.isValid(variantId)) return [];
     const variant = await Variant.findById(variantId).lean();
-    if (!variant || !variant.colors || variant.colors.length === 0) return [];
-
-    const colorIds = variant.colors.map((c: any) => c.colorId);
-    const colorDocs = await Color.find({ _id: { $in: colorIds } }).lean();
-    const colorDocMap = new Map<string, any>(colorDocs.map((cd: any) => [cd._id.toString(), cd]));
+    if (!variant) return [];
 
     const result: IVariantColor[] = [];
-    for (const emb of variant.colors) {
-      const cDoc = colorDocMap.get(emb.colorId.toString());
-      if (cDoc) {
-        const availability = (emb as any).availability || (emb.isBaseColor ? 'standard' : ((emb.extraPrice ?? 0) > 0 ? 'optional' : 'standard'));
-        result.push({
-          _id: cDoc._id,
-          variantId: new Types.ObjectId(variantId),
-          colorId: cDoc,
-          availability,
-          imageUrl: emb.imageUrl || null,
-          isBaseColor: emb.isBaseColor ?? false,
-          extraPrice: emb.extraPrice ?? 0,
-          status: emb.status || 'active',
-        } as any);
+    const embeddedColorIdSet = new Set<string>();
+
+    // 1. Primary: Embedded colors
+    if (variant.colors && variant.colors.length > 0) {
+      const activeEmbColors = variant.colors.filter((c: any) => c.status !== 'inactive');
+      const colorIds = activeEmbColors.map((c: any) => c.colorId);
+      const colorDocs = await Color.find({ _id: { $in: colorIds }, status: 'active' }).lean();
+      const colorDocMap = new Map<string, any>(colorDocs.map((cd: any) => [cd._id.toString(), cd]));
+
+      for (const emb of activeEmbColors) {
+        const cIdStr = emb.colorId.toString();
+        const cDoc = colorDocMap.get(cIdStr);
+        if (cDoc) {
+          embeddedColorIdSet.add(cIdStr);
+          const availability = (emb as any).availability || (emb.isBaseColor ? 'standard' : ((emb.extraPrice ?? 0) > 0 ? 'optional' : 'standard'));
+          result.push({
+            _id: cDoc._id,
+            variantId: new Types.ObjectId(variantId),
+            colorId: cDoc,
+            availability,
+            imageUrl: emb.imageUrl || null,
+            isBaseColor: emb.isBaseColor ?? false,
+            extraPrice: emb.extraPrice ?? 0,
+            status: emb.status || 'active',
+          } as any);
+        }
+      }
+    }
+
+    // 2. Fallback: Legacy variantcolors for any color not already in embedded
+    const legacyColors = await VariantColor.find({
+      variantId: new Types.ObjectId(variantId),
+      status: { $ne: 'inactive' },
+      availability: { $ne: 'unavailable' },
+    }).lean();
+
+    if (legacyColors.length > 0) {
+      const missingColorIds = legacyColors
+        .filter((lc: any) => lc.colorId && !embeddedColorIdSet.has(lc.colorId.toString()))
+        .map((lc: any) => lc.colorId);
+
+      if (missingColorIds.length > 0) {
+        const legacyColorDocs = await Color.find({ _id: { $in: missingColorIds }, status: 'active' }).lean();
+        const legacyColorDocMap = new Map<string, any>(legacyColorDocs.map((cd: any) => [cd._id.toString(), cd]));
+
+        for (const lc of legacyColors) {
+          if (!lc.colorId) continue;
+          const cIdStr = lc.colorId.toString();
+          if (embeddedColorIdSet.has(cIdStr)) continue;
+
+          const cDoc = legacyColorDocMap.get(cIdStr);
+          if (cDoc) {
+            embeddedColorIdSet.add(cIdStr);
+            const availability = (lc as any).availability || ((lc as any).isBaseColor ? 'standard' : (((lc as any).extraPrice ?? 0) > 0 ? 'optional' : 'standard'));
+            result.push({
+              _id: cDoc._id,
+              variantId: new Types.ObjectId(variantId),
+              colorId: cDoc,
+              availability,
+              imageUrl: (lc as any).imageUrl || null,
+              isBaseColor: (lc as any).isBaseColor ?? false,
+              extraPrice: (lc as any).extraPrice ?? 0,
+              status: lc.status || 'active',
+            } as any);
+          }
+        }
       }
     }
 

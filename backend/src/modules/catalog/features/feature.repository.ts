@@ -158,8 +158,21 @@ class VariantFeatureRepository {
     const fIdStr = featureId.toString();
 
     let availability: 'standard' | 'optional' | 'unavailable' = 'unavailable';
-    if (stdSet.has(fIdStr)) availability = 'standard';
-    else if (optSet.has(fIdStr)) availability = 'optional';
+    if (stdSet.has(fIdStr)) {
+      availability = 'standard';
+    } else if (optSet.has(fIdStr)) {
+      availability = 'optional';
+    } else {
+      // Fallback: check legacy variantfeatures collection
+      const legacyRecord = await VariantFeature.findOne({
+        variantId: new Types.ObjectId(variantId),
+        featureId: new Types.ObjectId(featureId),
+        status: { $ne: 'inactive' },
+      }).lean();
+      if (legacyRecord && legacyRecord.availability) {
+        availability = legacyRecord.availability;
+      }
+    }
 
     const featureDoc = await Feature.findById(featureId).lean();
     if (!featureDoc) return null;
@@ -227,6 +240,27 @@ class VariantFeatureRepository {
 
     const stdSet = new Set((variant.features?.standard || []).map((id: any) => id.toString()));
     const optSet = new Set((variant.features?.optional || []).map((id: any) => id.toString()));
+
+    // Fallback: If legacy records exist in variantfeatures, use them for any features not in embedded
+    const legacyRecords = await VariantFeature.find({
+      variantId: new Types.ObjectId(variantId),
+      status: { $ne: 'inactive' },
+    }).lean();
+
+    if (legacyRecords.length > 0) {
+      for (const lf of legacyRecords) {
+        if (!lf.featureId) continue;
+        const fStr = lf.featureId.toString();
+        // Do not overwrite valid embedded data
+        if (!stdSet.has(fStr) && !optSet.has(fStr)) {
+          if (lf.availability === 'standard') {
+            stdSet.add(fStr);
+          } else if (lf.availability === 'optional') {
+            optSet.add(fStr);
+          }
+        }
+      }
+    }
 
     const result: IVariantFeature[] = masterFeatures.map((fDoc: any) => {
       const fIdStr = fDoc._id.toString();
